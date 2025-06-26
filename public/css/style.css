@@ -1,0 +1,16 @@
+@font-face {
+  font-family: valorax;
+  src: url("../fonts/Valorax-lg25V.otf");
+}
+body {
+    font-family: valorax;
+    background-color: #000;
+    color: rgb(89, 255, 47);
+}
+
+.main {
+    display:flex;
+    align-items: center;
+    justify-content: center;
+    height: 90dvh;
+}

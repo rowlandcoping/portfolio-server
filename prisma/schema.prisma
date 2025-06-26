@@ -1,0 +1,155 @@
+//db initialisation
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+//USER AND AUTH
+
+//user model
+model User {
+    id        Int       @id @default(autoincrement())
+    name      String
+    email     String    @unique
+    password  String
+    roles     Role []   @relation("UserRoles") //many to many
+    refreshTokens RefreshToken[]
+    createdAt DateTime  @default(now())
+}
+//role model
+model Role {
+    id        Int           @id @default(autoincrement())
+    role      String        @unique
+    users     User []       @relation("UserRoles") //many to many
+}
+//refresh token model
+model RefreshToken {
+    id        Int      @id @default(autoincrement())
+    token     String   @unique
+    user      User     @relation(fields: [userId], references: [id])
+    userId    Int
+    createdAt DateTime @default(now())
+    expiresAt DateTime
+    revoked   Boolean  @default(false)
+}
+
+//PROJECT INFORMATION
+
+//project model
+model Project {
+    id        Int           @id @default(autoincrement())
+    title     String        @unique
+    overview  String   
+    image     String
+    features  Feature [] //1 to many
+    issues    Issue []
+    type      ProjectType   @relation(fields: [typeId], references:[id]) //1 to many
+    typeId    Int
+    ecosystem Ecosystem       @relation(fields: [ecoId], references:[id]) //NB can pull ecosystem from tech relational field
+    ecoId    Int
+    tech      Tech       @relation(fields: [techId], references:[id]) //NB can pull ecosystem from tech relational field
+    techId    Int
+    live      Boolean
+    dateMvp   DateTime?
+    dateProd  DateTime?
+    contact   Contact[]
+}
+//project relations
+model Feature {
+    id        Int           @id @default(autoincrement())
+    feature   Project       @relation(fields: [projectId], references:[id]) //1 to many
+    projectId Int
+}
+model Issue {
+    id        Int           @id @default(autoincrement())
+    feature   Project       @relation(fields: [projectId], references:[id]) //1 to many
+    projectId    Int
+}
+model ProjectType {
+    id        Int           @id @default(autoincrement())
+    type      String        @unique
+    projects  Project []
+}
+
+//PERSONAL INFO AND CONTACT FORM
+
+//Personal Model
+model Personal {
+    id        Int           @id @default(autoincrement())
+    name        String
+    skills    Skill []
+    description String
+    links   Link []
+}
+//personal relations
+model Skill {
+    id        Int           @id @default(autoincrement())
+    ecosystem Ecosystem       @relation(fields: [ecoId], references:[id]) //NB can pull ecosystem from tech relational field
+    ecoId    Int
+    tech    Tech            @relation(fields: [techId], references:[id]) //NB can pull ecosystem from tech relational field
+    techId  Int             
+    competency  String
+    personal    Personal      @relation(fields: [personId], references:[id])
+    personId    Int
+
+    @@unique([techId, personId])
+}
+model Link {
+    id        Int           @id @default(autoincrement())
+    name    String @unique
+    url     String @unique
+    logo    String
+    personal    Personal      @relation(fields: [personId], references:[id])
+    personId    Int  
+}
+
+model Contact {
+    id        Int           @id @default(autoincrement())
+    email     String
+    name      String
+    project   Project?       @relation(fields: [projectId], references:[id])
+    projectId    Int?
+    message   String
+    timestamp   DateTime @default(now())
+}
+
+
+
+
+//TECHNOLOGY INFORMATION
+
+//Tech models (personal and project relations)
+model Ecosystem {
+    id        Int           @id @default(autoincrement())
+    name      String        @unique
+    tech      Tech []
+    project   Project []
+    skill     Skill []
+    type      EcoType      @relation(fields: [typeId], references:[id])
+    typeId    Int
+}
+model Tech {
+    id        Int           @id @default(autoincrement())
+    tech      String        @unique
+    projects  Project []
+    ecosystem Ecosystem     @relation(fields: [ecoId], references:[id])
+    ecoId     Int
+    type      TechType      @relation(fields: [typeId], references:[id])
+    typeId    Int
+    skill     Skill []
+}
+//Tech relations
+model EcoType {
+    id        Int           @id @default(autoincrement())
+    techType  String
+    ecosystem Ecosystem []
+}
+model TechType {
+    id        Int           @id @default(autoincrement())
+    techType  String
+    tech      Tech []
+}
