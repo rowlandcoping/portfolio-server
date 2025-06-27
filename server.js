@@ -13,6 +13,7 @@ import corsOptions from './config/corsOptions.js';
 import rootRoutes from './routes/root.js';
 import userRoutes from './routes/userRoutes.js';
 import projectRoutes from './routes/projectRoutes.js';
+import techRoutes from './routes/techRoutes.js';
 
 const app = express();
 
@@ -35,6 +36,7 @@ app.use('/', rootRoutes);
 
 app.use('/users', userRoutes);
 app.use('/projects', projectRoutes);
+app.use('/tech', techRoutes);
 
 
 app.all(/.*/, (req, res) => {

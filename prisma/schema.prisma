@@ -23,7 +23,7 @@ model User {
 //role model
 model Role {
     id        Int           @id @default(autoincrement())
-    role      String        @unique
+    name      String        @unique
     uuid      String        @unique @default(uuid())
     users     User []       @relation("UserRoles") //many to many
 }
@@ -76,7 +76,7 @@ model Issue {
 }
 model ProjectType {
     id        Int           @id @default(autoincrement())
-    type      String        @unique
+    name      String        @unique
     projects  Project []
 }
 
@@ -85,7 +85,7 @@ model ProjectType {
 //Personal Model
 model Personal {
     id        Int           @id @default(autoincrement())
-    name        String
+    name      String
     skills    Skill []
     description String
     links   Link []
@@ -94,12 +94,12 @@ model Personal {
 //personal relations
 model Skill {
     id        Int           @id @default(autoincrement())
-    ecosystem Ecosystem       @relation(fields: [ecoId], references:[id]) //NB can pull ecosystem from tech relational field
+    ecosystem Ecosystem       @relation(fields: [ecoId], references:[id], onDelete: Cascade) //NB can pull ecosystem from tech relational field
     ecoId    Int
-    tech    Tech            @relation(fields: [techId], references:[id]) //NB can pull ecosystem from tech relational field
+    tech    Tech            @relation(fields: [techId], references:[id], onDelete: Cascade) //NB can pull ecosystem from tech relational field
     techId  Int             
     competency  String
-    personal    Personal      @relation(fields: [personId], references:[id])
+    personal    Personal      @relation(fields: [personId], references:[id], onDelete: Cascade)
     personId    Int
 
     @@unique([techId, personId])
@@ -140,7 +140,7 @@ model Ecosystem {
 }
 model Tech {
     id        Int           @id @default(autoincrement())
-    tech      String        @unique
+    name      String        @unique
     projects  Project []
     ecosystem Ecosystem     @relation(fields: [ecoId], references:[id])
     ecoId     Int
@@ -151,11 +151,11 @@ model Tech {
 //Tech relations
 model EcoType {
     id        Int           @id @default(autoincrement())
-    techType  String
+    name   String
     ecosystem Ecosystem []
 }
 model TechType {
     id        Int           @id @default(autoincrement())
-    techType  String
+    name      String
     tech      Tech []
 }

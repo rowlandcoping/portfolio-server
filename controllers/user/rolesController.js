@@ -20,15 +20,15 @@ const getAllRoles =async (req, res) => {
 //@route POST /users/roles
 //@access Private
 const addRole = async (req, res) => {
-    const { role } = req.body;
+    const { name } = req.body;
     //NB validate before making db query
-    if (!role) {
+    if (!name) {
         return res.status(400).json({ message: 'All fields Required'});
     }
     try {
         const newRole = await prisma.role.create({
             data: {
-                role: role.toLowerCase()
+                name: name.toLowerCase()
             }
         });
         res.status(201).json(newRole);
@@ -44,9 +44,9 @@ const addRole = async (req, res) => {
 //@route PATCH /roles
 //@access Private
 const updateRole = async (req, res) => { 
-    const { id, role } = req.body;
+    const { id, name } = req.body;
 
-    if (!id || !role) {
+    if (!id || !name) {
         return res.status(400).json({ message: "All fields are required"});
     }
 
@@ -54,7 +54,7 @@ const updateRole = async (req, res) => {
         const updatedRole =await prisma.role.update({
             where: { id },
             data: {
-                role: role.toLowerCase()
+                name: name.toLowerCase()
             }
         });
         res.json({ message: "Role updated", role: updatedRole });

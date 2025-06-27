@@ -67,6 +67,7 @@ const updateUser = async (req, res) => {
     }
     try {
         const updatedUser = await prisma.user.update({
+            
             where: { id },
             data: {
                 email,
@@ -80,7 +81,16 @@ const updateUser = async (req, res) => {
     } catch (err) {
         //err code for not found (ie id doesn't match or isn't found in DB)
         if (err.code === 'P2025') { // Record to update not found
-            return res.status(404).json({ message: `User with id ${id} not found` });
+            const target = err.meta?.cause || err.meta?.target?.join(', ') || '';
+            if (target.includes('Role')) {
+                return res
+                .status(404)
+                .json({ message: `Role with id ${target} not found` });
+            }
+            // otherwise assume it was the user lookup
+            return res
+                .status(404)
+                .json({ message: `User with id ${idNum} not found` });
         }
         //This covers eventuality user tries to change e-mail to one that already exists.
         if (err.code === 'P2002') {

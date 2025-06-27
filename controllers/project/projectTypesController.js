@@ -16,19 +16,19 @@ const getAllTypes =async (req, res) => {
     res.json(types);
 }
 
-//@desc Create new feature
+//@desc Create new project type
 //@route POST /projects/types
 //@access Private
 const addType = async (req, res) => {
-    const { type } = req.body;
+    const { name } = req.body;
     //NB validate before making db query
-    if (!type) {
+    if (!name) {
         return res.status(400).json({ message: 'All fields Required'});
     }
     try {
         const newType = await prisma.projectType.create({
             data: {
-                type
+                name
             }
         });
         res.status(201).json(newType);
@@ -44,9 +44,9 @@ const addType = async (req, res) => {
 //@route PATCH /projects/types
 //@access Private
 const updateType = async (req, res) => { 
-    const { id, type } = req.body;
+    const { id, name } = req.body;
 
-    if (!id || !type) {
+    if (!id || !name) {
         return res.status(400).json({ message: "All fields are required"});
     }
 
@@ -54,10 +54,10 @@ const updateType = async (req, res) => {
         const updatedType = await prisma.projectType.update({
             where: { id },
             data: {
-                type
+                name
             }
         });
-        res.json({ message: "Project Type updated", role: updatedType });
+        res.json({ message: "Project Type updated", name: updatedType });
     } catch (err) {
         if (err.code === 'P2025') {
             return res.status(404).json({ message: `Project Type with id ${id} not found` });

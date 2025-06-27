@@ -1,0 +1,106 @@
+import prisma from '../../config/db.js';
+import { logEvents } from '../../middleware/logger.js';
+
+//TECH ROUTES
+
+//@desc Get all tech types
+//@route GET /tech/tech
+//@access Private
+
+const getAllTech =async (req, res) => {
+    const tech = await prisma.tech.findMany();
+    if (!tech.length) {
+        //NB any errors not handled here will be handled by our error handline middleware
+        return res.status(400).json({message: 'No tech found'})
+    }
+    res.json(tech);
+}
+
+//@desc Create new tech type
+//@route POST /tech/tech
+//@access Private
+const addTech = async (req, res) => {
+    const { name, ecosystem, type } = req.body;
+    //NB validate before making db query
+    if (!name || !ecosystem || !type) {
+        return res.status(400).json({ message: 'All fields Required'});
+    }
+    try {
+        const newTech = await prisma.tech.create({
+            data: {
+                name,
+                ecosystem: { connect: { id: Number(ecosystem) } },
+                type: { connect: { id: Number(type) } },
+            }
+        });
+        res.status(201).json(newTech);
+    } catch (err) {
+        if (err.code === 'P2002') {
+            logEvents(`Duplicate field error: ${err.meta?.target}`, 'dbError.log');
+            return res.status(409).json({ message: 'Type of tech already exists' });
+        }
+    }
+};
+
+//@desc Update a tech type
+//@route PATCH /tech/tech
+//@access Private
+const updateTech = async (req, res) => { 
+    const { id, name, ecosystem, type } = req.body;
+
+    if (!id || !name || !ecosystem || !type ) {
+        return res.status(400).json({ message: "All fields are required"});
+    }
+
+    try {
+        const updatedTech = await prisma.tech.update({
+            where: { id },
+            data: {
+                name,
+                ecosystem: { connect: { id: Number(ecosystem) } },
+                type: { connect: { id: Number(type) } },
+            }
+        });
+        res.json({ message: "Tech updated", tech: updatedTech });
+    } catch (err) {
+        if (err.code === 'P2025') {
+            return res.status(404).json({ message: `Tech with id ${id} not found` });
+        }
+        if (err.code === 'P2002') {
+            logEvents(`Duplicate field error: ${err.meta?.target}`, 'dbError.log');
+            return res.status(409).json({ message: "Tech already exists" });
+        }
+    }
+}
+
+//@desc Delete a tech type
+//@route DELETE /tech/tech
+//@access Private
+const deleteTech = async (req, res) => { 
+    const { id } = req.body;
+
+    if(!id) {
+        return res.status(400).json({ message: 'Tech ID Required'});
+    }
+
+    const projectsUsingType = await prisma.project.findMany({
+        where: { techId: id },
+        select: { title: true }
+    });
+    if (projectsUsingType.length > 0) {
+            const projectTitles = projectsUsingType.map(p => p.title).join('\n');
+            return res.status(400).json({
+                message: `Cannot delete tech. These projects use it: ${projectTitles} \n  Please remove the tech from the projects and try again.`
+            });
+    }
+
+    await prisma.tech.delete({ where: { id } });
+    res.json({ message: 'Tech (and associated skills) deleted successfully' });
+}
+
+export default {
+    getAllTech,
+    addTech, 
+    updateTech,
+    deleteTech
+}
