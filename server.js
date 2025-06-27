@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
-import prisma from './config/prismaClient.js';
+import prisma from './config/db.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -11,6 +11,10 @@ import cors from 'cors';
 import corsOptions from './config/corsOptions.js';
 
 import rootRoutes from './routes/root.js';
+import userRoutes from './routes/userRoutes.js';
+import projectRoutes from './routes/projectRoutes.js';
+
+const app = express();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -29,6 +33,9 @@ app.use(cookieParser());
 app.use(express.static('public'));
 app.use('/', rootRoutes);
 
+app.use('/users', userRoutes);
+app.use('/projects', projectRoutes);
+
 
 app.all(/.*/, (req, res) => {
     res.status(404)
@@ -45,7 +52,9 @@ app.all(/.*/, (req, res) => {
 app.use(errorHandler);
 
 
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`))
+const server = app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
 
 //Disconnect from DB on shutdown
 const shutdown = async (signal) => {

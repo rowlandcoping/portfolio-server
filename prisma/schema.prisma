@@ -8,7 +8,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-//USER AND AUTH
+//USER STUFF
 
 //user model
 model User {
@@ -17,15 +17,18 @@ model User {
     email     String    @unique
     password  String
     roles     Role []   @relation("UserRoles") //many to many
-    refreshTokens RefreshToken[]
+    refreshTokens RefreshToken []
     createdAt DateTime  @default(now())
 }
 //role model
 model Role {
     id        Int           @id @default(autoincrement())
     role      String        @unique
+    uuid      String        @unique @default(uuid())
     users     User []       @relation("UserRoles") //many to many
 }
+
+//AUTH MODEL (add to auth controllers section when implemented)
 //refresh token model
 model RefreshToken {
     id        Int      @id @default(autoincrement())
@@ -44,16 +47,16 @@ model Project {
     id        Int           @id @default(autoincrement())
     title     String        @unique
     overview  String   
-    image     String
+    image     String?
     features  Feature [] //1 to many
     issues    Issue []
-    type      ProjectType   @relation(fields: [typeId], references:[id]) //1 to many
+    type      ProjectType    @relation(fields: [typeId], references:[id]) //1 to many
     typeId    Int
-    ecosystem Ecosystem       @relation(fields: [ecoId], references:[id]) //NB can pull ecosystem from tech relational field
-    ecoId    Int
-    tech      Tech       @relation(fields: [techId], references:[id]) //NB can pull ecosystem from tech relational field
+    ecosystem Ecosystem       @relation(fields: [ecoId], references:[id])
+    ecoId     Int
+    tech      Tech       @relation(fields: [techId], references:[id]) 
     techId    Int
-    live      Boolean
+    live      Boolean     @default(true)
     dateMvp   DateTime?
     dateProd  DateTime?
     contact   Contact[]
@@ -61,12 +64,14 @@ model Project {
 //project relations
 model Feature {
     id        Int           @id @default(autoincrement())
-    feature   Project       @relation(fields: [projectId], references:[id]) //1 to many
+    description String
+    feature   Project       @relation(fields: [projectId], references:[id], onDelete: Cascade) //1 to many
     projectId Int
 }
 model Issue {
     id        Int           @id @default(autoincrement())
-    feature   Project       @relation(fields: [projectId], references:[id]) //1 to many
+    description String
+    feature   Project       @relation(fields: [projectId], references:[id], onDelete: Cascade) //1 to many
     projectId    Int
 }
 model ProjectType {
@@ -84,6 +89,7 @@ model Personal {
     skills    Skill []
     description String
     links   Link []
+    singleton  Boolean  @default(true) @unique //ensures can only ever have one row (as desired)
 }
 //personal relations
 model Skill {

@@ -1,0 +1,105 @@
+import prisma from '../../config/db.js';
+import { logEvents } from '../../middleware/logger.js';
+
+//FEATUES ROUTES
+
+//@desc Get all project types
+//@route GET /projects/types
+//@access Private
+
+const getAllTypes =async (req, res) => {
+    const types = await prisma.projectType.findMany();
+    if (!types.length) {
+        //NB any errors not handled here will be handled by our error handline middleware
+        return res.status(400).json({message: 'No types found'})
+    }
+    res.json(types);
+}
+
+//@desc Create new feature
+//@route POST /projects/types
+//@access Private
+const addType = async (req, res) => {
+    const { type } = req.body;
+    //NB validate before making db query
+    if (!type) {
+        return res.status(400).json({ message: 'All fields Required'});
+    }
+    try {
+        const newType = await prisma.projectType.create({
+            data: {
+                type
+            }
+        });
+        res.status(201).json(newType);
+    } catch (err) {
+        if (err.code === 'P2002') {
+            logEvents(`Duplicate field error: ${err.meta?.target}`, 'dbError.log');
+            return res.status(409).json({ message: 'Project Type already exists' });
+        }
+    }
+};
+
+//@desc Update a project type
+//@route PATCH /projects/types
+//@access Private
+const updateType = async (req, res) => { 
+    const { id, type } = req.body;
+
+    if (!id || !type) {
+        return res.status(400).json({ message: "All fields are required"});
+    }
+
+    try {
+        const updatedType = await prisma.projectType.update({
+            where: { id },
+            data: {
+                type
+            }
+        });
+        res.json({ message: "Project Type updated", role: updatedType });
+    } catch (err) {
+        if (err.code === 'P2025') {
+            return res.status(404).json({ message: `Project Type with id ${id} not found` });
+        }
+        if (err.code === 'P2002') {
+            logEvents(`Duplicate field error: ${err.meta?.target}`, 'dbError.log');
+            return res.status(409).json({ message: "Project Type already exists" });
+        }
+    }
+}
+
+//@desc Delete a project type
+//@route DELETE /projects/types
+//@access Private
+const deleteType = async (req, res) => { 
+    const { id } = req.body;
+
+    if(!id) {
+        return res.status(400).json({ message: 'Project Type ID Required'});
+    }
+
+    const projectsUsingType = await prisma.project.findMany({
+        where: { typeId: id },
+        select: { title: true }
+    });
+
+    if (projectsUsingType.length > 0) {
+            const projectTitles = projectsUsingType.map(p => p.title).join('\n');
+            return res.status(400).json({
+                message: `Cannot delete project type. These projects use it: ${projectTitles} \n  Please update their project type and try again.`
+            });
+    }
+
+    await prisma.projectType.delete({ where: { id } });
+    res.json({ message: 'Project type deleted successfully' });
+}
+
+
+
+export default {
+    getAllTypes,
+    addType, 
+    updateType,
+    deleteType
+}
