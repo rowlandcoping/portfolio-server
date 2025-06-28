@@ -7,15 +7,15 @@ import ecoTypesController from '../controllers/tech/ecoTypesController.js'
 const router = express.Router();
 
 router.route('/')
-    .get(techController.getAllTechs)
+    .get(techController.getAllTech)
     .post(techController.addTech)
     .patch(techController.updateTech)
     .delete(techController.deleteTech)
 router.route('/ecosystems')
     .get(ecosystemsController.getAllEcosystems)    
-    .post(ecosystemsController.addEcosystems)
-    .patch(ecosystemsController.updateEcosystems)
-    .delete(ecosystemsController.deleteEcosystems)
+    .post(ecosystemsController.addEcosystem)
+    .patch(ecosystemsController.updateEcosystem)
+    .delete(ecosystemsController.deleteEcosystem)
 router.route('/techtypes')
     .get(techTypesController.getAllTechTypes)
     .post(techTypesController.addTechType)
@@ -26,5 +26,15 @@ router.route('/ecotypes')
     .post(ecoTypesController.addEcoType)
     .patch(ecoTypesController.updateEcoType)
     .delete(ecoTypesController.deleteEcoType)
+
+//get by id
+router.route('/:id')
+    .get(techController.getTechById)
+router.route('/ecosystems/:id')
+    .get(ecosystemsController.getEcosystemById)
+router.route('/techtypes/:id')
+    .get(techTypesController.getTechTypeById)
+router.route('/ecotypes/:id')
+    .get(ecoTypesController.getEcoTypeById)
 
 export default router

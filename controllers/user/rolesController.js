@@ -16,6 +16,19 @@ const getAllRoles =async (req, res) => {
     res.json(roles);
 }
 
+//@desc Get a role
+//@route GET /users/roles/:id
+//@access Private
+const getRoleById = async (req, res) => {
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ message: 'Role ID required' });
+
+    const role = await prisma.role.findUnique({ where: { id: Number(id) } });
+    if (!role) return res.status(404).json({ message: 'No role found' });
+
+    res.json(role);
+}
+
 //@desc Create new role
 //@route POST /users/roles
 //@access Private
@@ -60,6 +73,7 @@ const updateRole = async (req, res) => {
         res.json({ message: "Role updated", role: updatedRole });
     } catch (err) {
         if (err.code === 'P2025') {
+            logEvents(`Record not found - ${req.method} ${req.originalUrl} - Target ID: ${id}`,'dbError.log');
             return res.status(404).json({ message: `Role with id ${id} not found` });
         }
         if (err.code === 'P2002') {
@@ -71,6 +85,7 @@ const updateRole = async (req, res) => {
 
 export default {
     getAllRoles,
+    getRoleById,
     addRole, 
     updateRole
 }

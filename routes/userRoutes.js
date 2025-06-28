@@ -14,4 +14,10 @@ router.route('/roles')
     .post(rolesController.addRole)
     .patch(rolesController.updateRole)
 
+router.route('/:id')
+    .get(usersController.getUserById)
+router.route('/roles/:id')
+    .get(rolesController.getRoleById)
+
+
 export default router

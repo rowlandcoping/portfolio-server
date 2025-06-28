@@ -16,6 +16,19 @@ const getAllTechTypes =async (req, res) => {
     res.json(techTypes);
 }
 
+//@desc Get a tech type
+//@route GET /techTypes/techtypes/:id
+//@access Private
+const getTechTypeById = async (req, res) => {
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ message: 'Tech type ID required' });
+
+    const techType = await prisma.techType.findUnique({ where: { id: Number(id) } });
+    if (!techType) return res.status(404).json({ message: 'No tech type found' });
+
+    res.json(techType);
+}
+
 //@desc Create new tech type
 //@route POST /tech/techtypes
 //@access Private
@@ -60,6 +73,7 @@ const updateTechType = async (req, res) => {
         res.json({ message: "Tech type updated", name: updatedTechType });
     } catch (err) {
         if (err.code === 'P2025') {
+            logEvents(`Record not found - ${req.method} ${req.originalUrl} - Target ID: ${id}`,'dbError.log');
             return res.status(404).json({ message: `Tech type with id ${id} not found` });
         }
         if (err.code === 'P2002') {
@@ -91,12 +105,20 @@ const deleteTechType = async (req, res) => {
             });
     }
 
-    await prisma.techType.delete({ where: { id } });
-    res.json({ message: 'tech type deleted successfully' });
+    try {
+        await prisma.techType.delete({ where: { id } });
+        res.json({ message: 'tech type deleted successfully' });
+    } catch (err) {
+        if (err.code === 'P2025') {
+            logEvents(`Record not found - ${req.method} ${req.originalUrl} - Target ID: ${id}`,'dbError.log');
+            return res.status(404).json({ message: `Tech with id ${id} not found` });
+        }
+    }
 }
 
 export default {
     getAllTechTypes,
+    getTechTypeById,
     addTechType, 
     updateTechType,
     deleteTechType

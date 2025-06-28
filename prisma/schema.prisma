@@ -12,20 +12,22 @@ datasource db {
 
 //user model
 model User {
-    id        Int       @id @default(autoincrement())
-    name      String
-    email     String    @unique
-    password  String
-    roles     Role []   @relation("UserRoles") //many to many
-    refreshTokens RefreshToken []
-    createdAt DateTime  @default(now())
+    id              Int             @id @default(autoincrement())
+    name            String
+    email           String          @unique
+    password        String
+    roles           Role []         @relation("UserRoles") //many to many
+    personal        Personal?
+    projects         Project []        
+    refreshTokens   RefreshToken []
+    createdAt       DateTime        @default(now())
 }
 //role model
 model Role {
-    id        Int           @id @default(autoincrement())
-    name      String        @unique
-    uuid      String        @unique @default(uuid())
-    users     User []       @relation("UserRoles") //many to many
+    id      Int       @id @default(autoincrement())
+    name    String    @unique
+    uuid    String    @unique @default(uuid())
+    users   User []   @relation("UserRoles") //many to many
 }
 
 //AUTH MODEL (add to auth controllers section when implemented)
@@ -50,29 +52,29 @@ model Project {
     image     String?
     features  Feature [] //1 to many
     issues    Issue []
-    type      ProjectType    @relation(fields: [typeId], references:[id]) //1 to many
+    type      ProjectType   @relation(fields: [typeId], references:[id]) //1 to many
     typeId    Int
-    ecosystem Ecosystem       @relation(fields: [ecoId], references:[id])
-    ecoId     Int
-    tech      Tech       @relation(fields: [techId], references:[id]) 
-    techId    Int
-    live      Boolean     @default(true)
+    ecosystem Ecosystem []  @relation("ProjectEcosystems")
+    tech      Tech []       @relation("ProjectTech")
+    live      Boolean       @default(true)
     dateMvp   DateTime?
     dateProd  DateTime?
     contact   Contact[]
+    user      User          @relation(fields:[userId], references:[id])
+    userId    Int
 }
 //project relations
 model Feature {
-    id        Int           @id @default(autoincrement())
+    id          Int     @id @default(autoincrement())
     description String
-    feature   Project       @relation(fields: [projectId], references:[id], onDelete: Cascade) //1 to many
-    projectId Int
+    feature     Project @relation(fields: [projectId], references:[id], onDelete: Cascade) //1 to many
+    projectId   Int
 }
 model Issue {
-    id        Int           @id @default(autoincrement())
-    description String
-    feature   Project       @relation(fields: [projectId], references:[id], onDelete: Cascade) //1 to many
-    projectId    Int
+    id              Int     @id @default(autoincrement())
+    description     String
+    feature         Project @relation(fields: [projectId], references:[id], onDelete: Cascade) //1 to many
+    projectId       Int
 }
 model ProjectType {
     id        Int           @id @default(autoincrement())
@@ -84,43 +86,46 @@ model ProjectType {
 
 //Personal Model
 model Personal {
-    id        Int           @id @default(autoincrement())
-    name      String
-    skills    Skill []
+    id          Int         @id @default(autoincrement())
+    user        User        @relation(fields:[userId], references:[id], onDelete: Cascade)
+    userId      Int         @unique
+    skills      Skill []
     description String
-    links   Link []
-    singleton  Boolean  @default(true) @unique //ensures can only ever have one row (as desired)
+    links       Link []
+    contact     Contact []
 }
 //personal relations
 model Skill {
-    id        Int           @id @default(autoincrement())
-    ecosystem Ecosystem       @relation(fields: [ecoId], references:[id], onDelete: Cascade) //NB can pull ecosystem from tech relational field
-    ecoId    Int
-    tech    Tech            @relation(fields: [techId], references:[id], onDelete: Cascade) //NB can pull ecosystem from tech relational field
-    techId  Int             
+    id          Int         @id @default(autoincrement())
+    ecosystem   Ecosystem   @relation(fields: [ecoId], references:[id], onDelete: Cascade) //NB can pull ecosystem from tech relational field
+    ecoId       Int
+    tech        Tech        @relation(fields: [techId], references:[id], onDelete: Cascade) //NB can pull ecosystem from tech relational field
+    techId      Int             
     competency  String
-    personal    Personal      @relation(fields: [personId], references:[id], onDelete: Cascade)
+    personal    Personal    @relation(fields: [personId], references:[id], onDelete: Cascade)
     personId    Int
 
-    @@unique([techId, personId])
+    @@unique([ecoId, techId, personId])
 }
 model Link {
-    id        Int           @id @default(autoincrement())
-    name    String @unique
-    url     String @unique
-    logo    String
-    personal    Personal      @relation(fields: [personId], references:[id])
-    personId    Int  
+    id          Int         @id @default(autoincrement())
+    name        String      @unique
+    url         String      @unique
+    logo        String
+    personal    Personal    @relation(fields: [personId], references:[id], onDelete: Cascade)
+    personId    Int
 }
 
 model Contact {
-    id        Int           @id @default(autoincrement())
-    email     String
-    name      String
-    project   Project?       @relation(fields: [projectId], references:[id])
-    projectId    Int?
-    message   String
-    timestamp   DateTime @default(now())
+    id          Int         @id @default(autoincrement())
+    email       String
+    name        String
+    project     Project?    @relation(fields: [projectId], references:[id], onDelete: Cascade)
+    projectId   Int?
+    personal    Personal?   @relation(fields: [personId], references:[id], onDelete: Cascade)
+    personId    Int?
+    message     String
+    timestamp   DateTime?   @default(now())
 }
 
 
@@ -133,15 +138,15 @@ model Ecosystem {
     id        Int           @id @default(autoincrement())
     name      String        @unique
     tech      Tech []
-    project   Project []
+    project   Project []    @relation("ProjectEcosystems")
     skill     Skill []
-    type      EcoType      @relation(fields: [typeId], references:[id])
+    type      EcoType       @relation(fields: [typeId], references:[id])
     typeId    Int
 }
 model Tech {
     id        Int           @id @default(autoincrement())
     name      String        @unique
-    projects  Project []
+    projects  Project []    @relation("ProjectTech")
     ecosystem Ecosystem     @relation(fields: [ecoId], references:[id])
     ecoId     Int
     type      TechType      @relation(fields: [typeId], references:[id])
@@ -150,12 +155,12 @@ model Tech {
 }
 //Tech relations
 model EcoType {
-    id        Int           @id @default(autoincrement())
-    name   String
-    ecosystem Ecosystem []
+    id          Int           @id @default(autoincrement())
+    name        String
+    ecosystem   Ecosystem []
 }
 model TechType {
-    id        Int           @id @default(autoincrement())
+    id        Int       @id @default(autoincrement())
     name      String
     tech      Tech []
 }

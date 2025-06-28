@@ -21,6 +21,19 @@ const getAllUsers =async (req, res) => {
     res.json(cleanUsers);
 }
 
+//@desc Get a user
+//@route GET /users/:id
+//@access Private
+const getUserById = async (req, res) => {
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ message: 'User ID required' });
+
+    const user = await prisma.user.findUnique({ where: { id: Number(id) } });
+    if (!user) return res.status(404).json({ message: 'No user found' });
+
+    res.json(user);
+}
+
 //@desc Create new user
 //@route POST /users
 //@access Private
@@ -57,7 +70,7 @@ const addUser = async (req, res) => {
 };
 
 //@desc Update a user
-//@route PATCH /users
+//@route PATCH /users 
 //@access Private
 const updateUser = async (req, res) => { 
     const { id, email, name, roles } = req.body;
@@ -133,6 +146,7 @@ const deleteUser = async (req, res) => {
 
 export default {
     getAllUsers,
+    getUserById,
     addUser,
     updateUser,
     deleteUser,

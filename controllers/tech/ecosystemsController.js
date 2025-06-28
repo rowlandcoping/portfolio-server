@@ -16,6 +16,19 @@ const getAllEcosystems =async (req, res) => {
     res.json(ecosystems);
 }
 
+//@desc Get an ecosystem
+//@route GET /tech/ecosystems/:id
+//@access Private
+const getEcosystemById = async (req, res) => {
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ message: 'Ecosystem ID required' });
+
+    const ecosystem = await prisma.ecosystem.findUnique({ where: { id: Number(id) } });
+    if (!ecosystem) return res.status(404).json({ message: 'No ecosystem found' });
+
+    res.json(ecosystem);
+}
+
 //@desc Create new ecosystem
 //@route POST /tech/ecosystems
 //@access Private
@@ -62,6 +75,7 @@ const updateEcosystem = async (req, res) => {
         res.json({ message: "Ecosystem updated", ecosystem: updatedEcosystem });
     } catch (err) {
         if (err.code === 'P2025') {
+            logEvents(`Record not found - ${req.method} ${req.originalUrl} - Target ID: ${id}`,'dbError.log');
             return res.status(404).json({ message: `Ecosystem with id ${id} not found` });
         }
         if (err.code === 'P2002') {
@@ -102,13 +116,20 @@ const deleteEcosystem = async (req, res) => {
                 message: `Cannot delete ecosystem. These technologies use it: ${techNames} \n  Please remove the ecosystem from the technologies and try again.`
             });
     }
-
-    await prisma.ecosystem.delete({ where: { id } });
-    res.json({ message: 'ecosystem deleted successfully' });
+    try {
+        await prisma.ecosystem.delete({ where: { id } });
+        res.json({ message: 'ecosystem deleted successfully' });
+    } catch (err) {
+        if (err.code === 'P2025') {
+            logEvents(`Record not found - ${req.method} ${req.originalUrl} - Target ID: ${id}`,'dbError.log');
+            return res.status(404).json({ message: `Tech with id ${id} not found` });
+        }
+    }
 }
 
 export default {
     getAllEcosystems,
+    getEcosystemById,
     addEcosystem, 
     updateEcosystem,
     deleteEcosystem

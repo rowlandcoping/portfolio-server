@@ -16,6 +16,19 @@ const getAllEcoTypes =async (req, res) => {
     res.json(ecoTypes);
 }
 
+//@desc Get an ecosystem type
+//@route GET /ecoTypes/ecotypes/:id
+//@access Private
+const getEcoTypeById = async (req, res) => {
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ message: 'Ecosytem type ID required' });
+
+    const ecoType = await prisma.ecoType.findUnique({ where: { id: Number(id) } });
+    if (!ecoType) return res.status(404).json({ message: 'No Ecosytem type found' });
+
+    res.json(ecoType);
+}
+
 //@desc Create new ecosystem type
 //@route POST /tech/ecotypes
 //@access Private
@@ -60,6 +73,7 @@ const updateEcoType = async (req, res) => {
         res.json({ message: "Ecosystem type updated", name: updatedEcoType });
     } catch (err) {
         if (err.code === 'P2025') {
+            logEvents(`Record not found - ${req.method} ${req.originalUrl} - Target ID: ${id}`,'dbError.log');
             return res.status(404).json({ message: `Ecosystem type with id ${id} not found` });
         }
         if (err.code === 'P2002') {
@@ -91,12 +105,20 @@ const deleteEcoType = async (req, res) => {
             });
     }
 
-    await prisma.ecoType.delete({ where: { id } });
-    res.json({ message: 'tech type deleted successfully' });
+    try {
+        await prisma.ecoType.delete({ where: { id } });
+        res.json({ message: 'tech type deleted successfully' });
+    } catch (err) {
+        if (err.code === 'P2025') {
+            logEvents(`Record not found - ${req.method} ${req.originalUrl} - Target ID: ${id}`,'dbError.log');
+            return res.status(404).json({ message: `Tech with id ${id} not found` });
+        }
+    }
 }
 
 export default {
     getAllEcoTypes,
+    getEcoTypeById,
     addEcoType, 
     updateEcoType,
     deleteEcoType

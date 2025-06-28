@@ -4,7 +4,7 @@ import { logEvents } from '../../middleware/logger.js';
 //TECH ROUTES
 
 //@desc Get all tech types
-//@route GET /tech/tech
+//@route GET /tech
 //@access Private
 
 const getAllTech =async (req, res) => {
@@ -13,6 +13,19 @@ const getAllTech =async (req, res) => {
         //NB any errors not handled here will be handled by our error handline middleware
         return res.status(400).json({message: 'No tech found'})
     }
+    res.json(tech);
+}
+
+//@desc Get a tech
+//@route GET /tech/:id
+//@access Private
+const getTechById = async (req, res) => {
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ message: 'Tech ID required' });
+
+    const tech = await prisma.tech.findUnique({ where: { id: Number(id) } });
+    if (!tech) return res.status(404).json({ message: 'No tech found' });
+
     res.json(tech);
 }
 
@@ -93,13 +106,20 @@ const deleteTech = async (req, res) => {
                 message: `Cannot delete tech. These projects use it: ${projectTitles} \n  Please remove the tech from the projects and try again.`
             });
     }
-
-    await prisma.tech.delete({ where: { id } });
-    res.json({ message: 'Tech (and associated skills) deleted successfully' });
+    try {
+        await prisma.tech.delete({ where: { id } });
+        res.json({ message: 'Tech (and associated skills) deleted successfully' });
+    } catch (err) {
+        if (err.code === 'P2025') {
+            logEvents(`Record not found - ${req.method} ${req.originalUrl} - Target ID: ${id}`,'dbError.log');
+            return res.status(404).json({ message: `Tech with id ${id} not found` });
+        }
+    }
 }
 
 export default {
     getAllTech,
+    getTechById,
     addTech, 
     updateTech,
     deleteTech

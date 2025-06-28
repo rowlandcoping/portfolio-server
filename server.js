@@ -14,6 +14,7 @@ import rootRoutes from './routes/root.js';
 import userRoutes from './routes/userRoutes.js';
 import projectRoutes from './routes/projectRoutes.js';
 import techRoutes from './routes/techRoutes.js';
+import personalRoutes from './routes/personalRoutes.js';
 
 const app = express();
 
@@ -37,6 +38,7 @@ app.use('/', rootRoutes);
 app.use('/users', userRoutes);
 app.use('/projects', projectRoutes);
 app.use('/tech', techRoutes);
+app.use('/personal', personalRoutes);
 
 
 app.all(/.*/, (req, res) => {
