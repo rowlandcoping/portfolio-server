@@ -32,7 +32,7 @@ const getProjectById = async (req, res) => {
 //@desc Create new feature
 //@route POST /projects
 //@access Private
-const addProject = async (req, res) => {
+const addProject = async (req, res, next) => {
     console.log('req.body:', req.body);
     //NB features = [] defaults to empty array if there is no value.
     const { title, overview, image, features=[], issues=[], type, ecosystem, tech, dateMvp, dateProd, user } = req.body;
@@ -51,7 +51,7 @@ const addProject = async (req, res) => {
                 overview,
                 image,
                 type: { connect: { id: Number(type) } },
-                ecosystem: { connect: { id: Number(ecosystem) } },
+                ecosystem: { connect: ecosystem.map(id => ({ id: Number(id) })) },
                 user: { connect: { id: Number(user) } },
                 dateMvp: dateMvp ? new Date(dateMvp) : null,
                 dateProd: dateProd ? new Date(dateProd) : null,
@@ -75,16 +75,18 @@ const addProject = async (req, res) => {
             logEvents(`Duplicate field error: ${err.meta?.target}`, 'dbError.log');
             return res.status(409).json({ message: 'Project already exists' });
         }
+        console.log(err.stack);
+        next(err);
     }
 };
 
 //@desc Update a project project
 //@route PATCH /projects/projects
 //@access Private
-const updateProject = async (req, res) => {
+const updateProject = async (req, res, next) => {
     const { id, title, overview, image, features = [], issues = [], type, ecosystem, tech, dateMvp, dateProd } = req.body;
 
-    if (!id || !title || !overview || !image || !type || !ecosystem) {
+    if (!id || !title || !overview || !type || !ecosystem) {
         return res.status(400).json({ message: "Missing required fields" });
     }
     if (!Array.isArray(features) || !Array.isArray(issues)) {
@@ -99,8 +101,8 @@ const updateProject = async (req, res) => {
                 overview,
                 image,
                 type: { connect: { id: Number(type) } },
-                ecosystem: { connect: { id: Number(ecosystem) } },
-                tech: tech ? { connect: { id: Number(tech) } } : undefined,
+                ecosystem: { set: ecosystem.map(id => ({ id: Number(id) })) },
+                tech: tech && tech.length ? { set: tech.map(id => ({ id: Number(id) })) } : undefined,
                 dateMvp: dateMvp ? new Date(dateMvp) : null,
                 dateProd: dateProd ? new Date(dateProd) : null,
                 features: {
@@ -123,6 +125,8 @@ const updateProject = async (req, res) => {
             logEvents(`Duplicate field error: ${err.meta?.target}`, 'dbError.log');
             return res.status(409).json({ message: 'Project title already in use' });
         }
+        console.log(err.message)
+        next(err)
     }
 };
 

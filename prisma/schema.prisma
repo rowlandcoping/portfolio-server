@@ -18,7 +18,7 @@ model User {
     password        String
     roles           Role []         @relation("UserRoles") //many to many
     personal        Personal?
-    projects         Project []        
+    projects        Project []        
     refreshTokens   RefreshToken []
     createdAt       DateTime        @default(now())
 }
@@ -26,7 +26,7 @@ model User {
 model Role {
     id      Int       @id @default(autoincrement())
     name    String    @unique
-    uuid    String    @unique @default(uuid())
+    uuid    String?    @unique @default(uuid())
     users   User []   @relation("UserRoles") //many to many
 }
 

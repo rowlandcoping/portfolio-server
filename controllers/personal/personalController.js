@@ -32,7 +32,7 @@ const getPersonalByUserId = async (req, res) => {
 //@desc Create new personal profile
 //@route POST /personal
 //@access Private
-const addPersonal = async (req, res) => {
+const addPersonal = async (req, res, next) => {
     const { user, description } = req.body;
     //NB validate before making db query
     if (!user || !description) {
@@ -51,6 +51,15 @@ const addPersonal = async (req, res) => {
             logEvents(`Duplicate field error: ${err.meta?.target}`, 'dbError.log');
             return res.status(409).json({ message: 'Personal data already exists for this person' });
         }
+        if (
+            err.message &&
+            err.message.includes('violate the required relation') &&
+            err.message.includes('PersonalToUser')
+        ) {
+            logEvents(`A personal profile already exists for this user ID: ${user}`, 'dbError.log');
+            return res.status(409).json({ message: 'A personal profile already exists for this user.' });
+        }
+        next(err);
     }
 };
 

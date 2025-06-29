@@ -132,7 +132,7 @@ const deleteUser = async (req, res) => {
         //     return res.status(403).json({ message: 'Users cannot delete their own account' });
         // }
 
-        const deleteUser = await prisma.user.delete({ 
+        const deletedUser = await prisma.user.delete({ 
             where: { id: parseInt(id) } 
         
         })

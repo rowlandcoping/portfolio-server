@@ -64,7 +64,7 @@ const addSkill = async (req, res) => {
 //@desc Update skill
 //@route PATCH /personal/skills
 //@access Private
-const updateSkill = async (req, res) => {
+const updateSkill = async (req, res, next) => {
     console.log('req.body:', req.body);
 
     const { id, ecosystem, tech, competency } = req.body;
@@ -83,7 +83,7 @@ const updateSkill = async (req, res) => {
                 competency
             }   
         });
-        res.status({ message: "Skill updated", skill: updatedSkill });
+        res.json({ message: "Skill updated", skill: updatedSkill });
     } catch (err) {
         if (err.code === 'P2002' && Array.isArray(err.meta?.target) && err.meta.target.includes('techId') && err.meta.target.includes('personId')) {
             logEvents(`Duplicate field error: ${err.meta?.target}`, 'dbError.log');
@@ -93,6 +93,7 @@ const updateSkill = async (req, res) => {
             logEvents(`Record not found - ${req.method} ${req.originalUrl} - Target ID: ${id}`,'dbError.log');
             return res.status(404).json({ message: `Skill with id ${id} not found` });
         }
+        next(err);
     }
 };
 

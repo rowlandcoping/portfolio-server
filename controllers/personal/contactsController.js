@@ -32,7 +32,7 @@ const getContactById = async (req, res) => {
 //@desc Create new contact
 //@route POST /personal/contacts
 //@access Private
-const addContact = async (req, res) => {
+const addContact = async (req, res, next) => {
 
     const { email, name, project, personal, message } = req.body;
     
@@ -59,7 +59,8 @@ const addContact = async (req, res) => {
         if (err.code === 'P2002') {
             logEvents(`Duplicate field error: ${err.meta?.target}`, 'dbError.log');
             return res.status(409).json({ message: 'Contact already exists' });
-        }        
+        }
+        next(err);      
     }
 };
 

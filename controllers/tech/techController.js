@@ -96,15 +96,19 @@ const deleteTech = async (req, res) => {
         return res.status(400).json({ message: 'Tech ID Required'});
     }
 
-    const projectsUsingType = await prisma.project.findMany({
-        where: { techId: id },
+    const projectsUsingTech = await prisma.project.findMany({
+        where: {
+            tech: {
+                some: { id: id }
+            }
+        },
         select: { title: true }
     });
-    if (projectsUsingType.length > 0) {
-            const projectTitles = projectsUsingType.map(p => p.title).join('\n');
-            return res.status(400).json({
-                message: `Cannot delete tech. These projects use it: ${projectTitles} \n  Please remove the tech from the projects and try again.`
-            });
+    if (projectsUsingTech.length > 0) {
+        const projectTitles = projectsUsingTech.map(p => p.title).join('\n');
+        return res.status(400).json({
+            message: `Cannot delete tech. These projects use it: ${projectTitles} \n  Please remove the tech from the projects and try again.`
+        }); 
     }
     try {
         await prisma.tech.delete({ where: { id } });

@@ -62,7 +62,7 @@ const addLink = async (req, res) => {
 //@desc Update link
 //@route PATCH /personal/links
 //@access Private
-const updateLink = async (req, res) => {
+const updateLink = async (req, res, next) => {
     console.log('req.body:', req.body);
 
      const { id, name, url, logo, personal } = req.body;
@@ -82,7 +82,7 @@ const updateLink = async (req, res) => {
                 personal: { connect: { id: personal } },
             } 
         });
-        res.status({ message: "Link updated", link: updatedLink });
+        res.json({ message: "Link updated", link: updatedLink });
     } catch (err) {
         if (err.code === 'P2002') {
             logEvents(`Duplicate field error: ${err.meta?.target}`, 'dbError.log');
@@ -92,6 +92,7 @@ const updateLink = async (req, res) => {
             logEvents(`Record not found - ${req.method} ${req.originalUrl} - Target ID: ${id}`,'dbError.log');
             return res.status(404).json({ message: `Link with id ${id} not found` });
         }
+        next(err);
     }
 };
 

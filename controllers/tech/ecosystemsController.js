@@ -96,14 +96,19 @@ const deleteEcosystem = async (req, res) => {
     }
 
     const projectsUsingEcosystem = await prisma.project.findMany({
-        where: { ecoId: id },
+        where: {
+            ecosystem: {
+                some: { id: id }
+            }
+        },
         select: { title: true }
     });
+
     if (projectsUsingEcosystem.length > 0) {
-            const projectTitles = projectsUsingEcosystem.map(p => p.title).join('\n');
-            return res.status(400).json({
-                message: `Cannot delete ecosystem. These projects use it: ${projectTitles} \n  Please remove the ecosystem from the projects and try again.`
-            });
+        const projectTitles = projectsUsingEcosystem.map(p => p.title).join('\n');
+        return res.status(400).json({
+            message: `Cannot delete ecosystem. These projects use it:\n${projectTitles}\nPlease remove the ecosystem from these projects and try again.`
+        });
     }
 
     const techUsingEcosystem = await prisma.tech.findMany({
