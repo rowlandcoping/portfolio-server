@@ -2,7 +2,6 @@ import 'dotenv/config';
 import express from 'express';
 import prisma from './config/db.js';
 import path from 'path';
-import { fileURLToPath } from 'url';
 
 import { logger } from './middleware/logger.js';
 import errorHandler from './middleware/errorHandler.js';
@@ -11,41 +10,48 @@ import cors from 'cors';
 import corsOptions from './config/corsOptions.js';
 import sessionMiddleware from './middleware/session.js';
 
-import rootRoutes from './routes/root.js';
-import authRoutes from './routes/authRoutes.js';
-import userRoutes from './routes/userRoutes.js';
-import projectRoutes from './routes/projectRoutes.js';
-import techRoutes from './routes/techRoutes.js';
-import personalRoutes from './routes/personalRoutes.js';
+import rootRoutes from './routes/admin/root.js';
+import dashRoutes from './routes/admin/dashRoutes.js';
+import authRoutes from './routes/api/authRoutes.js';
+import userRoutes from './routes/api/userRoutes.js';
+import projectRoutes from './routes/api/projectRoutes.js';
+import techRoutes from './routes/api/techRoutes.js';
+import personalRoutes from './routes/api/personalRoutes.js';
+import userAdminRoutes from './routes/admin/userAdminRoutes.js'
 
 const app = express();
-app.use(sessionMiddleware);
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 const PORT = process.env.PORT || 3500;
 
-//MIDDLEWARE
+//MIDDLEWARE FOR REQUESTS
 app.use(logger);
 app.use(cors(corsOptions));
+app.use(express.static(path.join(process.cwd(), 'public')));
+
 app.use(express.json());
 app.use(cookieParser());
+app.use(sessionMiddleware);
 
-app.use(express.static('public'));
-app.use('/', rootRoutes);
+//Static routes
 
-app.use('/auth', authRoutes)
+
+//API routes
+app.use('/auth', authRoutes);
 app.use('/users', userRoutes);
 app.use('/projects', projectRoutes);
 app.use('/tech', techRoutes);
 app.use('/personal', personalRoutes);
 
+//Admin UI routes
+app.use('/', rootRoutes);
+app.use('/login', rootRoutes);
+app.use('/dashboard', dashRoutes);
+app.use('/dashboard/user', userAdminRoutes);
 
+//404 route
 app.all(/.*/, (req, res) => {
     res.status(404)
     if (req.accepts('html')) {
-        res.sendFile(path.join(__dirname, 'views', '404.html'))
+        res.sendFile(path.join(process.cwd(), 'views', 'root', '404.html'))
     } else if (req.accepts('json')) {
         res.json({message: '404 Not Found'})
     } else {

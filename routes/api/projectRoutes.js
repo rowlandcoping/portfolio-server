@@ -1,7 +1,7 @@
 import express from 'express';
-import projectsController from '../controllers/project/projectsController.js';
-import projectTypesController from '../controllers/project/projectTypesController.js';
-import requireSession from '../middleware/requireSession.js';
+import projectsController from '../../controllers/project/projectsController.js';
+import projectTypesController from '../../controllers/project/projectTypesController.js';
+import requireSession from '../../middleware/requireSession.js';
 
 const router = express.Router();
 

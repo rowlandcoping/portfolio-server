@@ -1,9 +1,9 @@
 import express from 'express';
-import techController from '../controllers/tech/techController.js';
-import ecosystemsController from '../controllers/tech/ecosystemsController.js';
-import techTypesController from '../controllers/tech/techTypesController.js';
-import ecoTypesController from '../controllers/tech/ecoTypesController.js';
-import requireSession from '../middleware/requireSession.js';
+import techController from '../../controllers/tech/techController.js';
+import ecosystemsController from '../../controllers/tech/ecosystemsController.js';
+import techTypesController from '../../controllers/tech/techTypesController.js';
+import ecoTypesController from '../../controllers/tech/ecoTypesController.js';
+import requireSession from '../../middleware/requireSession.js';
 
 const router = express.Router();
 

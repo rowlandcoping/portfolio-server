@@ -1,7 +1,7 @@
 import express from 'express';
-import usersController from '../controllers/user/usersController.js';
-import rolesController from '../controllers/user/rolesController.js';
-import requireSession from '../middleware/requireSession.js';
+import usersController from '../../controllers/user/usersController.js';
+import rolesController from '../../controllers/user/rolesController.js';
+import requireSession from '../../middleware/requireSession.js';
 
 const router = express.Router();
 

@@ -1,23 +1,20 @@
 import session from 'express-session';
-import FileStoreFactory from 'session-file-store';
+import pgSession from 'connect-pg-simple';
+import pg from 'pg';
 
-const FileStore = FileStoreFactory(session);
+const PgStore = pgSession(session);
+const pgPool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
 
 const sessionMiddleware = session({
-    store: new FileStore({
-        path: './sessions',
-        ttl: 1000 * 60 * 60 * 2,// session expires after 30 mins
-        reapInterval: 600, // expired session cleanup every 10 mins
+    store: new PgStore({
+        pool: pgPool,
+        createTableIfMissing: true,  // <-- This tells pg-simple to auto-create the table
+        tableName: 'session',        // optional, default is 'session'
     }),
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    cookie: {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        maxAge: 1000 * 60 * 60 * 2,
-        sameSite: 'strict'
-    }
-})
+    cookie: { maxAge: 2 * 60 * 60 * 1000 }, // 2 hours
+});
 
-export default sessionMiddleware;
+export default sessionMiddleware

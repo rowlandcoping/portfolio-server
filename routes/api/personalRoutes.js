@@ -1,9 +1,9 @@
 import express from 'express';
-import personalController from '../controllers/personal/personalController.js';
-import linksController from '../controllers/personal/linksController.js';
-import skillsController from '../controllers/personal/skillsController.js';
-import contactsController from '../controllers/personal/contactsController.js';
-import requireSession from '../middleware/requireSession.js';
+import personalController from '../../controllers/personal/personalController.js';
+import linksController from '../../controllers/personal/linksController.js';
+import skillsController from '../../controllers/personal/skillsController.js';
+import contactsController from '../../controllers/personal/contactsController.js';
+import requireSession from '../../middleware/requireSession.js';
 
 const router = express.Router();
 

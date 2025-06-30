@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log In to RowlandNet</title>
+    <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+    <main class="centered">
+        <h1>Master, we have been expecting you</h1>
+        <form class="admin-form" id="loginForm" method="POST">
+            <div class="input-container">
+                <label class="admin-label" for="email">e-mail</label>
+                <input
+                    class="admin-input"
+                    id="email"
+                    name="email"
+                    type="text"
+                    required
+                />
+            </div>
+            <div class="input-container">
+                <label class="admin-label" for="password">password</label>
+                <input
+                    class="admin-imput"
+                    id="password"
+                    name="password"
+                    type="password"
+                    required
+                />
+            </div>
+            <button class="admin-button" type="submit">Log In</button>
+        </form>
+        <small><a href="#">forgotten password?</a></small>
+        <p id="errorMessage" style="color: red; display: none;"></p>
+    </main>
+    <script type="module" src="/js/auth.js"></script>    
+</body>
+</html>
