@@ -9,14 +9,17 @@ import errorHandler from './middleware/errorHandler.js';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import corsOptions from './config/corsOptions.js';
+import sessionMiddleware from './middleware/session.js';
 
 import rootRoutes from './routes/root.js';
+import authRoutes from './routes/authRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import projectRoutes from './routes/projectRoutes.js';
 import techRoutes from './routes/techRoutes.js';
 import personalRoutes from './routes/personalRoutes.js';
 
 const app = express();
+app.use(sessionMiddleware);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -29,12 +32,10 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(cookieParser());
 
-
-
-
 app.use(express.static('public'));
 app.use('/', rootRoutes);
 
+app.use('/auth', authRoutes)
 app.use('/users', userRoutes);
 app.use('/projects', projectRoutes);
 app.use('/tech', techRoutes);

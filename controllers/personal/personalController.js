@@ -66,7 +66,7 @@ const addPersonal = async (req, res, next) => {
 //@desc Update personal profile
 //@route PATCH /personal
 //@access Private
-const updatePersonal = async (req, res) => { 
+const updatePersonal = async (req, res, next) => { 
     const { id, description } = req.body;
 
     if (!id || !description) {
@@ -86,13 +86,14 @@ const updatePersonal = async (req, res) => {
             logEvents(`Record not found - ${req.method} ${req.originalUrl} - Target ID: ${id}`,'dbError.log');
             return res.status(404).json({ message: `Personal profile with id ${id} not found` });
         }
+        next(err);
     }
 }
 
 //@desc Delete a personal profile
 //@route DELETE /personal
 //@access Private
-const deletePersonal = async (req, res) => { 
+const deletePersonal = async (req, res, next) => { 
     const { id } = req.body;
 
     if(!id) {
@@ -107,6 +108,7 @@ const deletePersonal = async (req, res) => {
             logEvents(`Record not found - ${req.method} ${req.originalUrl} - Target ID: ${id}`,'dbError.log');
             return res.status(404).json({ message: `Personal Profile with id ${id} not found` });
         }
+        next(err);
     }
 }
 

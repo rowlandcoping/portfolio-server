@@ -1,16 +1,20 @@
 import express from 'express';
 import projectsController from '../controllers/project/projectsController.js';
 import projectTypesController from '../controllers/project/projectTypesController.js';
+import requireSession from '../middleware/requireSession.js';
 
 const router = express.Router();
 
+router.get('/', projectsController.getAllProjects)
+router.get('types', projectTypesController.getAllTypes)
+
+router.use(requireSession)
+
 router.route('/')
-    .get(projectsController.getAllProjects)
     .post(projectsController.addProject)
     .patch(projectsController.updateProject)
     .delete(projectsController.deleteProject)
 router.route('/types')
-    .get(projectTypesController.getAllTypes)
     .post(projectTypesController.addType)
     .patch(projectTypesController.updateType)
     .delete(projectTypesController.deleteType)

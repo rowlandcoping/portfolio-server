@@ -3,27 +3,31 @@ import personalController from '../controllers/personal/personalController.js';
 import linksController from '../controllers/personal/linksController.js';
 import skillsController from '../controllers/personal/skillsController.js';
 import contactsController from '../controllers/personal/contactsController.js';
+import requireSession from '../middleware/requireSession.js';
 
 const router = express.Router();
 
+router.get('/', personalController.getAllPersonal)
+router.get('/links', linksController.getAllLinks)
+router.get('/skills', skillsController.getAllSkills)
+router.post('./contacts', contactsController.addContact)
+
+router.use(requireSession);
+
 router.route('/')
-    .get(personalController.getAllPersonal)
     .post(personalController.addPersonal)
     .patch(personalController.updatePersonal)
     .delete(personalController.deletePersonal)
-router.route('/links')
-    .get(linksController.getAllLinks)
+router.route('/links')    
     .post(linksController.addLink)
     .patch(linksController.updateLink)
     .delete(linksController.deleteLink)
 router.route('/skills')
-    .get(skillsController.getAllSkills)
-    .post(skillsController.addSkill)
-    .patch(skillsController.updateSkill)
-    .delete(skillsController.deleteSkill)
+    .post(requireSession, skillsController.addSkill)
+    .patch(requireSession, skillsController.updateSkill)
+    .delete(requireSession, skillsController.deleteSkill)
 router.route('/contacts')
     .get(contactsController.getAllContacts)
-    .post(contactsController.addContact)
     .delete(contactsController.deleteContact)
 router.route('/:id')
     .get(personalController.getPersonalByUserId)

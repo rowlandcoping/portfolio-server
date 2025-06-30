@@ -32,7 +32,7 @@ const getTechById = async (req, res) => {
 //@desc Create new tech type
 //@route POST /tech/tech
 //@access Private
-const addTech = async (req, res) => {
+const addTech = async (req, res, next) => {
     const { name, ecosystem, type } = req.body;
     //NB validate before making db query
     if (!name || !ecosystem || !type) {
@@ -52,13 +52,14 @@ const addTech = async (req, res) => {
             logEvents(`Duplicate field error: ${err.meta?.target}`, 'dbError.log');
             return res.status(409).json({ message: 'Type of tech already exists' });
         }
+        next(err);
     }
 };
 
 //@desc Update a tech type
 //@route PATCH /tech/tech
 //@access Private
-const updateTech = async (req, res) => { 
+const updateTech = async (req, res, next) => { 
     const { id, name, ecosystem, type } = req.body;
 
     if (!id || !name || !ecosystem || !type ) {
@@ -83,13 +84,14 @@ const updateTech = async (req, res) => {
             logEvents(`Duplicate field error: ${err.meta?.target}`, 'dbError.log');
             return res.status(409).json({ message: "Tech already exists" });
         }
+        next(err);
     }
 }
 
 //@desc Delete a tech type
 //@route DELETE /tech/tech
 //@access Private
-const deleteTech = async (req, res) => { 
+const deleteTech = async (req, res, next) => { 
     const { id } = req.body;
 
     if(!id) {
@@ -118,6 +120,7 @@ const deleteTech = async (req, res) => {
             logEvents(`Record not found - ${req.method} ${req.originalUrl} - Target ID: ${id}`,'dbError.log');
             return res.status(404).json({ message: `Tech with id ${id} not found` });
         }
+        next(err);
     }
 }
 

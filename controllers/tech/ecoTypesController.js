@@ -32,7 +32,7 @@ const getEcoTypeById = async (req, res) => {
 //@desc Create new ecosystem type
 //@route POST /tech/ecotypes
 //@access Private
-const addEcoType = async (req, res) => {
+const addEcoType = async (req, res, next) => {
     const { name } = req.body;
     //NB validate before making db query
     if (!name) {
@@ -50,13 +50,14 @@ const addEcoType = async (req, res) => {
             logEvents(`Duplicate field error: ${err.meta?.target}`, 'dbError.log');
             return res.status(409).json({ message: 'Type of ecosystem already exists' });
         }
+        next(err);
     }
 };
 
 //@desc Update an ecosystem type
 //@route PATCH /tech/ecotypes
 //@access Private
-const updateEcoType = async (req, res) => { 
+const updateEcoType = async (req, res, next) => { 
     const { id, name } = req.body;
 
     if (!id || !name) {
@@ -80,13 +81,14 @@ const updateEcoType = async (req, res) => {
             logEvents(`Duplicate field error: ${err.meta?.target}`, 'dbError.log');
             return res.status(409).json({ message: "Ecosystem type already exists" });
         }
+        next(err);
     }
 }
 
 //@desc Delete an ecosystem type
 //@route DELETE /tech/ecotypes
 //@access Private
-const deleteEcoType = async (req, res) => { 
+const deleteEcoType = async (req, res, next) => { 
     const { id } = req.body;
 
     if(!id) {
@@ -113,6 +115,7 @@ const deleteEcoType = async (req, res) => {
             logEvents(`Record not found - ${req.method} ${req.originalUrl} - Target ID: ${id}`,'dbError.log');
             return res.status(404).json({ message: `Tech with id ${id} not found` });
         }
+        next(err);
     }
 }
 

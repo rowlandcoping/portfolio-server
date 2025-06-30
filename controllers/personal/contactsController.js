@@ -10,7 +10,6 @@ import { logEvents } from '../../middleware/logger.js';
 const getAllContacts =async (req, res) => {
     const contacts = await prisma.contact.findMany();
     if (!contacts.length) {
-        //NB any errors not handled here will be handled by our error handline middleware
         return res.status(400).json({message: 'No messages found'})
     }
     res.json(contacts);
@@ -67,7 +66,7 @@ const addContact = async (req, res, next) => {
 //@desc Delete a contact
 //@route DELETE /personal/contacts
 //@access Private
-const deleteContact = async (req, res) => {
+const deleteContact = async (req, res, next) => {
   const { id } = req.body;
   if (!id) return res.status(400).json({ message: 'Contact ID required' });
   try {
@@ -78,6 +77,7 @@ const deleteContact = async (req, res) => {
         logEvents(`Record not found - ${req.method} ${req.originalUrl} - Target ID: ${id}`,'dbError.log');
         return res.status(404).json({ message: `Contact with id ${id} not found` });
     }
+    next(err);
   }
 };
 

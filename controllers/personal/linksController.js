@@ -32,7 +32,7 @@ const getLinkById = async (req, res) => {
 //@desc Create new link
 //@route POST /links
 //@access Private
-const addLink = async (req, res) => {
+const addLink = async (req, res, next) => {
 
     const { name, url, logo, personal } = req.body;
     
@@ -55,7 +55,8 @@ const addLink = async (req, res) => {
         if (err.code === 'P2002') {
             logEvents(`Duplicate field error: ${err.meta?.target}`, 'dbError.log');
             return res.status(409).json({ message: 'Link already exists' });
-        }        
+        }
+        next(err);       
     }
 };
 
@@ -99,7 +100,7 @@ const updateLink = async (req, res, next) => {
 //@desc Delete a link
 //@route DELETE /personal/links 
 //@access Private
-const deleteLink = async (req, res) => {
+const deleteLink = async (req, res, next) => {
   const { id } = req.body;
   if (!id) return res.status(400).json({ message: 'Link ID required' });
   try {
@@ -110,6 +111,7 @@ const deleteLink = async (req, res) => {
         logEvents(`Record not found - ${req.method} ${req.originalUrl} - Target ID: ${id}`,'dbError.log');
         return res.status(404).json({ message: `Link with id ${id} not found` });
     }
+    next(err)
   }
 };
 

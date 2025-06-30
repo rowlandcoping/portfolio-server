@@ -32,7 +32,7 @@ const getRoleById = async (req, res) => {
 //@desc Create new role
 //@route POST /users/roles
 //@access Private
-const addRole = async (req, res) => {
+const addRole = async (req, res, next) => {
     const { name } = req.body;
     //NB validate before making db query
     if (!name) {
@@ -50,13 +50,14 @@ const addRole = async (req, res) => {
             logEvents(`Duplicate field error: ${err.meta?.target}`, 'dbError.log');
             return res.status(409).json({ message: 'Role already exists' });
         }
+        next(err);
     }
 };
 
 //@desc Update a role
 //@route PATCH /roles
 //@access Private
-const updateRole = async (req, res) => { 
+const updateRole = async (req, res, next) => { 
     const { id, name } = req.body;
 
     if (!id || !name) {
@@ -80,6 +81,7 @@ const updateRole = async (req, res) => {
             logEvents(`Duplicate field error: ${err.meta?.target}`, 'dbError.log');
             return res.status(409).json({ message: "Role already exists" });
         }
+        next(err);
     }
 }
 

@@ -31,7 +31,7 @@ const getSkillById = async (req, res) => {
 //@desc Create new skill
 //@route POST /skills
 //@access Private
-const addSkill = async (req, res) => {
+const addSkill = async (req, res, next) => {
     console.log('req.body:', req.body);
 
     const { ecosystem, tech, competency, personal } = req.body;
@@ -57,7 +57,8 @@ const addSkill = async (req, res) => {
         if (err.code === 'P2002' && Array.isArray(err.meta?.target) && err.meta.target.includes('techId') && err.meta.target.includes('personId')) {
             logEvents(`Duplicate field error: ${err.meta?.target}`, 'dbError.log');
             return res.status(409).json({ message: 'Skill already exists for this person and tech combination.' });
-        }       
+        }
+        next(err);
     }
 };
 
@@ -100,7 +101,7 @@ const updateSkill = async (req, res, next) => {
 //@desc Delete a skill
 //@route DELETE /personal/skills
 //@access Private
-const deleteSkill = async (req, res) => {
+const deleteSkill = async (req, res, next) => {
   const { id } = req.body;
   if (!id) return res.status(400).json({ message: 'Skill ID required' });
   try {
@@ -111,6 +112,7 @@ const deleteSkill = async (req, res) => {
         logEvents(`Record not found - ${req.method} ${req.originalUrl} - Target ID: ${id}`,'dbError.log');
         return res.status(404).json({ message: `Skill with id ${id} not found` });
     }
+    next(err);
   }
 };
 

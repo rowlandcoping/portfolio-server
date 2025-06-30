@@ -32,7 +32,7 @@ const getProjectTypeById = async (req, res) => {
 //@desc Create new project type
 //@route POST /projects/types
 //@access Private
-const addType = async (req, res) => {
+const addType = async (req, res, next) => {
     const { name } = req.body;
     //NB validate before making db query
     if (!name) {
@@ -50,13 +50,14 @@ const addType = async (req, res) => {
             logEvents(`Duplicate field error: ${err.meta?.target}`, 'dbError.log');
             return res.status(409).json({ message: 'Project Type already exists' });
         }
+        next(err);
     }
 };
 
 //@desc Update a project type
 //@route PATCH /projects/types
 //@access Private
-const updateType = async (req, res) => { 
+const updateType = async (req, res, next) => { 
     const { id, name } = req.body;
 
     if (!id || !name) {
@@ -80,13 +81,14 @@ const updateType = async (req, res) => {
             logEvents(`Duplicate field error: ${err.meta?.target}`, 'dbError.log');
             return res.status(409).json({ message: "Project Type already exists" });
         }
+        next(err);
     }
 }
 
 //@desc Delete a project type
 //@route DELETE /projects/types
 //@access Private
-const deleteType = async (req, res) => { 
+const deleteType = async (req, res, next) => { 
     const { id } = req.body;
 
     if(!id) {
@@ -113,6 +115,7 @@ const deleteType = async (req, res) => {
             logEvents(`Record not found - ${req.method} ${req.originalUrl} - Target ID: ${id}`,'dbError.log');
             return res.status(404).json({ message: `Tech with id ${id} not found` });
         }
+        next(err);
     }
 }
 

@@ -133,7 +133,7 @@ const updateProject = async (req, res, next) => {
 //@desc Delete a project
 //@route DELETE /projects
 //@access Private
-const deleteProject = async (req, res) => {
+const deleteProject = async (req, res, next) => {
   const { id } = req.body;
 
   if (!id) return res.status(400).json({ message: 'Project ID required' });
@@ -146,6 +146,7 @@ const deleteProject = async (req, res) => {
         logEvents(`Record not found - ${req.method} ${req.originalUrl} - Target ID: ${id}`,'dbError.log');
         return res.status(404).json({ message: `Project with id ${id} not found` });
     }
+    next(err);
   }
 };
 

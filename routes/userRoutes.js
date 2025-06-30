@@ -1,7 +1,11 @@
 import express from 'express';
-import usersController from '../controllers/user/usersController.js'
-import rolesController from '../controllers/user/rolesController.js'
+import usersController from '../controllers/user/usersController.js';
+import rolesController from '../controllers/user/rolesController.js';
+import requireSession from '../middleware/requireSession.js';
+
 const router = express.Router();
+
+router.use(requireSession);
 
 router.route('/')
     .get(usersController.getAllUsers)
@@ -18,6 +22,5 @@ router.route('/:id')
     .get(usersController.getUserById)
 router.route('/roles/:id')
     .get(rolesController.getRoleById)
-
 
 export default router

@@ -37,7 +37,7 @@ const getUserById = async (req, res) => {
 //@desc Create new user
 //@route POST /users
 //@access Private
-const addUser = async (req, res) => {
+const addUser = async (req, res, next) => {
 
     const { name, email, password, roles } = req.body;
 
@@ -66,13 +66,14 @@ const addUser = async (req, res) => {
             logEvents(`Duplicate field error: ${err.meta?.target}`, 'dbError.log');
             return res.status(409).json({ message: "e-mail address in use" });
         }
+        next(err);
     }
 };
 
 //@desc Update a user
 //@route PATCH /users 
 //@access Private
-const updateUser = async (req, res) => { 
+const updateUser = async (req, res, next) => { 
     const { id, email, name, roles } = req.body;
     //confirm data
     if (!id || !email || !name || !Array.isArray(roles) || !roles.length) {
@@ -110,10 +111,11 @@ const updateUser = async (req, res) => {
             logEvents(`Duplicate field error: ${err.meta?.target}`, 'dbError.log');
             return res.status(409).json({ message: "e-mail address in use" });
         }
+        next(err);
     }
 }
 
-const deleteUser = async (req, res) => { 
+const deleteUser = async (req, res, next) => { 
     const { id } = req.body;
 
     if(!id) {
@@ -141,6 +143,7 @@ const deleteUser = async (req, res) => {
         if (err.code === 'P2025') { // Record to update not found
             return res.status(404).json({ message: `User with id ${id} not found` });
         }
+        next(err);
     }
 }
 
