@@ -8,10 +8,11 @@ if (message) {
     showMessage('success', message)
     sessionStorage.removeItem('flash');
 }
+const apiUrl = '/users';
 
 try {
     const result = await fetchWithRedirect({
-        url: '/users/roles'
+        url: apiUrl
     });
     const adminSelect = document.getElementById('adminSelect');
     adminSelect.innerHTML = ''; // clear previous content
@@ -19,19 +20,14 @@ try {
     //creating a fragment stores up all the appends to be added at the end
     const fragment = document.createDocumentFragment();
     //for... of loop is marginally quicker and supprts break/continue
-    for (const role of result) {
+    for (const item of result) {
         fragment.appendChild(createListLink({
-            listItem: role    
+            listItem: item,
+            showDelete: true,
+            deleteUrl: apiUrl
         }));
     }
     adminSelect.appendChild(fragment);
-    /*
-    result.forEach(role => adminSelect.appendChild(createListLink({
-        url: "/dashboard/user/role/edit/",
-        innerHTML: "&rarr;&nbsp;&nbsp;",
-        listItem: role    
-    })));
-    */
 } catch (err) {
     showMessage('error', err.message, false);
 }

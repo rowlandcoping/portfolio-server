@@ -1,11 +1,57 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit User (this guy)</title>
-</head>
-<body>
-    
-</body>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Edit User</title>
+        <link rel="stylesheet" href="/css/style.css" />
+    </head>
+    <body>
+        <main class="center-top">
+            <h1> Edit User</h1>
+            <p id="showMessage"></p>
+            <form class="admin-form" id="editUserForm" method="POST">
+                <div class="admin-form-container">
+                    <div class="input-container">
+                        <label class="admin-label" for="name">Full Name</label>
+                        <input
+                            class="admin-input"
+                            id="name"
+                            name="name"
+                            type="text"
+                            autocomplete="false"
+                            required
+                        />
+                    </div>
+                    <div class="input-container">
+                        <label class="admin-label" for="email">e-mail</label>
+                        <input
+                            class="admin-input"
+                            id="email"
+                            name="email"
+                            type="email"
+                            required
+                        />
+                    </div>
+                    <div class="input-container">
+                        <label class="admin-label" for="roles">roles</label>
+                        <div id="roleButtonsContainer">
+
+                        </div>
+
+                        <input
+                            id="roles"
+                            name="roles"
+                            type="hidden"
+                            value=""
+                            required
+                        />
+                    </div>
+                    <button class="admin-button" type="submit">Edit User</button>                
+                </div>
+            </form>
+            <small><a href="/dashboard/user/edit/">Back to Users List</a></small>
+        </main>
+        <script type="module" src="/js/user/editUserForm.js"></script>    
+    </body>
 </html>

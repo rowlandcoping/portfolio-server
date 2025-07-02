@@ -10,7 +10,15 @@ import bcrypt from 'bcrypt';
 //@access Private
 const getAllUsers =async (req, res) => {
 
-    const users = await prisma.user.findMany();
+    const users = await prisma.user.findMany({
+        //have to explicitly include many-many fields
+        include: {
+            roles: true,  // include all roles related to each user
+        },
+        orderBy: {
+            id: 'asc'  // or 'desc' for descending
+        }
+    });
 
     if (!users.length) {
         //NB any errors not handled here will be handled by our error handline middleware
@@ -28,7 +36,10 @@ const getUserById = async (req, res) => {
     const { id } = req.params;
     if (!id) return res.status(400).json({ message: 'User ID required' });
 
-    const user = await prisma.user.findUnique({ where: { id: Number(id) } });
+    const user = await prisma.user.findUnique({ 
+        where: { id: Number(id) },
+        include: { roles: true }
+    });
     if (!user) return res.status(404).json({ message: 'No user found' });
 
     res.json(user);
@@ -82,7 +93,7 @@ const updateUser = async (req, res, next) => {
     try {
         const updatedUser = await prisma.user.update({
             
-            where: { id },
+            where: { id: Number(id) },
             data: {
                 email,
                 name,

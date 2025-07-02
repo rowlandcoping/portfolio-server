@@ -15,14 +15,14 @@ try {
     });
     const fragment = document.createDocumentFragment();
     //for... of loop is marginally quicker and supprts break/continue
-    for (const role of result) {        
+    for (const option of result) {        
             const button = document.createElement('button');
             button.type = 'button';
-            button.textContent = role.name;
-            button.id = role.id
+            button.textContent = option.name;
+            button.id = option.id;
             button.className = 'deselected';
             button.addEventListener('click', (event) => {
-                categoryClicked(role.id);
+                categoryClicked(option.id);
             });
             fragment.appendChild(button);
     }

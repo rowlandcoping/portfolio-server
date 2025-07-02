@@ -1,67 +1,67 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add User</title>
-    <link rel="stylesheet" href="/css/style.css" />
-</head>
-<body>
-    <main class="center-top">
-        <h1> Add a New User</h1>
-        <p id="showMessage"></p>
-        <form class="admin-form" id="userForm" method="POST">
-            <div class="admin-form-container">
-                <div class="input-container">
-                    <label class="admin-label" for="name">Full Name</label>
-                    <input
-                        class="admin-input"
-                        id="name"
-                        name="name"
-                        type="text"
-                        autocomplete="false"
-                        required
-                    />
-                </div>
-                <div class="input-container">
-                    <label class="admin-label" for="email">e-mail</label>
-                    <input
-                        class="admin-input"
-                        id="email"
-                        name="email"
-                        type="email"
-                        required
-                    />
-                </div>
-                <div class="input-container">
-                    <label class="admin-label" for="password">password</label>
-                    <input
-                        class="admin-input"
-                        id="password"
-                        name="password"
-                        type="password"
-                        required
-                    />
-                </div>
-                <div class="input-container">
-                    <label class="admin-label" for="roles">roles</label>
-                    <div id="roleButtonsContainer">
-
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Add User</title>
+        <link rel="stylesheet" href="/css/style.css" />
+    </head>
+    <body>
+        <main class="center-top">
+            <h1> Add a New User</h1>
+            <p id="showMessage"></p>
+            <form class="admin-form" id="userForm" method="POST">
+                <div class="admin-form-container">
+                    <div class="input-container">
+                        <label class="admin-label" for="name">Full Name</label>
+                        <input
+                            class="admin-input"
+                            id="name"
+                            name="name"
+                            type="text"
+                            autocomplete="false"
+                            required
+                        />
                     </div>
+                    <div class="input-container">
+                        <label class="admin-label" for="email">e-mail</label>
+                        <input
+                            class="admin-input"
+                            id="email"
+                            name="email"
+                            type="email"
+                            required
+                        />
+                    </div>
+                    <div class="input-container">
+                        <label class="admin-label" for="password">password</label>
+                        <input
+                            class="admin-input"
+                            id="password"
+                            name="password"
+                            type="password"
+                            required
+                        />
+                    </div>
+                    <div class="input-container">
+                        <label class="admin-label" for="roles">roles</label>
+                        <div id="roleButtonsContainer">
 
-                    <input
-                        id="roles"
-                        name="roles"
-                        type="hidden"
-                        value=""
-                        required
-                    />
+                        </div>
+
+                        <input
+                            id="roles"
+                            name="roles"
+                            type="hidden"
+                            value=""
+                            required
+                        />
+                    </div>
+                    <button class="admin-button" type="submit">Add User</button>                
                 </div>
-                <button class="admin-button" type="submit">Add User</button>                
-            </div>
-        </form>
-        <small><a href="/dashboard">Back to Dashboard</a></small>
-    </main>
-    <script type="module" src="/js/user/addUser.js"></script>    
-</body>
+            </form>
+            <small><a href="/dashboard">Back to Dashboard</a></small>
+        </main>
+        <script type="module" src="/js/user/addUser.js"></script>    
+    </body>
 </html>
