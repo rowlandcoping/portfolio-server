@@ -16,12 +16,40 @@ a:hover {
     text-decoration: underline;
 }
 
+button.unstyled-button {
+  all: unset;
+  cursor: pointer;
+  display: inline;
+  font: inherit;
+  color: inherit;
+}
+
 .hidden {
     display: none;
+}
+.block {
+    display: block;
+}
+.flex {
+    display: flex;
 }
 
 .pointer {
     cursor: pointer;
+}
+
+#showMessage {
+    margin:0 0 20px 0;
+    padding:0;
+    display:none;
+}
+
+.error {
+    color: red;
+}
+
+.success {
+    color: white;
 }
 
 .centered {
@@ -44,7 +72,101 @@ a:hover {
     padding-left: 50px;
 }
 
-.admin-options-group {
+.admin-options-group, #adminSelect {
     line-height: 0;
     margin-bottom:35px;
+}
+
+.admin-icon:hover {
+  color: white;
+  text-decoration: underline;
+}
+
+
+/*form styling*/
+form {
+    width:100%;
+}
+
+.admin-form-container {
+    display:flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.input-container {
+    display:flex;
+    width: 40%;
+    justify-content: space-evenly;
+    align-items: center;
+    margin-bottom: 10px;
+    text-align: left;
+}
+
+
+.admin-label {
+    width: 30%;
+}
+.roles-container, #roleButtonsContainer {
+    width: 60%;
+}
+.admin-input {
+    background-color:rgb(1, 27, 4);
+    border: 1px solid rgb(0, 73, 9);
+    color:rgb(89, 255, 47);
+    width:60%;
+    padding: 5px;
+}
+
+.admin-input:focus {
+    outline:rgb(89, 255, 47) 1px solid;
+}
+
+.admin-button {
+    font-size: 1.5em;
+    color:rgb(89, 255, 47);
+    border: rgb(0, 73, 9) 2px solid;
+    background-color:rgb(1, 27, 4); 
+    padding: 10px 20px;
+    margin: 15px 0 25px 0;
+    font-family: valorax;
+    cursor: pointer;
+}
+
+.admin-button:hover {
+    color:rgb(1, 27, 4);
+    border: rgb(0, 73, 9) 2px solid;
+    background-color:rgb(89, 255, 47);
+}
+
+
+
+/*SELECTOR BUTTONS*/
+#roleButtonsContainer {
+    display:flex;
+    flex-wrap: wrap;
+    justify-content:center;
+    padding: 0 5px;
+}
+
+#roleButtonsContainer button {
+    width:100px;
+    margin: 2px;
+}
+.deselected {
+    color:rgb(89, 255, 47);
+    border: rgb(0, 73, 9) 2px solid;
+    background-color:rgb(1, 27, 4); 
+    font-family: valorax;
+    cursor: pointer;
+}
+.deselected:hover, .selected:hover {
+    background-color: rgb(0, 73, 9);
+}
+
+.selected {
+    font-family: valorax;
+    color:rgb(1, 27, 4);
+    border: rgb(0, 73, 9) 2px solid;
+    background-color:rgb(89, 255, 47);
 }

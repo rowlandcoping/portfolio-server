@@ -9,32 +9,36 @@
 <body>
     <main class="centered">
         <h1>Master, we have been expecting you</h1>
+        <p id="showMessage"></p>
         <form class="admin-form" id="loginForm" method="POST">
-            <div class="input-container">
-                <label class="admin-label" for="email">e-mail</label>
-                <input
-                    class="admin-input"
-                    id="email"
-                    name="email"
-                    type="text"
-                    required
-                />
+            <div class="admin-form-container">
+                <div class="input-container">
+                    <label class="admin-label" for="email">e-mail</label>
+                    <input
+                        class="admin-input"
+                        id="email"
+                        name="email"
+                        type="text"
+                        autocomplete="false"
+                        required
+                    />
+                </div>
+                <div class="input-container">
+                    <label class="admin-label" for="password">password</label>
+                    <input
+                        class="admin-input"
+                        id="password"
+                        name="password"
+                        type="password"
+                        required
+                    />
+                </div>
+                <button class="admin-button" type="submit">Log In</button>
+                
             </div>
-            <div class="input-container">
-                <label class="admin-label" for="password">password</label>
-                <input
-                    class="admin-imput"
-                    id="password"
-                    name="password"
-                    type="password"
-                    required
-                />
-            </div>
-            <button class="admin-button" type="submit">Log In</button>
         </form>
         <small><a href="#">forgotten password?</a></small>
-        <p id="errorMessage" style="color: red; display: none;"></p>
     </main>
-    <script type="module" src="/js/auth.js"></script>    
+    <script type="module" src="/js/root/auth.js"></script>    
 </body>
 </html>

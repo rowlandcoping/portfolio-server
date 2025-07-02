@@ -4,8 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Role (this role)</title>
+    <link rel="stylesheet" href="/css/style.css" />
 </head>
 <body>
+    <main class="center-top">
+        <h1> Add a New Role</h1>
+        <form class="admin-form" id="editRoleForm" method="PATCH">
+            <div class="admin-form-container">
+                <div class="input-container">
+                    <label class="admin-label" for="name">Update Role</label>
+                    <input
+                        class="admin-input"
+                        id="name"
+                        name="name"
+                        type="text"
+                        autocomplete="false"
+                        required
+                    />
+                </div>
+                <button class="admin-button" type="submit">Edit Role</button>                
+            </div>
+        </form>
+        <small><a href="/dashboard/user/role/edit">Back to Role List</a></small>
+        <p id="errorMessage" style="color: red; display: none;"></p>
+    </main>
+    <script type="module" src="/js/user/editRoleForm.js"></script>
     
 </body>
 </html>

@@ -4,8 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add Role</title>
+    <link rel="stylesheet" href="/css/style.css" />
 </head>
 <body>
+    <main class="center-top">
+        <h1> Add a New Role</h1>
+        <p id="showMessage"></p>
+        <form class="admin-form" id="roleForm" method="POST">
+            <div class="admin-form-container">
+                <div class="input-container">
+                    <label class="admin-label" for="name">Name of Role</label>
+                    <input
+                        class="admin-input"
+                        id="name"
+                        name="name"
+                        type="text"
+                        autocomplete="false"
+                        required
+                    />
+                </div>
+                <button class="admin-button" type="submit">Add Role</button>                
+            </div>
+        </form>
+        <small><a href="/dashboard">Back to Dashboard</a></small>
+    </main>
+    <script type="module" src="/js/user/addRole.js"></script>
     
 </body>
 </html>

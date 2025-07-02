@@ -48,6 +48,13 @@ app.use('/dashboard', dashRoutes);
 app.use('/dashboard/user', userAdminRoutes);
 
 //404 route
+//test thing
+app.use((req, res, next) => {
+    console.log(`[${req.method}] ${req.originalUrl}`);
+    next();
+});
+
+
 app.all(/.*/, (req, res) => {
     res.status(404)
     if (req.accepts('html')) {

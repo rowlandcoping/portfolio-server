@@ -15,8 +15,6 @@ router.get('/edit', (req, res) => {
     res.sendFile(path.join(viewDir, 'user', 'edit-user.html'));
 });
 
-
-
 router.get(['/role', '/role.html'], (req, res) => {
     res.sendFile(path.join(viewDir, 'user', 'add-role.html'));
 });

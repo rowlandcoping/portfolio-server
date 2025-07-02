@@ -44,7 +44,7 @@ const addRole = async (req, res, next) => {
                 name: name.toLowerCase()
             }
         });
-        res.status(201).json(newRole);
+        res.status(201).json({ message: 'Role added successfully', role: newRole });
     } catch (err) {
         if (err.code === 'P2002') {
             logEvents(`Duplicate field error: ${err.meta?.target}`, 'dbError.log');
@@ -66,7 +66,7 @@ const updateRole = async (req, res, next) => {
 
     try {
         const updatedRole =await prisma.role.update({
-            where: { id },
+            where: { id: Number(id) },
             data: {
                 name: name.toLowerCase()
             }

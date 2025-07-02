@@ -9,11 +9,22 @@
 <body>
     <main class="center-top">
         <h1>Select a section to update</h1>
-
+        <p id="showMessage"></p>
         <div class="admin-sections">
             <div class="admin-section">
                 <div class="admin-section-title">
-                    <h2><span class="admin-icon pointer" id="user-options">&rrarr;</span>&nbsp&nbspUsers</h2>
+                    <h2>
+                        <button
+                            class="admin-icon unstyled-button"
+                            data-section="user"
+                            id="user-options"
+                            aria-expanded="false"
+                            aria-controls="userSection"
+                        >
+                            &rrarr;
+                        </button>
+                        &nbspUsers
+                    </h2>
                 </div>
                 <div class="admin-section-options hidden" id="userSection">
                     <div class="admin-options-group">
@@ -29,7 +40,18 @@
             
             <div class="admin-section">
                 <div class="admin-section-title">
-                    <h2><span class="admin-icon pointer" id="pers-options">&rrarr;</span>&nbsp&nbspPersonal Profile</h2>
+                    <h2>
+                        <button
+                            class="admin-icon unstyled-button"
+                            data-section="pers"
+                            id="pers-options"
+                            aria-expanded="false"
+                            aria-controls="userSection"
+                        >
+                            &rrarr;
+                        </button>
+                        &nbspPersonal Profile
+                    </h2>
                 </div>
                 <div class="admin-section-options hidden" id="persSection">
                     <div class="admin-options-group">
@@ -45,7 +67,7 @@
                         <h4><a href="#">&rarr;&nbsp&nbspEdit Links</a></h4>
                     </div>
                     <div class="admin-options-group">
-                        <h4><a href="#">&rarr;&nbsp&nbspView Contact</a></h4>
+                        <h4><a href="#">&rarr;&nbsp&nbspView Messages</a></h4>
                     </div>
 
                 </div>
@@ -53,7 +75,18 @@
 
             <div class="admin-section">
                 <div class="admin-section-title">
-                    <h2><span class="admin-icon pointer" id="proj-options">&rrarr;</span>&nbsp&nbspProjects</h2>
+                    <h2>
+                        <button
+                            class="admin-icon unstyled-button"
+                            data-section="proj"
+                            id="proj-options"
+                            aria-expanded="false"
+                            aria-controls="userSection"
+                        >
+                            &rrarr;
+                        </button>
+                        &nbspProjects
+                    </h2>
                 </div>
                 <div class="admin-section-options hidden" id="projSection">
                     <div class="admin-options-group">
@@ -68,7 +101,18 @@
             </div>
             <div class="admin-section">
                 <div class="admin-section-title">
-                    <h2><span class="admin-icon pointer" id="tech-options">&rrarr;</span>&nbsp&nbspTechnologies</h2>
+                    <h2>
+                        <button
+                            class="admin-icon unstyled-button"
+                            data-section="tech"
+                            id="tech-options"
+                            aria-expanded="false"
+                            aria-controls="userSection"
+                        >
+                            &rrarr;
+                        </button>
+                        &nbspTechnologies
+                    </h2>
                 </div>
                 <div class="admin-section-options hidden" id="techSection">
                     <div class="admin-options-group">
@@ -92,7 +136,9 @@
             </div>
         
         </div>
-    <script type="module" src="/js/dashboard.js"></script>  
+        <button class="admin-button" type="button" id="logout">Log Out</button>
+        <small><a href="#">change password</a></small>
+        <script type="module" src="/js/root/dashboard.js"></script>  
     </main>  
 </body>
 </html>

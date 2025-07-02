@@ -2,8 +2,8 @@ import { logEvents } from "./logger.js";
 
 const requireSession = (req, res, next) => {
     if (!req.session?.userId) {
-        logEvents('Logout Unsuccessful','errLog.log');
-        return res.status(401).json({ message: "Unauthorized" });
+        logEvents('Unauthorized access attempt','errLog.log');
+        return res.status(401).redirect('/login');
     }
     next();
 }
