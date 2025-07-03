@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import prisma from '../../config/db.js';
 import { logEvents } from '../../middleware/logger.js';
 
@@ -16,15 +18,16 @@ const getAllLinks =async (req, res) => {
     res.json(links);
 }
 
-//@desc Get a link by the user's session id
-//@route GET /personal//userlinks
+//@desc Get links by the user's session id
+//@route POST /personal/profilelinks
 //@access Private
-const getLinksBySessionId = async (req, res) => {
-    const id = req.session?.userId;
-    if (!id) return res.status(401).json({ message: 'User not authorized' });
+const getLinksByProfileId = async (req, res) => {
+    console.log(req.body)
+    const { id } = req.body;
+    if (!id) return res.status(401).json({ message: 'Id not found' });
 
-    const links = await prisma.link.find({ 
-        where: { userId: Number(id) }
+    const links = await prisma.link.findMany({ 
+        where: { personId: Number(id) }
     });
     if (!links) return res.status(404).json({ message: 'No links found for logged in user' });
     res.json(links);
@@ -36,10 +39,8 @@ const getLinksBySessionId = async (req, res) => {
 const getLinkById = async (req, res) => {
     const { id } = req.params;
     if (!id) return res.status(400).json({ message: 'Link ID required' });
-
     const link = await prisma.link.findUnique({ where: { id: Number(id) } });
     if (!link) return res.status(404).json({ message: 'No link found' });
-
     res.json(link);
 }
 
@@ -47,19 +48,15 @@ const getLinkById = async (req, res) => {
 //@route POST /links
 //@access Private
 const addLink = async (req, res, next) => {
-    const userId = req.session?.userId;
-    if (!userId) return res.status(401).json({ message: 'User not authorized' });
-    const { id } = await prisma.personal.findUnique({ 
-        where: { userId: Number(userId) }
-    });
-
-
-
-    const { name, url, imageAlt } = req.body;    
+    const { profileId, name, url, imageAlt } = req.body;    
     //NB validate before making db query
-    if (!name || !url || !imageAlt || !id) {
+    if (!profileId || !name || !url || !imageAlt) {
         return res.status(400).json({ message: "Missing Data" });
     }
+    const { userId } = await prisma.personal.findUnique({ 
+        where: { id: Number(profileId) }
+    });
+    if (!userId) return res.status(404).json({ message: 'No user found' });
 
     const originalFile = req.files?.original?.[0];
     const transformedFile = req.files?.transformed?.[0];
@@ -79,8 +76,8 @@ const addLink = async (req, res, next) => {
                 logoOrg,
                 logoGrn,
                 logoAlt:imageAlt,
-                personal: { connect: { id: id } },
-                user: { connect: { id: userId } }
+                personal: { connect: { id: Number(profileId) } },
+                user: { connect: { id: Number(userId) } }
             }
         });        
         res.status(201).json(newLink);
@@ -98,12 +95,20 @@ const addLink = async (req, res, next) => {
 //@access Private
 const updateLink = async (req, res, next) => {
 
-    const { id, name, url, logo, personal } = req.body;
+    const { id, name, url, imageAlt, oldOriginal, oldTransformed } = req.body;
     
     //NB validate before making db query
-    if (!id || !name || !url || !logo || !personal) {
+    if (!id || !name || !url || !imageAlt) {
         return res.status(400).json({ message: "Missing required fields" });
-    }    
+    }
+    
+    const uploadDir = path.join(process.cwd(), 'images');
+    const logoOrg = req.files?.original?.[0]
+        ? `/images/${req.files.original[0].filename}`
+        : undefined;
+    const logoGrn = req.files?.transformed?.[0]
+        ? `/images/${req.files.transformed[0].filename}`
+        : undefined;
 
     try {
         const updatedLink = await prisma.link.update({ 
@@ -111,10 +116,21 @@ const updateLink = async (req, res, next) => {
             data: {
                 name,
                 url,
-                logo,
-                personal: { connect: { id: personal } },
+                logoAlt: imageAlt,
+                logoOrg: logoOrg || undefined,
+                logoGrn: logoGrn || undefined
             } 
         });
+        if (req.files.original && oldOriginal) {
+            fs.unlink(path.join(uploadDir, oldOriginal), (err) => {
+                if (err) console.error('Failed to delete old original file:', err);
+            });
+        }
+        if (req.files.transformed && oldTransformed) {
+            fs.unlink(path.join(uploadDir, oldTransformed), (err) => {
+                if (err) console.error('Failed to delete old transformed file:', err);
+            });
+        }
         res.json({ message: "Link updated", link: updatedLink });
     } catch (err) {
         if (err.code === 'P2002') {
@@ -133,11 +149,24 @@ const updateLink = async (req, res, next) => {
 //@route DELETE /personal/links 
 //@access Private
 const deleteLink = async (req, res, next) => {
-
     const { id } = req.body;
     if (!id) return res.status(400).json({ message: 'Link ID required' });
+
+    //retrieve image links
+    const link = await prisma.link.findUnique({ where: { id: Number(id) } });
+    const imagePath = path.join(process.cwd(), '.' + link.logoGrn);
+    const originalPath = path.join(process.cwd(), '.' + link.logoOrg);
+    
+    //delete
     try {
         await prisma.link.delete({ where: { id: Number(id) } });
+        //remove images
+        await fs.unlink(path.resolve(imagePath), (err) => {
+            if (err) console.error('Failed to delete old transformed file:', err);
+        });
+        await fs.unlink(path.resolve(originalPath), (err) => {
+            if (err) console.error('Failed to delete old original file:', err);
+        });
         res.json({ message: `Link with id ${id} deleted.` });
     } catch (err) {
         if (err.code === 'P2025') {
@@ -151,7 +180,7 @@ const deleteLink = async (req, res, next) => {
 export default {
     getAllLinks,
     getLinkById,
-    getLinksBySessionId,
+    getLinksByProfileId,
     addLink, 
     updateLink,
     deleteLink

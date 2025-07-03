@@ -4,12 +4,13 @@ import showMessage from "./showMessage.js";
 function createListLink({
     listItem,
     showDelete = false,
-    deleteUrl = null
+    deleteUrl = null,
+    baseUrl = window.location.href
 } = {}) {
     //add edit link
     const h4 = document.createElement('h4');
     const a = document.createElement('a');
-    a.href = `${window.location.href}/${listItem.id}`;
+    a.href = `${baseUrl}/${listItem.id}`;
     a.innerHTML = `&rarr;&nbsp;&nbsp;${listItem.name}`;
     h4.appendChild(a);   
 
@@ -23,7 +24,7 @@ function createListLink({
         deleteBtn.onclick = async () => {
             try {
                 await fetchWithRedirect({
-                    deleteUrl,
+                    url: deleteUrl,
                     method: 'DELETE',
                     data: { id: listItem.id },
                     redirect: window.location.href

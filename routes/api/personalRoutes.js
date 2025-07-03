@@ -24,24 +24,30 @@ router.route('/')
 router.route('/profile')
     .get(personalController.getUserPersonal)
 
-router.route('/links')    
+router.route('/links')
+
     .post(upload.fields([
-    { name: 'original', maxCount: 1 },
-    { name: 'transformed', maxCount: 1 }
-  ]),linksController.addLink)
-    .patch(linksController.updateLink)
+        { name: 'original', maxCount: 1 },
+        { name: 'transformed', maxCount: 1 }
+    ]),linksController.addLink)
+
+    .patch(upload.fields([
+        { name: 'original', maxCount: 1 },
+        { name: 'transformed', maxCount: 1 }
+    ]),linksController.updateLink)
+
     .delete(linksController.deleteLink)
 
-router.route('/userlinks')
-    .get(linksController.getLinksBySessionId)
+router.route('/profilelinks')
+    .post(linksController.getLinksByProfileId)
 
 router.route('/skills')
     .post(requireSession, skillsController.addSkill)
     .patch(requireSession, skillsController.updateSkill)
     .delete(requireSession, skillsController.deleteSkill)
 
-router.route('/userskills')
-    .get(skillsController.getSkillsBySessionId)
+router.route('/profileskills')
+    .post(skillsController.getSkillsByProfileId)
 
 router.route('/contacts')
     .get(contactsController.getAllContacts)

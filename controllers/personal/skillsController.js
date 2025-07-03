@@ -29,17 +29,17 @@ const getSkillById = async (req, res) => {
 }
 
 //@desc Get skills for logged in user
-//@route GET /personal/userskills
+//@route GET /personal/profileskills
 //@access Private
-const getSkillsBySessionId = async (req, res) => {
-    const id = req.session?.userId;
-    if (!id) return res.status(401).json({ message: 'User not authorized' });
+const getSkillsByProfileId = async (req, res) => {
+    const { id } = req.body;
+    if (!id) return res.status(401).json({ message: 'ID not found' });
 
-    const personal = await prisma.skill.find({ 
-        where: { userId: Number(id) }
+    const skills = await prisma.skill.findMany({ 
+        where: { personId: Number(id) }
     });
-    if (!personal) return res.status(404).json({ message: 'No skills found for logged in user' });
-    res.json(personal);
+    if (!skills) return res.status(404).json({ message: 'No skills found for logged in user' });
+    res.json(skills);
 }
 
 
@@ -134,7 +134,7 @@ const deleteSkill = async (req, res, next) => {
 export default {
     getAllSkills,
     getSkillById,
-    getSkillsBySessionId,
+    getSkillsByProfileId,
     addSkill, 
     updateSkill,
     deleteSkill

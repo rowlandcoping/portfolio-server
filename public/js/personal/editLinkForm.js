@@ -4,16 +4,34 @@ import { processImageHelper } from "../utils/imageProcessor.js";
 
 window.onload=document.getElementById('logo').value = "";
 const url = new URL(window.location.href);
-const profileId = url.pathname.split('/').pop();
+const id = url.pathname.split('/').pop();
 
-const form = document.getElementById('linkForm');
+const form = document.getElementById('editLinkForm');
+const nameInput = document.getElementById('name');
+const urlInput = document.getElementById('url');
+const altInput = document.getElementById('imageAlt');
+
 const imageUpload = document.getElementById('logo');
 const imageLoader = document.getElementById('imageLoader');
 const imagePreview = document.getElementById('imagePreview');
 const imageCancel = document.getElementById('imageCancel');
+const currentImage = document.getElementById('currentImage');
 let originalBlob = null;
 let transformedBlob = null;
- 
+
+try {
+    const result = await fetchWithRedirect({
+        url: `/personal/links/${id}`
+    });
+    nameInput.value = result.name;
+    urlInput.value = result.url;
+    altInput.value = result.logoAlt;
+    currentImage.src = result.logoGrn;
+
+} catch (err) {
+    showMessage(errorMessage, err.message || 'Update failed');
+}
+
 //IMAGE HANDLING
 //previews images due for upload
 imageUpload.addEventListener('change', () => {
@@ -31,6 +49,7 @@ imageLoader.onload = async () => {
   imagePreview.src = previewUrl;
   imagePreview.style.display = 'block';
   imageCancel.style.display = "block";
+  currentImage.style.display = "none";
   // clean up
   URL.revokeObjectURL(imageLoader.src);
 };
@@ -42,6 +61,7 @@ imageCancel.addEventListener('click', (e) => {
     imagePreview.src = "";
     imageUpload.value = "";
     imageCancel.style.display = "none";
+    currentImage.style.display = "block";
     originalBlob = null;
     transformedBlob = null;
 });
@@ -50,24 +70,29 @@ imageCancel.addEventListener('click', (e) => {
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const formData = new FormData(form);
-    const userOriginalName = imageUpload.files[0].name;
+    formData.append('id', id);
 
-    const originalFile = new File([originalBlob], userOriginalName, { type: 'image/webp' });
-    const transformedFile = new File([transformedBlob], `green-${userOriginalName}`, { type: 'image/webp' });
-
+    if (originalBlob && transformedBlob) {
+        const baseName = imageUpload.files[0].name.replace(/\.[^/.]+$/, ''); // remove file extension
+        const originalFile = new File([originalBlob], `${baseName}.webp`, { type: 'image/webp' });
+        const transformedFile = new File([transformedBlob], `green-${baseName}.webp`, { type: 'image/webp' });
+        const oldTransformedFilename = currentImage.src.split('/').pop();
+        const oldFilename = oldTransformedFilename.split('-').slice(1).join('-');        
+        formData.append('original', originalFile);
+        formData.append('transformed', transformedFile);
+        formData.append('oldOriginal', oldFilename);
+        formData.append('oldTransformed', oldTransformedFilename);
+    }
     formData.delete('logo');
-    formData.append('original', originalFile);
-    formData.append('transformed', transformedFile);
-    formData.append('profileId', profileId);
     
     try {
         await fetchWithRedirect({
             url: '/personal/links',
-            method: 'POST',
+            method: 'PATCH',
             data: formData,
-            redirect: '/dashboard/personal/edit'
+            redirect: '/dashboard'
         });
     } catch (err) {
-        showMessage('error', err.message || 'Adding Link Failed');
+        showMessage('error', err.message || 'Updating Link Failed');
     }
 });

@@ -3,12 +3,12 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Edit Your Profile</title>
+        <title>Manage Your Profile</title>
         <link rel="stylesheet" href="/css/style.css" />
     </head>
     <body>
         <main class="center-top">
-            <h1>Edit Profile</h1>
+            <h1>Manage Profile</h1>
             <p id="showMessage"></p>
             <form class="admin-form" id="editPersonalForm" method="PATCH">
                 <div class="admin-form-container">
@@ -22,7 +22,17 @@
                             required
                         ></textarea>
                     </div>
-                    <button class="admin-button" type="submit">Edit Profile</button>                
+                    <h2>Skills</h2>
+                    <div id="adminSkillSelect"></div>
+                    <button id="addSkill" type="button" class="selected">Add Skill</button>
+
+
+
+                    <h2>Links</h2>
+                    <div id="adminLinkSelect"></div>
+                    <button id="addLink" type="button" class="selected">Add Link</button>
+                    
+                    <button class="admin-button" type="submit">Update Profile</button>                
                 </div>
             </form>
             <small><a href="/dashboard">Back to Dashboard</a></small>

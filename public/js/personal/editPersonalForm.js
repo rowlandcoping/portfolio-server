@@ -1,9 +1,16 @@
 import showMessage from "../utils/showMessage.js";
 import { fetchWithRedirect } from "../utils/fetchWithRedirect.js";
+import createListLink from "../utils/createListLink.js";
 
 const form = document.getElementById('editPersonalForm');
 const descriptionInput = document.getElementById('description');
 const data = {}
+
+const message = sessionStorage.getItem('flash');
+if (message) {
+    showMessage('success', message)
+    sessionStorage.removeItem('flash');
+}
 
 
 try {
@@ -17,6 +24,68 @@ try {
     showMessage('error', err.message || 'Retrieving Data Failed');
 }
 
+//populate skills
+try {
+    const skills = await fetchWithRedirect({
+        url: '/personal/profileskills',
+        method: 'POST',
+        data: {id: data.id }
+    });
+    const adminSkillSelect = document.getElementById('adminSkillSelect');
+    adminSkillSelect.innerHTML = '';
+    if (skills?.length) {
+        const fragment = document.createDocumentFragment();
+        for (const skill of skills) {
+            fragment.appendChild(createListLink({
+                listItem: skill,
+                showDelete: true,
+                deleteUrl: '/personal/skills',
+                baseUrl: '/dashboard/personal/skill/edit'
+            }));
+        }
+        adminSkillSelect.appendChild(fragment);
+    } else {
+        adminSkillSelect.innerText = "No Skills Found"
+    }
+} catch (err) {
+    showMessage('error', err.message, false);
+}
+
+//populate links
+try {
+    const links = await fetchWithRedirect({
+        url: '/personal/profilelinks',
+        method: 'POST',
+        data: {id: data.id } 
+    });
+    const adminLinkSelect = document.getElementById('adminLinkSelect');
+    adminLinkSelect.innerHTML = '';
+    if (links?.length) {
+        const fragment = document.createDocumentFragment();
+        for (const link of links) {
+            fragment.appendChild(createListLink({
+                listItem: link,
+                showDelete: true,
+                deleteUrl: '/personal/links',
+                baseUrl: '/dashboard/personal/link/edit'
+            }));
+        }
+        adminLinkSelect.appendChild(fragment);
+    } else {
+        adminLinkSelect.innerText = "No Links Found"
+    }
+} catch (err) {
+    showMessage('error', err.message, false);
+}
+
+//clicking an add button
+const addSkill = document.getElementById('addSkill');
+const addLink = document.getElementById('addLink');
+
+addLink.addEventListener('click', () => {
+    window.location.href = `/dashboard/personal/link/${data.id}`;
+});
+//update description
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const formData = new FormData(form);
@@ -27,7 +96,6 @@ form.addEventListener('submit', async (e) => {
             url: '/personal',
             method: 'PATCH',
             data,
-            redirect: '/dashboard'
         });
     } catch (err) {
         showMessage('error', err.message || 'Updating Profile Failed');

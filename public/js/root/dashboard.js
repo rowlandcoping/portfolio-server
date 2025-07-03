@@ -1,7 +1,20 @@
 import { logoutUser } from '../utils/logout.js';
 import showMessage from "../utils/showMessage.js";
+import { fetchWithRedirect } from "../utils/fetchWithRedirect.js";
 
 //display messages for user
+try {
+    const profile = await fetchWithRedirect({
+        url: '/personal/profile'
+    });
+    if (profile) {
+        document.getElementById('createProfile').style.display = 'none';
+    } else {
+        document.getElementById('manageProfile').style.display = 'none';
+    }
+} catch (err) {
+    showMessage('error', err.message || 'Updating Link Failed');
+}
 
 const message = sessionStorage.getItem('flash');
 if (message) {
@@ -45,10 +58,6 @@ iconContainer.addEventListener('click', (event) => {
         button.setAttribute('aria-expanded', 'true');
     }
 });
-
-
-
-
 
 /*
 //
