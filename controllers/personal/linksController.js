@@ -16,6 +16,20 @@ const getAllLinks =async (req, res) => {
     res.json(links);
 }
 
+//@desc Get a link by the user's session id
+//@route GET /personal//userlinks
+//@access Private
+const getLinksBySessionId = async (req, res) => {
+    const id = req.session?.userId;
+    if (!id) return res.status(401).json({ message: 'User not authorized' });
+
+    const links = await prisma.link.find({ 
+        where: { userId: Number(id) }
+    });
+    if (!links) return res.status(404).json({ message: 'No links found for logged in user' });
+    res.json(links);
+}
+
 //@desc Get a link
 //@route GET /personal/links/:id
 //@access Private
@@ -33,21 +47,40 @@ const getLinkById = async (req, res) => {
 //@route POST /links
 //@access Private
 const addLink = async (req, res, next) => {
+    const userId = req.session?.userId;
+    if (!userId) return res.status(401).json({ message: 'User not authorized' });
+    const { id } = await prisma.personal.findUnique({ 
+        where: { userId: Number(userId) }
+    });
 
-    const { name, url, logo, personal } = req.body;
-    
+
+
+    const { name, url, imageAlt } = req.body;    
     //NB validate before making db query
-    if (!name || !url || !logo || !personal) {
-        return res.status(400).json({ message: "Missing required fields" });
-    }    
+    if (!name || !url || !imageAlt || !id) {
+        return res.status(400).json({ message: "Missing Data" });
+    }
+
+    const originalFile = req.files?.original?.[0];
+    const transformedFile = req.files?.transformed?.[0];
+
+    if (!originalFile || !transformedFile) {
+        return res.status(400).json({ message: 'Missing uploaded files' });
+    }
+
+    const logoOrg = `/images/${originalFile.filename}`;
+    const logoGrn = `/images/${transformedFile.filename}`;
 
     try {
         const newLink = await prisma.link.create({
-            data: {
+            data: {                
                 name,
                 url,
-                logo,
-                personal: { connect: { id: personal } },
+                logoOrg,
+                logoGrn,
+                logoAlt:imageAlt,
+                personal: { connect: { id: id } },
+                user: { connect: { id: userId } }
             }
         });        
         res.status(201).json(newLink);
@@ -64,9 +97,8 @@ const addLink = async (req, res, next) => {
 //@route PATCH /personal/links
 //@access Private
 const updateLink = async (req, res, next) => {
-    console.log('req.body:', req.body);
 
-     const { id, name, url, logo, personal } = req.body;
+    const { id, name, url, logo, personal } = req.body;
     
     //NB validate before making db query
     if (!id || !name || !url || !logo || !personal) {
@@ -101,23 +133,25 @@ const updateLink = async (req, res, next) => {
 //@route DELETE /personal/links 
 //@access Private
 const deleteLink = async (req, res, next) => {
-  const { id } = req.body;
-  if (!id) return res.status(400).json({ message: 'Link ID required' });
-  try {
-    await prisma.link.delete({ where: { id: Number(id) } });
-    res.json({ message: `Link with id ${id} deleted.` });
-  } catch (err) {
-    if (err.code === 'P2025') {
-        logEvents(`Record not found - ${req.method} ${req.originalUrl} - Target ID: ${id}`,'dbError.log');
-        return res.status(404).json({ message: `Link with id ${id} not found` });
+
+    const { id } = req.body;
+    if (!id) return res.status(400).json({ message: 'Link ID required' });
+    try {
+        await prisma.link.delete({ where: { id: Number(id) } });
+        res.json({ message: `Link with id ${id} deleted.` });
+    } catch (err) {
+        if (err.code === 'P2025') {
+            logEvents(`Record not found - ${req.method} ${req.originalUrl} - Target ID: ${id}`,'dbError.log');
+            return res.status(404).json({ message: `Link with id ${id} not found` });
+        }
+        next(err)
     }
-    next(err)
-  }
 };
 
 export default {
     getAllLinks,
     getLinkById,
+    getLinksBySessionId,
     addLink, 
     updateLink,
     deleteLink

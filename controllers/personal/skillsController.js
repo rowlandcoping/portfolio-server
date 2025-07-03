@@ -28,14 +28,28 @@ const getSkillById = async (req, res) => {
     res.json(skill);
 }
 
+//@desc Get skills for logged in user
+//@route GET /personal/userskills
+//@access Private
+const getSkillsBySessionId = async (req, res) => {
+    const id = req.session?.userId;
+    if (!id) return res.status(401).json({ message: 'User not authorized' });
+
+    const personal = await prisma.skill.find({ 
+        where: { userId: Number(id) }
+    });
+    if (!personal) return res.status(404).json({ message: 'No skills found for logged in user' });
+    res.json(personal);
+}
+
+
 //@desc Create new skill
 //@route POST /skills
 //@access Private
 const addSkill = async (req, res, next) => {
-    console.log('req.body:', req.body);
-
+    const userId = req.session?.userId;
     const { ecosystem, tech, competency, personal } = req.body;
-    
+    if (!id) return res.status(401).json({ message: 'User not authorized' });
     //NB validate before making db query
     if (!ecosystem || !competency || !personal) {
         return res.status(400).json({ message: "Missing required fields" });
@@ -46,7 +60,8 @@ const addSkill = async (req, res, next) => {
         const data = {            
             ecosystem: { connect: { id: ecosystem } },
             personal: { connect: { id: personal } },
-            competency
+            competency,
+            user: { connect: { id: userId } }
         }
         if (tech) {
             data.tech = { connect: { id: Number(tech) } }
@@ -119,6 +134,7 @@ const deleteSkill = async (req, res, next) => {
 export default {
     getAllSkills,
     getSkillById,
+    getSkillsBySessionId,
     addSkill, 
     updateSkill,
     deleteSkill

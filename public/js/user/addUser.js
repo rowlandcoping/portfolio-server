@@ -1,5 +1,6 @@
 import showMessage from "../utils/showMessage.js";
 import { fetchWithRedirect } from "../utils/fetchWithRedirect.js";
+import { optionFragment } from '../utils/optionButtons.js';
 
 window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('roles').value = '';
@@ -13,27 +14,16 @@ try {
     const result = await fetchWithRedirect({
         url: '/users/roles'
     });
-    const fragment = document.createDocumentFragment();
-    //for... of loop is marginally quicker and supprts break/continue
-    for (const option of result) {        
-            const button = document.createElement('button');
-            button.type = 'button';
-            button.textContent = option.name;
-            button.id = option.id;
-            button.className = 'deselected';
-            button.addEventListener('click', (event) => {
-                categoryClicked(option.id);
-            });
-            fragment.appendChild(button);
-    }
-    roleButtonsContainer.appendChild(fragment);
+    roleButtonsContainer.appendChild(optionFragment({
+        result,
+        optionsInput: rolesInput
+    }));
 } catch(err) {
     showMessage('error', err.message, false);
 }
 
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
-
     const formData = new FormData(form);
     const roles = rolesInput.value.split(',').filter(Boolean).map(Number);
     const data = {
@@ -51,30 +41,6 @@ form.addEventListener('submit', async (e) => {
             redirect: '/dashboard'
         });
     } catch (err) {
-        showMessage(errorMessage, err.message || 'Adding User Failed');
+        showMessage('error', err.message || 'Adding User Failed');
     }
 });
-
-
-
-const categoryClicked = (id) => {
-    const btnClicked = document.getElementById(id);
-    // removes empty string, converts to a number array
-    const currentRoles = rolesInput.value.split(',').filter(Boolean).map(Number); 
-    if (btnClicked.className === 'deselected') {
-        btnClicked.className = 'selected';
-        currentRoles.push(id);
-    } else {        
-        //this line locates the position of id in the currentRoles array (ie its array index)
-        //it returns the index if found, or -1 if not
-        const index = currentRoles.indexOf(id);
-        //if it exists (ie greater than -1) then remove it
-        if (index > -1) {
-            //the 1 means remove one item, starting at the provided index(ie that item)
-            currentRoles.splice(index, 1);
-        }
-        btnClicked.className = 'deselected';
-    }
-    rolesInput.value = currentRoles.join(',');
-}
-

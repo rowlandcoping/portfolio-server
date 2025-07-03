@@ -12,7 +12,7 @@ a, a:visited {
     color: inherit;
 }
 a:hover {
-    color: white;
+    color: rgb(209, 238, 208);
     text-decoration: underline;
 }
 
@@ -22,6 +22,12 @@ button.unstyled-button {
   font: inherit;
   color: inherit;
   cursor: pointer;
+}
+
+#canvas {
+    object-fit: cover;
+    width:300px;
+    height:300px;
 }
 
 .hidden {
@@ -45,11 +51,11 @@ button.unstyled-button {
 }
 
 .error {
-    color: red;
+    color: rgb(87, 114, 84);
 }
 
 .success {
-    color: white;
+    color: rgb(209, 238, 208);
 }
 
 .centered {
@@ -78,10 +84,12 @@ button.unstyled-button {
 }
 
 #adminSelect {
-    margin: 35px 0;
+    margin-bottom: 35px;
 }
 #adminSelect h4 {
+    display:flex;
     margin: 7px;
+    align-items:center;
 }
 .admin-icon:hover {
   color: white;
@@ -107,6 +115,10 @@ form {
     align-items: center;
     margin-bottom: 10px;
     text-align: left;
+}
+
+.input-container textarea {
+    height: 20vh;
 }
 
 .admin-label {
@@ -177,9 +189,14 @@ form {
 }
 
 .delete-button {
-    margin-left:10px;
+    margin-left:20px;
     color:rgb(89, 255, 47);
     border: rgb(0, 73, 9) 2px solid;
     background-color:rgb(1, 27, 4);
     cursor: pointer;
+}
+
+#imagePreview {
+    width:250px;
+    border: rgb(0, 73, 9) 2px solid;
 }

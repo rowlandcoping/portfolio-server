@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Edit Your Profile</title>
+        <link rel="stylesheet" href="/css/style.css" />
+    </head>
+    <body>
+        <main class="center-top">
+            <h1>Edit Profile</h1>
+            <p id="showMessage"></p>
+            <form class="admin-form" id="editPersonalForm" method="PATCH">
+                <div class="admin-form-container">
+                    <div class="input-container">
+                        <label class="admin-label" for="description">Edit Description</label>
+                        <textarea
+                            class="admin-input"
+                            id="description"
+                            name="description"
+                            autocomplete="false"
+                            required
+                        ></textarea>
+                    </div>
+                    <button class="admin-button" type="submit">Edit Profile</button>                
+                </div>
+            </form>
+            <small><a href="/dashboard">Back to Dashboard</a></small>
+        </main>
+        <script type="module" src="/js/personal/editPersonalForm.js"></script>
+    </body>
+</html>

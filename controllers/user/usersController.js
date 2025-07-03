@@ -14,6 +14,7 @@ const getAllUsers =async (req, res) => {
         //have to explicitly include many-many fields
         include: {
             roles: true,  // include all roles related to each user
+            personal: true,
         },
         orderBy: {
             id: 'asc'  // or 'desc' for descending

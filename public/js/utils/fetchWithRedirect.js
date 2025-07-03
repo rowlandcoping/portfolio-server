@@ -8,12 +8,17 @@ export async function fetchWithRedirect({
 } = {}) {
     const options = {
         method,
-        headers: { 'Content-Type': 'application/json' },
         credentials: 'include'
     };
 
     if (method !== 'GET' && data !== null) {
-        options.body = JSON.stringify(data);
+        if (data instanceof FormData) {
+            options.body = data;
+            // DO NOT set Content-Type here — browser will set it correctly
+        } else {
+            options.headers = { 'Content-Type': 'application/json' };
+            options.body = JSON.stringify(data);
+        }
     }
 
     try {

@@ -17,7 +17,8 @@ import userRoutes from './routes/api/userRoutes.js';
 import projectRoutes from './routes/api/projectRoutes.js';
 import techRoutes from './routes/api/techRoutes.js';
 import personalRoutes from './routes/api/personalRoutes.js';
-import userAdminRoutes from './routes/admin/userAdminRoutes.js'
+import userAdminRoutes from './routes/admin/userAdminRoutes.js';
+import userPersonalRoutes from './routes/admin/personalAdminRoutes.js';
 
 const app = express();
 const PORT = process.env.PORT || 3500;
@@ -26,6 +27,7 @@ const PORT = process.env.PORT || 3500;
 app.use(logger);
 app.use(cors(corsOptions));
 app.use(express.static(path.join(process.cwd(), 'public')));
+app.use('/images', express.static(path.join(process.cwd(), 'images')));
 
 app.use(express.json());
 app.use(cookieParser());
@@ -46,6 +48,7 @@ app.use('/', rootRoutes);
 app.use('/login', rootRoutes);
 app.use('/dashboard', dashRoutes);
 app.use('/dashboard/user', userAdminRoutes);
+app.use('/dashboard/personal', userPersonalRoutes);
 
 //404 route
 //test thing

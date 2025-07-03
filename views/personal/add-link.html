@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Document</title>
+        <link rel="stylesheet" href="/css/style.css" />
+    </head>
+    <body>
+        <main class="center-top">
+            <h1> Add a New Link</h1>
+            <p id="showMessage"></p>
+            <form class="admin-form" id="linkForm" method="POST">
+                <div class="admin-form-container">
+                    <div class="input-container">
+                        <label class="admin-label" for="name">Link Name</label>
+                        <input
+                            class="admin-input"
+                            id="name"
+                            name="name"
+                            type="text"
+                            autocomplete="false"
+                            required
+                        />
+                    </div>
+                    <div class="input-container">
+                        <label class="admin-label" for="url">Link URL</label>
+                        <input
+                            class="admin-input"
+                            id="url"
+                            name="url"
+                            type="text"
+                            required
+                        />
+                    </div>
+                    <div class="input-container">
+                        <label class="admin-label" for="imageAlt">Image Description</label>
+                        <input
+                            class="admin-input"
+                            id="imageAlt"
+                            name="imageAlt"
+                            type="text"
+                            required
+                        />
+                    </div>
+                    <div class="input-container">
+                        <label class="admin-label" for="logo">Logo</label>
+                        <input 
+                            type="file" 
+                            id="logo"
+                        />
+                    </div>
+                    <button id="imageCancel" type="button" class="hidden">Cancel Upload</button>
+                    
+                    <div class="input-container">
+                        <canvas id="canvas" class="hidden"></canvas>
+                        <img id="imageLoader" class="hidden">
+                        <img id="imagePreview" class="hidden" src="" alt="This is a preview of the uploaded image">
+                    </div>
+
+                    <button class="admin-button" type="submit">Add Link</button>                
+                </div>
+            </form>
+            <small><a href="/dashboard">Back to Dashboard</a></small>
+        </main>
+        <script type="module" src="/js/personal/addLink.js"></script>    
+    </body>
+</html>

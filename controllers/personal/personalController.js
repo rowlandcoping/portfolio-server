@@ -17,15 +17,16 @@ const getAllPersonal = async (req, res) => {
 }
 
 //@desc Get a personal profile
-//@route GET /personal/:userId
+//@route GET /personal/profile
 //@access Private
-const getPersonalByUserId = async (req, res) => {
-    const { id } = req.params;
-    if (!id) return res.status(400).json({ message: 'User ID required' });
+const getUserPersonal = async (req, res) => {
+    const id = req.session?.userId;
+    if (!id) return res.status(401).json({ message: 'User not authorized' });
 
-    const personal = await prisma.personal.findUnique({ where: { userId: Number(id) } });
-    if (!personal) return res.status(404).json({ message: 'No profile found for this user' });
-
+    const personal = await prisma.personal.findUnique({ 
+        where: { userId: Number(id) },
+    });
+    if (!personal) return res.status(404).json({ message: 'No profile found for logged in user' });
     res.json(personal);
 }
 
@@ -33,9 +34,14 @@ const getPersonalByUserId = async (req, res) => {
 //@route POST /personal
 //@access Private
 const addPersonal = async (req, res, next) => {
-    const { user, description } = req.body;
+    const { description } = req.body;
     //NB validate before making db query
-    if (!user || !description) {
+    const user = req.session?.userId;
+
+    if (!user) {
+        return res.status(401).json({ message: 'Session not found'});
+    }
+    if (!description) {
         return res.status(400).json({ message: 'All fields Required'});
     }
     try {
@@ -45,7 +51,7 @@ const addPersonal = async (req, res, next) => {
                 description
             }
         });
-        res.status(201).json(newPersonal);
+        res.status(201).json( { message: "Profile Created", personal: newPersonal });
     } catch (err) {
         if (err.code === 'P2002') {
             logEvents(`Duplicate field error: ${err.meta?.target}`, 'dbError.log');
@@ -114,7 +120,7 @@ const deletePersonal = async (req, res, next) => {
 
 export default {
     getAllPersonal,
-    getPersonalByUserId,
+    getUserPersonal,
     addPersonal, 
     updatePersonal,
     deletePersonal
