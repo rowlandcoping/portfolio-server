@@ -66,7 +66,7 @@ const updateTechType = async (req, res, next) => {
 
     try {
         const updatedTechType = await prisma.techType.update({
-            where: { id },
+            where: { id: Number(id) },
             data: {
                 name
             }

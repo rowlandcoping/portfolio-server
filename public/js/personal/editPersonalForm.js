@@ -90,7 +90,6 @@ form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const formData = new FormData(form);
     data.description = formData.get('description');
-    console.log(data);
     try {
         await fetchWithRedirect({
             url: '/personal',

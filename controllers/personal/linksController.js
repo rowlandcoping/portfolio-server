@@ -22,7 +22,6 @@ const getAllLinks =async (req, res) => {
 //@route POST /personal/profilelinks
 //@access Private
 const getLinksByProfileId = async (req, res) => {
-    console.log(req.body)
     const { id } = req.body;
     if (!id) return res.status(401).json({ message: 'Id not found' });
 

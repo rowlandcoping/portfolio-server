@@ -42,14 +42,25 @@ model Project {
     issues    Issue []
     type      ProjectType   @relation(fields: [typeId], references:[id]) //1 to many
     typeId    Int
-    ecosystem Ecosystem []  @relation("ProjectEcosystems")
-    tech      Tech []       @relation("ProjectTech")
+    projectEcosystem       ProjectEcosystem []
     live      Boolean       @default(true)
     dateMvp   DateTime?
     dateProd  DateTime?
     contact   Contact[]
     user      User          @relation(fields:[userId], references:[id])
     userId    Int
+}
+
+model ProjectEcosystem {
+    id        Int           @id @default(autoincrement())
+    name      String
+    ecosystem Ecosystem     @relation(fields:[ecoId], references:[id])
+    ecoId     Int
+    tech      Tech []       @relation("ProjectTech")
+    project   Project       @relation(fields:[projectId], references:[id])
+    projectId Int
+
+    @@unique([projectId, ecoId])
 }
 //project relations
 model Feature {
@@ -85,6 +96,7 @@ model Personal {
 //personal relations
 model Skill {
     id          Int         @id @default(autoincrement())
+    name        String
     ecosystem   Ecosystem   @relation(fields: [ecoId], references:[id], onDelete: Cascade) //NB can pull ecosystem from tech relational field
     ecoId       Int
     tech        Tech        @relation(fields: [techId], references:[id], onDelete: Cascade) //NB can pull ecosystem from tech relational field
@@ -124,13 +136,12 @@ model Contact {
 }
 
 model Ecosystem {
-  id      Int       @id @default(autoincrement())
-  name    String    @unique
-  typeId  Int
-  type    EcoType   @relation(fields: [typeId], references: [id])
-  skill   Skill[]
-  tech    Tech[]
-  project Project[] @relation("ProjectEcosystems")
+    id      Int       @id @default(autoincrement())
+    name    String    @unique
+    typeId  Int
+    type    EcoType   @relation(fields: [typeId], references: [id])
+    skill   Skill[]
+    projEcosystems ProjectEcosystem [] 
 }
 
 model Tech {
@@ -139,9 +150,8 @@ model Tech {
   typeId    Int
   name      String    @unique
   skill     Skill[]
-  ecosystem Ecosystem @relation(fields: [ecoId], references: [id])
   type      TechType  @relation(fields: [typeId], references: [id])
-  projects  Project[] @relation("ProjectTech")
+  projEcosystems  ProjectEcosystem[] @relation("ProjectTech")
 }
 
 model EcoType {

@@ -66,7 +66,7 @@ const updateEcoType = async (req, res, next) => {
 
     try {
         const updatedEcoType = await prisma.ecoType.update({
-            where: { id },
+            where: { id: Number(id) },
             data: {
                 name
             }

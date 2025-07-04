@@ -15,7 +15,9 @@ import dashRoutes from './routes/admin/dashRoutes.js';
 import authRoutes from './routes/api/authRoutes.js';
 import userRoutes from './routes/api/userRoutes.js';
 import projectRoutes from './routes/api/projectRoutes.js';
+import projectAdminRoutes from './routes/admin/projectAdminRoutes.js';
 import techRoutes from './routes/api/techRoutes.js';
+import techAdminRoutes from './routes/admin/techAdminRoutes.js';
 import personalRoutes from './routes/api/personalRoutes.js';
 import userAdminRoutes from './routes/admin/userAdminRoutes.js';
 import userPersonalRoutes from './routes/admin/personalAdminRoutes.js';
@@ -49,6 +51,8 @@ app.use('/login', rootRoutes);
 app.use('/dashboard', dashRoutes);
 app.use('/dashboard/user', userAdminRoutes);
 app.use('/dashboard/personal', userPersonalRoutes);
+app.use('/dashboard/tech', techAdminRoutes);
+app.use('/dashboard/project', projectAdminRoutes);
 
 //404 route
 //test thing

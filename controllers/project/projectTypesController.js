@@ -17,7 +17,7 @@ const getAllTypes =async (req, res) => {
 }
 
 //@desc Get a project type
-//@route GET /users/types/:id
+//@route GET /projects/types/:id
 //@access Private
 const getProjectTypeById = async (req, res) => {
     const { id } = req.params;
@@ -66,7 +66,7 @@ const updateType = async (req, res, next) => {
 
     try {
         const updatedType = await prisma.projectType.update({
-            where: { id },
+            where: { id: Number(id) },
             data: {
                 name
             }

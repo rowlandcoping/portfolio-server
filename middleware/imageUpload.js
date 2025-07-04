@@ -2,8 +2,6 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 
-
-console.log('multer reached');
 const uploadDir = path.join(process.cwd(), 'images');
 
 // Make sure uploads folder exists
