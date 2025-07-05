@@ -33,16 +33,16 @@ const getTechById = async (req, res) => {
 //@route POST /tech/tech
 //@access Private
 const addTech = async (req, res, next) => {
-    const { name, ecosystem, type } = req.body;
+    const { name, type } = req.body;
+    console.log(type)
     //NB validate before making db query
-    if (!name || !ecosystem || !type) {
+    if (!name || !type) {
         return res.status(400).json({ message: 'All fields Required'});
     }
     try {
         const newTech = await prisma.tech.create({
             data: {
                 name,
-                ecosystem: { connect: { id: Number(ecosystem) } },
                 type: { connect: { id: Number(type) } },
             }
         });
@@ -60,22 +60,30 @@ const addTech = async (req, res, next) => {
 //@route PATCH /tech/tech
 //@access Private
 const updateTech = async (req, res, next) => { 
-    const { id, name, ecosystem, type } = req.body;
+    const { id, name, type } = req.body;
 
-    if (!id || !name || !ecosystem || !type ) {
+    if (!id || !name || !type ) {
         return res.status(400).json({ message: "All fields are required"});
     }
 
     try {
         const updatedTech = await prisma.tech.update({
-            where: { id },
+            where: { id: Number(id) },
             data: {
                 name,
-                ecosystem: { connect: { id: Number(ecosystem) } },
                 type: { connect: { id: Number(type) } },
             }
         });
-        res.json({ message: "Tech updated", tech: updatedTech });
+        const relatedSkills = await prisma.skill.updateMany({
+            where: { techId: Number(id) },
+            data: {
+                name
+            }
+        });
+        res.json({ 
+            message: `Tech updated. ${relatedSkills.count} related skill${relatedSkills.count !== 1 ? 's' : ''} updated.`, 
+            tech: updatedTech
+        });
     } catch (err) {
         if (err.code === 'P2025') {
             return res.status(404).json({ message: `Tech with id ${id} not found` });
@@ -98,20 +106,6 @@ const deleteTech = async (req, res, next) => {
         return res.status(400).json({ message: 'Tech ID Required'});
     }
 
-    const projectsUsingTech = await prisma.project.findMany({
-        where: {
-            tech: {
-                some: { id: id }
-            }
-        },
-        select: { title: true }
-    });
-    if (projectsUsingTech.length > 0) {
-        const projectTitles = projectsUsingTech.map(p => p.title).join('\n');
-        return res.status(400).json({
-            message: `Cannot delete tech. These projects use it: ${projectTitles} \n  Please remove the tech from the projects and try again.`
-        }); 
-    }
     try {
         await prisma.tech.delete({ where: { id } });
         res.json({ message: 'Tech (and associated skills) deleted successfully' });

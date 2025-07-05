@@ -67,13 +67,30 @@ const updateEcosystem = async (req, res, next) => {
 
     try {
         const updatedEcosystem = await prisma.ecosystem.update({
-            where: { id },
+            where: { id: Number(id) },
             data: {
                 name,
                 type: { connect: { id: Number(type) } },
             }
         });
-        res.json({ message: "Ecosystem updated", ecosystem: updatedEcosystem });
+        const relatedSkills = await prisma.skill.updateMany({
+            where: { ecoId: Number(id) },
+            data: {
+                name
+            }
+        });
+        const relatedProjectEcosystems = await prisma.projectEcosystem.updateMany({
+            where: { ecoId: Number(id) },
+            data: {
+                name
+            }
+        });
+        res.json({ 
+            message: `Ecosystem updated. ${relatedSkills.count} related skill${
+                relatedSkills.count !== 1 ? 's' : ''} and ${relatedProjectEcosystems.count} related projects${
+                relatedProjectEcosystems.count !== 1 ? 's' : ''} updated.`,
+            ecosystem: updatedEcosystem 
+        });
     } catch (err) {
         if (err.code === 'P2025') {
             logEvents(`Record not found - ${req.method} ${req.originalUrl} - Target ID: ${id}`,'dbError.log');
@@ -97,32 +114,24 @@ const deleteEcosystem = async (req, res, next) => {
         return res.status(400).json({ message: 'Ecosystem ID Required'});
     }
 
-    const projectsUsingEcosystem = await prisma.project.findMany({
+    const relatedProjects = await prisma.projectEcosystem.findMany({
         where: {
-            ecosystem: {
-                some: { id: id }
-            }
+            ecoId: Number(id) 
         },
-        select: { title: true }
+        select: {
+            project: {
+            select: { name: true }
+            }
+        }
     });
 
-    if (projectsUsingEcosystem.length > 0) {
-        const projectTitles = projectsUsingEcosystem.map(p => p.title).join('\n');
+    if (relatedProjects.length > 0) {
+        const projectTitles = projectsUsingEcosystem.map(p => p.name).join('\n');
         return res.status(400).json({
             message: `Cannot delete ecosystem. These projects use it:\n${projectTitles}\nPlease remove the ecosystem from these projects and try again.`
         });
     }
 
-    const techUsingEcosystem = await prisma.tech.findMany({
-        where: { ecoId: id },
-        select: { name: true }
-    });
-    if (techUsingEcosystem.length > 0) {
-            const techNames = techUsingEcosystem.map(p => p.name).join('\n');
-            return res.status(400).json({
-                message: `Cannot delete ecosystem. These technologies use it: ${techNames} \n  Please remove the ecosystem from the technologies and try again.`
-            });
-    }
     try {
         await prisma.ecosystem.delete({ where: { id } });
         res.json({ message: 'ecosystem deleted successfully' });

@@ -1,0 +1,45 @@
+ <!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="/css/style.css" />
+    </head>
+    <body>
+        <main class="center-top">
+            <h1>Add Technology</h1>
+            <p id="showMessage"></p>
+            <form class="admin-form" id="techForm" method="POST">
+                <div class="admin-form-container">
+                    <div class="input-container">
+                        <label class="admin-label" for="name">Technology</label>
+                        <input
+                            class="admin-input"
+                            id="name"
+                            name="name"
+                            type="text"
+                            autocomplete="false"
+                            required
+                        />
+                        
+                    </div>
+                    <div class="input-container">
+                        <label class="admin-label" for="techtype">Technology Type</label>
+                        <select
+                            id="techtype"
+                            name="techtype"
+                            class="admin-input"
+                            default=""
+                        >
+                        <option value="">---------</option>
+                        </select>
+                    </div>
+                    <button class="admin-button" type="submit">Add Technology</button>                
+                </div>
+            </form>
+            <small><a href="/dashboard">Back to Dashboard</a></small>
+        </main>
+        <script type="module" src="/js/tech/addTech.js"></script>
+        
+    </body>
+</html>

@@ -1,0 +1,44 @@
+ <!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="/css/style.css" />
+    </head>
+    <body>
+        <main class="center-top">
+            <h1>Edit Ecosystem</h1>
+            <p id="showMessage"></p>
+            <form class="admin-form" id="editEcosystemForm" method="PATCH">
+                <div class="admin-form-container">
+                    <div class="input-container">
+                        <label class="admin-label" for="name">Ecosystem</label>
+                        <input
+                            class="admin-input"
+                            id="name"
+                            name="name"
+                            type="text"
+                            autocomplete="false"
+                            required
+                        />
+                    </div>
+                    <div class="input-container">
+                        <label class="admin-label" for="ecotype">Ecosystem Type</label>
+                        <select
+                            id="ecotype"
+                            name="ecotype"
+                            class="admin-input"
+                            value=""
+                        >
+                        <option value="">---------</option>
+                        </select>
+                    </div>
+                    <button class="admin-button" type="submit">Edit Ecosystem</button>                
+                </div>
+            </form>
+            <small><a href="/dashboard">Back to Dashboard</a></small>
+        </main>
+        <script type="module" src="/js/tech/editEcosystemForm.js"></script>
+        
+    </body>
+</html>

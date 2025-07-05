@@ -33,7 +33,7 @@ model Role {
 //project model
 model Project {
     id        Int           @id @default(autoincrement())
-    title     String        @unique
+    name      String        @unique
     overview  String   
     imageOrg  String?
     imageGrn  String?
@@ -146,11 +146,10 @@ model Ecosystem {
 
 model Tech {
   id        Int       @id @default(autoincrement())
-  ecoId     Int
+  type      TechType  @relation(fields: [typeId], references: [id])
   typeId    Int
   name      String    @unique
-  skill     Skill[]
-  type      TechType  @relation(fields: [typeId], references: [id])
+  skill     Skill[]  
   projEcosystems  ProjectEcosystem[] @relation("ProjectTech")
 }
 
