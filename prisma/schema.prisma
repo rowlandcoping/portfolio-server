@@ -97,17 +97,18 @@ model Personal {
 model Skill {
     id          Int         @id @default(autoincrement())
     name        String
-    ecosystem   Ecosystem   @relation(fields: [ecoId], references:[id], onDelete: Cascade) //NB can pull ecosystem from tech relational field
-    ecoId       Int
-    tech        Tech        @relation(fields: [techId], references:[id], onDelete: Cascade) //NB can pull ecosystem from tech relational field
-    techId      Int             
+    ecosystem   Ecosystem?   @relation(fields: [ecoId], references:[id], onDelete: Cascade) //NB can pull ecosystem from tech relational field
+    ecoId       Int?
+    tech        Tech?        @relation(fields: [techId], references:[id], onDelete: Cascade) //NB can pull ecosystem from tech relational field
+    techId      Int?           
     competency  String
     personal    Personal    @relation(fields: [personId], references:[id], onDelete: Cascade)
     personId    Int
     user        User        @relation(fields: [userId], references:[id], onDelete: Cascade)
     userId      Int
 
-    @@unique([ecoId, techId, personId])
+    @@unique([ecoId, personId])
+    @@unique([techId, personId])
 }
 model Link {
     id          Int         @id @default(autoincrement())

@@ -38,6 +38,23 @@ const addEcosystem = async (req, res, next) => {
     if (!name || !type) {
         return res.status(400).json({ message: 'All fields Required'});
     }
+
+    try {
+        const duplicate = await prisma.tech.findFirst({
+            where: {
+                name: {
+                equals: name,
+                mode: 'insensitive'
+                }
+            }
+        });
+        if (duplicate) {
+            return res.status(409).json({ message: 'Technology already exists with this name'});
+        }
+    } catch(err) {
+        return res.status(500).json({ message: 'server error'});
+    }
+
     try {
         const newEcosystem = await prisma.ecosystem.create({
             data: {
@@ -64,6 +81,25 @@ const updateEcosystem = async (req, res, next) => {
     if (!id || !name || !type) {
         return res.status(400).json({ message: 'All fields Required'});
     }
+
+    try {
+        const duplicate = await prisma.tech.findFirst({
+            where: {
+                name: {
+                equals: name,
+                mode: 'insensitive'
+                }
+            }
+        });
+        if (duplicate) {
+            return res.status(409).json({ message: 'Technology already exists with this name'});
+        }
+    } catch(err) {
+        return res.status(500).json({ message: 'server error'});
+    }
+
+
+
 
     try {
         const updatedEcosystem = await prisma.ecosystem.update({

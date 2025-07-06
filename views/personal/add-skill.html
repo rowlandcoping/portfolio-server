@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta value="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Add Skill</title>
+        <link rel="stylesheet" href="/css/style.css" />
+    </head>
+    <body>
+        <main class="center-top">
+            <h1> Add a New Skill</h1>
+            <p id="showMessage"></p>
+            <form class="admin-form" id="skillForm" method="POST">
+                <div class="admin-form-container"> 
+                    <div class="input-container select-selector">
+                        <div class="admin-label">
+                            Select Type of SKill to Add
+                        </div>
+
+                        <button type="button" class="deselected" id="loadEcosystem">Ecosystem</button>
+                        <button type="button" class="deselected" id="loadTechnology">Technology</button>
+                    </div>
+                    <div class="input-container" id="ecoContainer">
+                        <label class="admin-label" for="ecosystem">Ecosystem</label>
+                        <select
+                            id="ecosystem"
+                            name="ecosystem"
+                            class="admin-input"
+                            value=""
+                        >
+                            <option value="">---------</option>
+                        </select>
+                    </div>
+                    <div class="input-container" id="techContainer">
+                        <label class="admin-label" for="technology">Technology</label>
+                        <select
+                            id="technology"
+                            name="technology"
+                            class="admin-input"
+                            value=""
+                        >
+                            <option value="">---------</option>
+                        </select>
+                    </div>
+                    <div class="input-container">
+                        <label class="admin-label" for="competency">Competency</label>
+                        <input
+                            class="admin-input"
+                            id="competency"
+                            name="competency"
+                            type="text"
+                            autocomplete="false"
+                            required
+                        />
+                    </div>
+                    <button class="admin-button" type="submit">Add Skill</button>                
+                </div>
+            </form>
+            <small><a href="/dashboard/personal/edit">Back to Profile</a></small>
+        </main>
+        <script type="module" src="/js/personal/addSkill.js"></script>    
+    </body>
+</html>

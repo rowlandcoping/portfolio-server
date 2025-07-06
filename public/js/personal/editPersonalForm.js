@@ -4,6 +4,7 @@ import createListLink from "../utils/createListLink.js";
 
 const form = document.getElementById('editPersonalForm');
 const descriptionInput = document.getElementById('description');
+
 const data = {}
 
 const message = sessionStorage.getItem('flash');
@@ -84,6 +85,9 @@ const addLink = document.getElementById('addLink');
 
 addLink.addEventListener('click', () => {
     window.location.href = `/dashboard/personal/link/${data.id}`;
+});
+addSkill.addEventListener('click', () => {
+    window.location.href = `/dashboard/personal/skill/${data.id}`;
 });
 //update description
 form.addEventListener('submit', async (e) => {

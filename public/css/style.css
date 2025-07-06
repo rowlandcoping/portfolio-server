@@ -120,7 +120,7 @@ form {
 }
 
 .input-container textarea {
-    height: 20vh;
+    height: 15vh;
 }
 
 .admin-label {
@@ -242,13 +242,28 @@ input[type="file"]::file-selector-button {
 }
 
 #addSkill, #addLink {
-    margin-top:20px;
+    width:100%;
+    margin-top: 10px;
 }
 
-#adminLinkSelect h4, #adminSKillSelect h4 {
+#adminLinkSelect h4, #adminSkillSelect h4 {
     margin: 5px 0;
 }
 
 select {
     margin: 0 12px 0 0px;
+}
+
+#ecoContainer, #techContainer {
+    display:none;
+}
+
+
+
+.select-selector {
+    margin-bottom: 30px;
+}
+
+.select-selector button {
+    padding: 10px;
 }

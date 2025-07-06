@@ -47,31 +47,36 @@ const getSkillsByProfileId = async (req, res) => {
 //@route POST /skills
 //@access Private
 const addSkill = async (req, res, next) => {
-    const userId = req.session?.userId;
-    const { ecosystem, tech, competency, personal } = req.body;
-    if (!id) return res.status(401).json({ message: 'User not authorized' });
-    //NB validate before making db query
-    if (!ecosystem || !competency || !personal) {
+    const { name, ecosystem, tech, competency, personal } = req.body;
+    if (!name || (!ecosystem && !tech) || !competency || !personal) {
         return res.status(400).json({ message: "Missing required fields" });
-    }    
+    }
+
+    const { userId } = await prisma.personal.findUnique({ 
+        where: { id: Number(personal) }
+    });
+    if (!userId) return res.status(404).json({ message: 'No user found' });
 
     try {
         //set data outside of db call
-        const data = {            
-            ecosystem: { connect: { id: ecosystem } },
-            personal: { connect: { id: personal } },
+        const data = {
+            name,           
+            personal: { connect: { id: Number(personal) } },
             competency,
             user: { connect: { id: userId } }
         }
+        if (ecosystem) {
+            data.ecosystem = { connect: { id: Number(ecosystem) } }
+        }
         if (tech) {
             data.tech = { connect: { id: Number(tech) } }
-        }        
+        }
         const newSkill = await prisma.skill.create({ data });
-        res.status(201).json(newSkill);
+        res.status(201).json({ message: "New Skill Created", skill: newSkill });
     } catch (err) {
-        if (err.code === 'P2002' && Array.isArray(err.meta?.target) && err.meta.target.includes('techId') && err.meta.target.includes('personId')) {
+        if (err.code === 'P2002') {
             logEvents(`Duplicate field error: ${err.meta?.target}`, 'dbError.log');
-            return res.status(409).json({ message: 'Skill already exists for this person and tech combination.' });
+            return res.status(409).json({ message: 'This Skill already exists.' });
         }
         next(err);
     }
@@ -86,7 +91,7 @@ const updateSkill = async (req, res, next) => {
     const { id, ecosystem, tech, competency } = req.body;
     
     //NB validate before making db query
-    if (!id || !ecosystem || !competency) {
+    if (!id || (!ecosystem && !tech) || !competency) {
         return res.status(400).json({ message: "Missing required fields" });
     }    
 
@@ -94,16 +99,15 @@ const updateSkill = async (req, res, next) => {
         const updatedSkill = await prisma.skill.update({ 
             where: { id: Number(id) }, 
             data: {
-                ecosystem: { connect: { id: ecosystem } },
+                ecosystem: tech ? { connect: { id: Number(ecosystem) } }: undefined,
                 tech: tech ? { connect: { id: Number(tech) } } : undefined,
                 competency
-            }   
+            }
         });
         res.json({ message: "Skill updated", skill: updatedSkill });
     } catch (err) {
-        if (err.code === 'P2002' && Array.isArray(err.meta?.target) && err.meta.target.includes('techId') && err.meta.target.includes('personId')) {
-            logEvents(`Duplicate field error: ${err.meta?.target}`, 'dbError.log');
-            return res.status(409).json({ message: 'Skill already exists for this person and tech combination.' });
+        if (err.code === 'P2002') {
+            return res.status(409).json({ message: 'Skill already exists' });
         }
         if (err.code === 'P2025') {
             logEvents(`Record not found - ${req.method} ${req.originalUrl} - Target ID: ${id}`,'dbError.log');
@@ -117,18 +121,18 @@ const updateSkill = async (req, res, next) => {
 //@route DELETE /personal/skills
 //@access Private
 const deleteSkill = async (req, res, next) => {
-  const { id } = req.body;
-  if (!id) return res.status(400).json({ message: 'Skill ID required' });
-  try {
-    await prisma.skill.delete({ where: { id: Number(id) } });
-    res.json({ message: `Skill with id ${id} deleted.` });
-  } catch (err) {
-    if (err.code === 'P2025') {
-        logEvents(`Record not found - ${req.method} ${req.originalUrl} - Target ID: ${id}`,'dbError.log');
-        return res.status(404).json({ message: `Skill with id ${id} not found` });
+    const { id } = req.body;
+    if (!id) return res.status(400).json({ message: 'Skill ID required' });
+    try {
+        await prisma.skill.delete({ where: { id: Number(id) } });
+        res.json({ message: `Skill with id ${id} deleted.` });
+    } catch (err) {
+        if (err.code === 'P2025') {
+            logEvents(`Record not found - ${req.method} ${req.originalUrl} - Target ID: ${id}`,'dbError.log');
+            return res.status(404).json({ message: `Skill with id ${id} not found` });
+        }
+        next(err);
     }
-    next(err);
-  }
 };
 
 export default {
