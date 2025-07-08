@@ -47,6 +47,8 @@ model Project {
     dateMvp   DateTime?
     dateProd  DateTime?
     contact   Contact[]
+    personal  Personal    @relation(fields: [personId], references:[id], onDelete: Cascade)
+    personId  Int
     user      User          @relation(fields:[userId], references:[id])
     userId    Int
 }
@@ -59,6 +61,7 @@ model ProjectEcosystem {
     tech      Tech []       @relation("ProjectTech")
     project   Project       @relation(fields:[projectId], references:[id])
     projectId Int
+    
 
     @@unique([projectId, ecoId])
 }
@@ -92,6 +95,7 @@ model Personal {
     description String
     links       Link []
     contact     Contact []
+    project     Project []
 }
 //personal relations
 model Skill {

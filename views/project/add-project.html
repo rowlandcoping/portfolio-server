@@ -1,0 +1,168 @@
+ <!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Create Project</title>
+        <link rel="stylesheet" href="/css/style.css" />
+    </head>
+    <body>
+        <main class="center-top">
+            <h1>Create New Project</h1>
+            <p id="showMessage"></p>
+            <form class="admin-form" id="projectForm" method="POST">                
+                <div class="admin-form-container">
+                    <div class="input-container">
+                        <label class="user-toggle" for="userToggle">Assign to another user</label><input type="checkbox" id="userToggle" name="userToggle">
+                    </div>
+                    <div id="userSelect" class="input-container">
+                        <label class="admin-label" for="userId">Assign to User</label>
+                        <select
+                            id="userId"
+                            name="userId"
+                            class="admin-input"
+                            value=""
+                        >
+                            <option value="">---------</option>
+                        </select>
+                    </div>
+                    <div class="input-container">
+                        <label class="admin-label" for="name">Project Title</label>
+                        <input
+                            class="admin-input"
+                            id="name"
+                            name="name"
+                            type="text"
+                            autocomplete="false"
+                            required
+                        />
+                    </div>
+                    
+                    <div class="input-container">
+                        <label class="admin-label" for="description">Add a Description</label>
+                        <textarea
+                            class="admin-input"
+                            id="description"
+                            name="description"
+                            autocomplete="false"
+                            required
+                        ></textarea>
+                    </div>
+                    <div class="input-container">
+                        <label class="admin-label" for="projtype">Select Type of Project</label>
+                        <select
+                            id="projtype"
+                            name="projtype"
+                            class="admin-input"
+                            value=""
+                        >
+                            <option value="">---------</option>
+                        </select>
+                    </div>
+                    <div class="input-container">
+                        <label class="admin-label" for="dateMvp">Date MVP completed</label>
+                        <input
+                            id="dateMvp"
+                            type="date"
+                            name="dateMvp"
+                            class="admin-input"
+                            value=""
+                        />
+                    </div>
+                    <div class="input-container">
+                        <label class="admin-label" for="dateProd">Date Production version live</label>
+                        <input
+                            id="dateProd"
+                            type="date"
+                            name="dateProd"
+                            class="admin-input"
+                            value=""
+                        />
+                    </div>
+                    
+                    <div class="input-container">                        
+                        <label class="admin-label">Features</label>                           
+                        <div class="admin-input input-wrapper">
+                            <label for="featureInput" class="sr-only">Add Feature</label>
+                            <input
+                                class="nested-input"
+                                id="featureInput"
+                                type="text"
+                                autocomplete="false"
+                                placeholder="click here to add feature"
+                                required
+                            />
+                            <button class="add-button selected" id="addFeature" type="button">Add Feature</button>                       
+                            <input
+                                id="features"
+                                name="features"
+                                type="hidden"
+                                autocomplete="false"
+                                required
+                            />
+                        </div>
+                    </div>
+                    <div class="input-container">                        
+                        <h4 class="admin-label">Feature List</h4>                           
+                        <div id="featureList" class="admin-input item-list"></div>
+                    </div>
+                    <div class="input-container">
+                        <label class="admin-label">Issues</label>
+                        <div class="admin-input input-wrapper">
+                            <label for="issueInput" class="sr-only">Add Issue</label>
+                            <input
+                                class="nested-input"
+                                id="issueInput"
+                                type="text"
+                                autocomplete="false"
+                                placeholder="click here to add issue"
+                                required
+                            />
+                            <button class="add-button selected" id="addIssue" type="button">Add Issue</button>
+                        </div>
+                        <input
+                            id="issues"
+                            name="issues"
+                            type="hidden"
+                            autocomplete="false"
+                            required
+                        />
+                    </div>
+                    <div class="input-container">                        
+                        <h4 class="admin-label">Issues List</h4>                           
+                        <div id="issueList" class="admin-input item-list"></div>
+                    </div>
+                    <div class="input-container">
+                        <label class="admin-label" for="imageAlt">Image Description</label>
+                        <input
+                            class="admin-input"
+                            id="imageAlt"
+                            name="imageAlt"
+                            type="text"
+                            required
+                        />
+                    </div>
+                    <div class="input-container">
+                        <label class="admin-label" for="image">Image</label>
+                        <input
+                            class="file-input"
+                            type="file" 
+                            id="image"
+                        />
+                    </div>
+                    <button id="imageCancel" type="button" class="hidden">Cancel Upload</button>
+                    
+                    <div class="input-container">
+                        <canvas id="canvas" class="hidden"></canvas>
+                        <img id="imageLoader" class="hidden">
+                        <img id="imagePreview" class="hidden" src="" alt="This is a preview of the uploaded image">
+                    </div>                    
+                    <button class="admin-button" type="submit">Create Project</button>
+                    <small class="help-info">Manage project once created to add technologies</small>
+                </div>
+            </form>
+            <a href="/dashboard">Back to Dashboard</a></small>
+        </main>
+        <script type="module" src="/js/project/addProject.js"></script>    
+    </body>
+</html>
