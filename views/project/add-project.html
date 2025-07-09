@@ -35,26 +35,41 @@
                             type="text"
                             autocomplete="false"
                             required
+                            placeholder="the name of the project"
+                        />
+                    </div>
+                    <div class="input-container">
+                        <label class="admin-label" for="url">Project Link</label>
+                        <input
+                            class="admin-input"
+                            id="url"
+                            name="url"
+                            type="text"
+                            autocomplete="false"
+                            required
+                            placeholder="enter live project url"
                         />
                     </div>
                     
                     <div class="input-container">
-                        <label class="admin-label" for="description">Add a Description</label>
+                        <label class="admin-label" for="overview">Add a Description</label>
                         <textarea
                             class="admin-input"
-                            id="description"
-                            name="description"
+                            id="overview"
+                            name="overview"
                             autocomplete="false"
+                            placeholder="type here what it is all about"
                             required
                         ></textarea>
                     </div>
                     <div class="input-container">
-                        <label class="admin-label" for="projtype">Select Type of Project</label>
+                        <label class="admin-label" for="type">Select Type of Project</label>
                         <select
-                            id="projtype"
-                            name="projtype"
+                            id="type"
+                            name="type"
                             class="admin-input"
                             value=""
+                            required
                         >
                             <option value="">---------</option>
                         </select>
@@ -81,7 +96,7 @@
                     </div>
                     
                     <div class="input-container">                        
-                        <label class="admin-label">Features</label>                           
+                        <label class="admin-label">Add Feature</label>                           
                         <div class="admin-input input-wrapper">
                             <label for="featureInput" class="sr-only">Add Feature</label>
                             <input
@@ -90,7 +105,6 @@
                                 type="text"
                                 autocomplete="false"
                                 placeholder="click here to add feature"
-                                required
                             />
                             <button class="add-button selected" id="addFeature" type="button">Add Feature</button>                       
                             <input
@@ -107,7 +121,7 @@
                         <div id="featureList" class="admin-input item-list"></div>
                     </div>
                     <div class="input-container">
-                        <label class="admin-label">Issues</label>
+                        <label class="admin-label">Add Issue</label>
                         <div class="admin-input input-wrapper">
                             <label for="issueInput" class="sr-only">Add Issue</label>
                             <input
@@ -116,7 +130,6 @@
                                 type="text"
                                 autocomplete="false"
                                 placeholder="click here to add issue"
-                                required
                             />
                             <button class="add-button selected" id="addIssue" type="button">Add Issue</button>
                         </div>
@@ -139,7 +152,7 @@
                             id="imageAlt"
                             name="imageAlt"
                             type="text"
-                            required
+                            placeholder="describe your image for screen-readers"
                         />
                     </div>
                     <div class="input-container">

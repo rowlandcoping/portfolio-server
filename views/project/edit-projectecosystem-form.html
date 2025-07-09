@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="/css/style.css" />
+    </head>
+    <body>
+        <main class="center-top">
+            <h1>Update Project Ecosystem</h1>
+            <p id="showMessage"></p>
+            <form class="admin-form" id="editProjectecosystemForm" method="POST">
+                <div class="admin-form-container">
+                    <div class="input-container">
+                        <label class="admin-label" for="ecosystem">Ecosystem</label>
+                        <select
+                            id="ecosystem"
+                            name="ecosystem"
+                            class="admin-input"
+                            value=""
+                            required
+                        >
+                            <option value="">---------</option>
+                        </select>
+                    </div>
+                    <div class="input-container">
+                        <label class="admin-label" for="tech">Related Tech</label>
+                        <div id="buttonsContainer"></div>
+                        <input
+                            id="tech"
+                            name="tech"
+                            type="hidden"
+                            value=""
+                        />
+                    </div>
+                    <button class="admin-button" type="submit">Update Project Ecosystem</button>                
+                </div>
+            </form>
+            <small><a href="/dashboard/project/edit">Back to Projects</a></small>
+        </main>
+        <script type="module" src="/js/project/editProjectecosystem.js"></script>
+        
+    </body>
+</html>

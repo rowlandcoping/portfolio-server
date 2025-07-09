@@ -50,10 +50,9 @@ imageCancel.addEventListener('click', (e) => {
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const formData = new FormData(form);
-    const useOriginalName = imageUpload.files[0].name;
-
-    const originalFile = new File([originalBlob], useOriginalName, { type: 'image/webp' });
-    const transformedFile = new File([transformedBlob], `green-${useOriginalName}`, { type: 'image/webp' });
+    const baseName = imageUpload.files[0].name.replace(/\.[^/.]+$/, ''); // remove file extension
+    const originalFile = new File([originalBlob], `${baseName}.webp`, { type: 'image/webp' });
+    const transformedFile = new File([transformedBlob], `green-${baseName}.webp`, { type: 'image/webp' });
 
     formData.delete('logo');
     formData.append('original', originalFile);

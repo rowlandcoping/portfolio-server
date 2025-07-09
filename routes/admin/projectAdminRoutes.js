@@ -19,11 +19,19 @@ router.get(['/type', '/type.html'], (req, res) => {
 router.get('/type/edit', (req, res) => {
     res.sendFile(path.join(viewDir, 'project', 'edit-projtype.html'));
 });
+
+
+router.get(['/projectecosystem/:id'], (req, res) => {
+    res.sendFile(path.join(viewDir, 'project', 'add-projectecosystem.html'));
+});
 router.get('/edit/:id', (req, res) => {
     res.sendFile(path.join(viewDir, 'project', 'edit-project-form.html'));
 })
 router.get('/type/edit/:id', (req, res) => {
     res.sendFile(path.join(viewDir, 'project', 'edit-projtype-form.html'));
 })
+router.get(['/projectecosystem/edit/:id'], (req, res) => {
+    res.sendFile(path.join(viewDir, 'project', 'edit-projectecosystem-form.html'));
+});
 
 export default router;

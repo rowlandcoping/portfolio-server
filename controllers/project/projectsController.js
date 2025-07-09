@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import prisma from '../../config/db.js';
 import { logEvents } from '../../middleware/logger.js';
 
@@ -29,47 +31,104 @@ const getProjectById = async (req, res) => {
     res.json(project);
 }
 
+//@desc Get a project
+//@route GET /projects/features/:id
+//@access Private
+const getFeaturesByProjectId = async (req, res) => {
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ message: 'Project ID required' });
+
+    const features = await prisma.feature.findMany({ where: { projectId: Number(id) } });
+    if (!features) return res.status(404).json({ message: 'No features found' });
+
+    res.json(features);
+}
+
+//@desc Get a project
+//@route GET /projects/issues/:id
+//@access Private
+const getIssuesByProjectId = async (req, res) => {
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ message: 'Project ID required' });
+
+    const issues = await prisma.issue.findMany({ where: { projectId: Number(id) } });
+    if (!issues) return res.status(404).json({ message: 'No issues found' });
+
+    res.json(issues);
+}
+
 //@desc Create new feature
 //@route POST /projects
 //@access Private
 const addProject = async (req, res, next) => {
-    console.log('req.body:', req.body);
     //NB features = [] defaults to empty array if there is no value.
-    const { title, overview, image, features=[], issues=[], type, ecosystem, tech, dateMvp, dateProd, user } = req.body;
-    
+    const { name, overview, url, imageAlt, features=[], issues=[], type, dateMvp, dateProd, user } = req.body;
+    const id = req.session?.userId;
+    const featureArray = JSON.parse(features);    
+    const issueArray = JSON.parse(issues);
+
+    let userId
+    if (!user) {
+        userId = id
+    } else {
+        userId = user;
+    }
+    if (!userId) {
+        return res.status(401).json({ message: 'User not found'});
+    }
+
+    const result = await prisma.personal.findUnique({ 
+        where: { userId: Number(userId) },
+        select: { id: true }   
+    });
+    const personal = Number(result.id);
+
+    if (!result) {
+        return res.status(404).json({ message: 'Profile not found for user' });
+    }
+
     //NB validate before making db query
-    if (!title || !overview || !type || !ecosystem) {
+    if (!name || !overview || !type || !url) {
         return res.status(400).json({ message: "Missing required fields" });
     }
-    if (!Array.isArray(features) || !Array.isArray(issues)) {
+     
+    if (!Array.isArray(featureArray) || !Array.isArray(issueArray)) {
         return res.status(400).json({ message: 'Features and issues must be arrays' });
     }
+
+    const originalFile = req.files?.original?.[0];
+    const transformedFile = req.files?.transformed?.[0];
+
+    let imageOrg = undefined;
+    let imageGrn = undefined;
+    if (originalFile && transformedFile) {
+        imageOrg = `/images/${originalFile.filename}`;
+        imageGrn = `/images/${transformedFile.filename}`;
+    }
+
     try {
         //set data outside of db call 
         const data = {
-                title,
-                overview,
-                image,
-                type: { connect: { id: Number(type) } },
-                ecosystem: { connect: ecosystem.map(id => ({ id: Number(id) })) },
-                user: { connect: { id: Number(user) } },
-                dateMvp: dateMvp ? new Date(dateMvp) : null,
-                dateProd: dateProd ? new Date(dateProd) : null,
-                features: {
-                    create: features.map(f => ({ description: f }))
-                },
-                issues: {
-                    create: issues.map(i => ({ description: i }))
-                }
+            name,
+            overview,
+            url,
+            imageAlt,
+            imageOrg,
+            imageGrn,
+            type: { connect: { id: Number(type) } },
+            user: { connect: { id: Number(userId) } },
+            personal: { connect: { id: Number(personal) } },
+            dateMvp: dateMvp ? new Date(dateMvp) : null,
+            dateProd: dateProd ? new Date(dateProd) : null,
+            features: {
+                create: featureArray.map(f => ({ description: f }))
+            },
+            issues: {
+                create: issueArray.map(i => ({ description: i }))
             }
-        //add optional relational field to data if it exists
-        if (tech && tech.length) {
-            data.tech = {
-                connect: tech.map(id => ({ id: Number(id) }))
-             };
         }
         const newProject = await prisma.project.create({ data });
-        res.status(201).json(newProject);
+        res.status(201).json({ message: "project created", project: newProject});
     } catch (err) {
         if (err.code === 'P2002') {
             logEvents(`Duplicate field error: ${err.meta?.target}`, 'dbError.log');
@@ -84,37 +143,72 @@ const addProject = async (req, res, next) => {
 //@route PATCH /projects/projects
 //@access Private
 const updateProject = async (req, res, next) => {
-    const { id, title, overview, image, features = [], issues = [], type, ecosystem, tech, dateMvp, dateProd } = req.body;
+    const { id, user, name, url, imageAlt, overview, features, issues, type, dateMvp, dateProd, oldOriginal, oldTransformed } = req.body;
 
-    if (!id || !title || !overview || !type || !ecosystem) {
+    if (!id || !name || !overview || !type || !url) {
         return res.status(400).json({ message: "Missing required fields" });
     }
-    if (!Array.isArray(features) || !Array.isArray(issues)) {
+
+
+    const result = await prisma.personal.findUnique({ 
+        where: { userId: Number(user) },
+        select: { id: true }   
+    });
+    if (!result && user) {
+        return res.status(404).json({ message: 'Profile not found for selected user.  Create a profile first.' });
+    }
+
+    const personal = Number(result.id);
+    const featuresArray = JSON.parse(features);
+    const issuesArray = JSON.parse(issues);
+
+    if (!Array.isArray(featuresArray) || !Array.isArray(issuesArray)) {
         return res.status(400).json({ message: 'Features and issues must be arrays' });
     }
+
+    const uploadDir = path.join(process.cwd(), 'images');
+    const imageOrg = req.files?.original?.[0]
+        ? `/images/${req.files.original[0].filename}`
+        : undefined;
+    const imageGrn = req.files?.transformed?.[0]
+        ? `/images/${req.files.transformed[0].filename}`
+        : undefined;
 
     try {        
         const updatedProject = await prisma.project.update({
             where: { id: Number(id) },
             data: {
-                title,
+                user: { connect: { id: Number(user) } },
+                personal: { connect: { id: Number(personal) } },
+                name,
                 overview,
-                image,
-                type: { connect: { id: Number(type) } },
-                ecosystem: { set: ecosystem.map(id => ({ id: Number(id) })) },
-                tech: tech && tech.length ? { set: tech.map(id => ({ id: Number(id) })) } : undefined,
+                url,
+                imageAlt,
+                imageOrg,
+                imageGrn,
+                type: { connect: { id: Number(type) } },                
                 dateMvp: dateMvp ? new Date(dateMvp) : null,
                 dateProd: dateProd ? new Date(dateProd) : null,
                 features: {
                     deleteMany: {}, // deletes existing features first
-                    create: features.map(f => ({ description: f }))
+                    create: featuresArray.map(f => ({ description: f }))
                 },
                 issues: {
                     deleteMany: {}, // deletes existing issues first
-                    create: issues.map(i => ({ description: i }))
+                    create: issuesArray.map(i => ({ description: i }))
                 }
             }
         });
+        if (req.files.original && oldOriginal) {
+            fs.unlink(path.join(uploadDir, oldOriginal), (err) => {
+                if (err) console.error('Failed to delete old original file:', err);
+            });
+        }
+        if (req.files.transformed && oldTransformed) {
+            fs.unlink(path.join(uploadDir, oldTransformed), (err) => {
+                if (err) console.error('Failed to delete old transformed file:', err);
+            });
+        }
         res.json({ message: "Project updated", project: updatedProject });
     } catch (err) {
         if (err.code === 'P2025') {
@@ -134,25 +228,38 @@ const updateProject = async (req, res, next) => {
 //@route DELETE /projects
 //@access Private
 const deleteProject = async (req, res, next) => {
-  const { id } = req.body;
+    const { id } = req.body;
+    if (!id) return res.status(400).json({ message: 'Project ID required' });
 
-  if (!id) return res.status(400).json({ message: 'Project ID required' });
+    //retrieve image links
+    const project = await prisma.project.findUnique({ where: { id: Number(id) } });
+    const imagePath = path.join(process.cwd(), '.' + project.imageGrn);
+    const originalPath = path.join(process.cwd(), '.' + project.imageOrg);
 
-  try {
-    await prisma.project.delete({ where: { id: Number(id) } });
-    res.json({ message: `Project with id ${id} deleted.` });
-  } catch (err) {
-    if (err.code === 'P2025') {
-        logEvents(`Record not found - ${req.method} ${req.originalUrl} - Target ID: ${id}`,'dbError.log');
-        return res.status(404).json({ message: `Project with id ${id} not found` });
+    try {
+        await prisma.project.delete({ where: { id: Number(id) } });
+        //remove images
+        await fs.unlink(path.resolve(imagePath), (err) => {
+            if (err) console.error('Failed to delete old transformed file:', err);
+        });
+        await fs.unlink(path.resolve(originalPath), (err) => {
+            if (err) console.error('Failed to delete old original file:', err);
+        });
+        res.json({ message: `Project with id ${id} deleted.` });
+    } catch (err) {
+        if (err.code === 'P2025') {
+            logEvents(`Record not found - ${req.method} ${req.originalUrl} - Target ID: ${id}`,'dbError.log');
+            return res.status(404).json({ message: `Project with id ${id} not found` });
+        }
+        next(err);
     }
-    next(err);
-  }
 };
 
 export default {
     getAllProjects,
     getProjectById,
+    getFeaturesByProjectId,
+    getIssuesByProjectId,
     addProject, 
     updateProject,
     deleteProject

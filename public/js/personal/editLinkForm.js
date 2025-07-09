@@ -29,7 +29,7 @@ try {
     currentImage.src = result.logoGrn;
 
 } catch (err) {
-    showMessage(errorMessage, err.message || 'Update failed');
+    showMessage('error', err.message || 'Update failed');
 }
 
 //IMAGE HANDLING

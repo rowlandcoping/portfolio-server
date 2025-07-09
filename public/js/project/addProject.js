@@ -3,7 +3,7 @@ import { fetchWithRedirect } from "../utils/fetchWithRedirect.js";
 import { processImageHelper } from "../utils/imageProcessor.js";
 
 const form = document.getElementById('projectForm');
-const select = document.getElementById('projtype');
+const select = document.getElementById('type');
 const imageUpload = document.getElementById('image');
 const imageLoader = document.getElementById('imageLoader');
 const imagePreview = document.getElementById('imagePreview');
@@ -117,9 +117,9 @@ document.querySelectorAll('.add-button').forEach(button => {
 
         // Create and append delete button
         const delBtn = document.createElement('button');
-        delBtn.textContent = '×';
+        delBtn.innerHTML = '&#216;';
         delBtn.type = 'button';
-        delBtn.style.marginLeft = '8px';
+        delBtn.className = 'delete-button'; // Add class for styling
         delBtn.addEventListener('click', () => {
             item.remove();
             updateHiddenInput(list, hiddenInput);
@@ -169,19 +169,23 @@ imageCancel.addEventListener('click', (e) => {
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const formData = new FormData(form);
-    const useOriginalName = imageUpload.files[0].name;
-    const originalFile = new File([originalBlob], useOriginalName, { type: 'image/webp' });
-    const transformedFile = new File([transformedBlob], `green-${useOriginalName}`, { type: 'image/webp' });
-    //NNB we need to use form data with images and append like this.
-    formData.delete('image');
-    formData.append('original', originalFile);
-    formData.append('transformed', transformedFile);
+    if (imageUpload.files.length > 0) {
+        const baseName = imageUpload.files[0].name.replace(/\.[^/.]+$/, ''); // remove file extension
+        const originalFile = new File([originalBlob], `${baseName}.webp`, { type: 'image/webp' });
+        const transformedFile = new File([transformedBlob], `green-${baseName}.webp`, { type: 'image/webp' });
+        
+        // Remove the plain image field and append the files
+        formData.delete('image');
+        formData.append('original', originalFile);
+        formData.append('transformed', transformedFile);
+    }
+    console.log(formData)
 
     try {
         await fetchWithRedirect({
             url: '/projects',
             method: 'POST',
-            data,
+            data: formData,
             redirect: '/dashboard'
         });
     } catch (err) {

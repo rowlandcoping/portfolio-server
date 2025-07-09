@@ -34,7 +34,8 @@ model Role {
 model Project {
     id        Int           @id @default(autoincrement())
     name      String        @unique
-    overview  String   
+    overview  String
+    url       String        @unique
     imageOrg  String?
     imageGrn  String?
     imageAlt  String?
@@ -42,12 +43,12 @@ model Project {
     issues    Issue []
     type      ProjectType   @relation(fields: [typeId], references:[id]) //1 to many
     typeId    Int
-    projectEcosystem       ProjectEcosystem []
+    projectEcosystem       ProjectEcosystem [] 
     live      Boolean       @default(true)
     dateMvp   DateTime?
     dateProd  DateTime?
     contact   Contact[]
-    personal  Personal    @relation(fields: [personId], references:[id], onDelete: Cascade)
+    personal  Personal   @relation(fields: [personId], references:[id], onDelete: Cascade)
     personId  Int
     user      User          @relation(fields:[userId], references:[id])
     userId    Int
@@ -59,7 +60,7 @@ model ProjectEcosystem {
     ecosystem Ecosystem     @relation(fields:[ecoId], references:[id])
     ecoId     Int
     tech      Tech []       @relation("ProjectTech")
-    project   Project       @relation(fields:[projectId], references:[id])
+    project   Project       @relation(fields:[projectId], references:[id], onDelete: Cascade)
     projectId Int
     
 

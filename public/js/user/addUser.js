@@ -7,14 +7,14 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 const form = document.getElementById('userForm');
-const roleButtonsContainer = document.getElementById('roleButtonsContainer');
+const buttonsContainer = document.getElementById('buttonsContainer');
 const rolesInput = document.getElementById('roles');
 
 try {
     const result = await fetchWithRedirect({
         url: '/users/roles'
     });
-    roleButtonsContainer.appendChild(optionFragment({
+    buttonsContainer.appendChild(optionFragment({
         result,
         optionsInput: rolesInput
     }));

@@ -64,7 +64,8 @@ button.unstyled-button {
     text-align:center;
     align-items: center;
     justify-content: center;
-    height: 90dvh;
+    min-height: 90dvh;
+    margin-bottom: 50px;
 }
 
 .center-top{
@@ -72,7 +73,9 @@ button.unstyled-button {
     display:flex;
     flex-direction: column;
     align-items: center;
-    height: 90dvh;
+    min-height: 90dvh;
+    margin-bottom: 50px;
+    
 }
 
 
@@ -127,7 +130,7 @@ form {
     width: 30%;
 }
 
-.roles-container, #roleButtonsContainer {
+.roles-container, #buttonsContainer  {
     width: 60%;
 }
 .admin-input {
@@ -160,14 +163,14 @@ form {
 }
 
 /*SELECTOR BUTTONS*/
-#roleButtonsContainer {
+#buttonsContainer {
     display:flex;
     flex-wrap: wrap;
     justify-content:center;
     padding: 0 5px;
 }
 
-#roleButtonsContainer button {
+#buttonsContainer button {
     width:100px;
     margin: 2px;
 }
@@ -241,7 +244,7 @@ input[type="file"]::file-selector-button {
     margin-top: 25px;
 }
 
-#addSkill, #addLink, .add-button {
+#addSkill, #addLink, .add-button, #addProjeco {
     width:100%;
     margin-top: 10px;
 }
