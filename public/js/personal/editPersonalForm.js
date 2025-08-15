@@ -99,6 +99,7 @@ form.addEventListener('submit', async (e) => {
             url: '/personal',
             method: 'PATCH',
             data,
+            redirect: '/dashboard'
         });
     } catch (err) {
         showMessage('error', err.message || 'Updating Profile Failed');

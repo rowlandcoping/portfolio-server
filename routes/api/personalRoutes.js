@@ -10,6 +10,7 @@ import contactsController from '../../controllers/personal/contactsController.js
 const router = express.Router();
 
 router.get('/', personalController.getAllPersonal)
+router.get('/provider', personalController.getPersonalByPublicId)
 router.get('/links', linksController.getAllLinks)
 router.get('/skills', skillsController.getAllSkills)
 router.post('./contacts', contactsController.addContact)

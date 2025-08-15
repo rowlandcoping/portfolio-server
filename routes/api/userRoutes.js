@@ -5,6 +5,8 @@ import requireSession from '../../middleware/requireSession.js';
 
 const router = express.Router();
 
+router.get('/provider', usersController.getPortfolioUser)
+
 router.use(requireSession);
 
 router.route('/')

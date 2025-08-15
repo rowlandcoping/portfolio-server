@@ -16,7 +16,44 @@ const getAllPersonal = async (req, res) => {
     res.json(personal);
 }
 
-//@desc Get a personal profile
+//@desc Retrieve data for consumption on front end
+//@route GET /personal/provider
+//@access Public
+
+const getPersonalByPublicId = async (req, res) => {
+    const publicId = req.headers['x-user-uuid'];
+    console.log(publicId)
+
+    if (!publicId) {
+        return res.status(400).json({ message: 'Missing user UUID header' });
+    }
+
+    const user = await prisma.user.findUnique({
+        where: { publicId }
+    })
+    console.log(user.id)
+    const personal = await prisma.personal.findUnique({
+        where: { userId:  Number(user.id) },
+        include: {
+            skills: true,
+            links: true,
+            contact: true,
+            project: {
+                select: {
+                    id: true
+                }
+            }
+        }
+    });
+    if (!personal) {
+        //NB any errors not handled here will be handled by our error handline middleware
+        return res.status(404).json({message: 'No data found'})
+    }
+    res.json(personal);
+}
+
+
+//@desc Get a personal profile to edit
 //@route GET /personal/profile
 //@access Private
 const getUserPersonal = async (req, res) => {
@@ -120,6 +157,7 @@ const deletePersonal = async (req, res, next) => {
 
 export default {
     getAllPersonal,
+    getPersonalByPublicId,
     getUserPersonal,
     addPersonal, 
     updatePersonal,

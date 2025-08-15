@@ -17,11 +17,11 @@ a:hover {
 }
 
 button.unstyled-button {
-  all: unset;
-  display: inline;
-  font: inherit;
-  color: inherit;
-  cursor: pointer;
+    all: unset;
+    display: inline;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
 }
 
 #canvas {
@@ -62,8 +62,7 @@ button.unstyled-button {
     display:flex;
     flex-direction: column;
     text-align:center;
-    align-items: center;
-    justify-content: center;
+    place-items: center;
     min-height: 90dvh;
     margin-bottom: 50px;
 }

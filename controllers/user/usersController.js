@@ -46,6 +46,32 @@ const getUserById = async (req, res) => {
     res.json(user);
 }
 
+//@desc Get user of requesting website
+//@route GET /users/provider
+//@access Public
+
+const getPortfolioUser =async (req, res) => {
+    const publicId = req.headers['x-user-uuid'];
+    if (!publicId) {
+        return res.status(400).json({ message: 'Missing user UUID header' });
+    }
+
+    const user = await prisma.user.findUnique({
+        where: { publicId },
+        select: {
+            id: true,
+            name: true,
+            email: true
+        }
+    })
+
+    if (!user) {
+        //NB any errors not handled here will be handled by our error handline middleware
+        return res.status(404).json({message: 'No user found'})
+    }
+    res.json(user);
+}
+
 //@desc Create new user
 //@route POST /users
 //@access Private
@@ -162,6 +188,7 @@ const deleteUser = async (req, res, next) => {
 export default {
     getAllUsers,
     getUserById,
+    getPortfolioUser,
     addUser,
     updateUser,
     deleteUser,

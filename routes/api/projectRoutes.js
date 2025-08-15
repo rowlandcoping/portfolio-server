@@ -9,6 +9,7 @@ import requireSession from '../../middleware/requireSession.js';
 const router = express.Router();
 
 router.get('/', projectsController.getAllProjects)
+router.get('/provider', projectsController.getAllPortfolioProjects)
 router.get('/types', projectTypesController.getAllTypes)
 
 router.use(requireSession)

@@ -18,6 +18,40 @@ const getAllProjects =async (req, res) => {
     res.json(projects);
 }
 
+//@desc Get all projects for user's portfolio
+//@route GET /projects/provider
+//@access Public
+
+const getAllPortfolioProjects =async (req, res) => {
+    const publicId = req.headers['x-user-uuid'];
+    if (!publicId) {
+        return res.status(400).json({ message: 'Missing user UUID header' });
+    }
+
+    const user = await prisma.user.findUnique({
+        where: { publicId }
+    })
+
+    const projects = await prisma.project.findMany({
+        where: { userId: user.id },
+        include: {
+            features: true,
+            issues: true,
+            projectEcosystem: {
+                select: {
+                    ecosystem: true,
+                    tech: true,
+                }
+            }
+        }
+    });
+    if (!projects.length) {
+        //NB any errors not handled here will be handled by our error handline middleware
+        return res.status(400).json({message: 'No projects found'})
+    }
+    res.json(projects);
+}
+
 //@desc Get a project
 //@route GET /projects/:id
 //@access Private
@@ -257,6 +291,7 @@ const deleteProject = async (req, res, next) => {
 
 export default {
     getAllProjects,
+    getAllPortfolioProjects,
     getProjectById,
     getFeaturesByProjectId,
     getIssuesByProjectId,
