@@ -103,18 +103,14 @@ model Personal {
 model Skill {
     id          Int         @id @default(autoincrement())
     name        String
-    ecosystem   Ecosystem?   @relation(fields: [ecoId], references:[id], onDelete: Cascade) //NB can pull ecosystem from tech relational field
-    ecoId       Int?
-    tech        Tech?        @relation(fields: [techId], references:[id], onDelete: Cascade) //NB can pull ecosystem from tech relational field
-    techId      Int?           
-    competency  String
+    ecosystem   Ecosystem   @relation(fields: [ecoId], references:[id], onDelete: Cascade) //NB can pull ecosystem from tech relational field
+    ecoId       Int
+    tech        Tech[]      @relation("SkillTech")
     personal    Personal    @relation(fields: [personId], references:[id], onDelete: Cascade)
     personId    Int
     user        User        @relation(fields: [userId], references:[id], onDelete: Cascade)
     userId      Int
-
     @@unique([ecoId, personId])
-    @@unique([techId, personId])
 }
 model Link {
     id          Int         @id @default(autoincrement())
@@ -147,17 +143,20 @@ model Ecosystem {
     name    String    @unique
     typeId  Int
     type    EcoType   @relation(fields: [typeId], references: [id])
+    tech    Tech []
     skill   Skill[]
     projEcosystems ProjectEcosystem [] 
 }
 
 model Tech {
-  id        Int       @id @default(autoincrement())
-  type      TechType  @relation(fields: [typeId], references: [id])
-  typeId    Int
-  name      String    @unique
-  skill     Skill[]  
-  projEcosystems  ProjectEcosystem[] @relation("ProjectTech")
+  id                Int                 @id @default(autoincrement())
+  type              TechType            @relation(fields: [typeId], references: [id])
+  typeId            Int
+  ecosystem         Ecosystem?          @relation(fields: [ecoId], references: [id])
+  ecoId             Int?
+  name              String              @unique
+  skills            Skill[]             @relation("SkillTech")
+  projEcosystems    ProjectEcosystem[]  @relation("ProjectTech")
 }
 
 model EcoType {

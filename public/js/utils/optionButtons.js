@@ -27,20 +27,26 @@ const optionFragment = ({
 } = {}) => {
     const fragment = document.createDocumentFragment();
     //for... of loop is marginally quicker and supprts break/continue
-    for (const option of result) {        
-            const button = document.createElement('button');
-            button.type = 'button';
-            button.textContent = option.name;
-            button.id = option.id;
-            button.className = optionsArray.includes(option.id)
-                ? 'selected'
-                : 'deselected';
-            button.addEventListener('click', (event) => {
-                categoryClicked(option.id, optionsInput);
-            });
-            fragment.appendChild(button); 
+    if (result.length) {
+        for (const option of result) {        
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.textContent = option.name;
+                button.id = option.id;
+                button.className = optionsArray.includes(option.id)
+                    ? 'selected'
+                    : 'deselected';
+                button.addEventListener('click', (event) => {
+                    categoryClicked(option.id, optionsInput);
+                });
+                fragment.appendChild(button); 
+        }
+    } else {
+        const p = document.createElement('p');
+        p.textContent = 'No options found';
+        fragment.appendChild(p);
     }
-    return(fragment);
+    return(fragment);   
 }
 
 export { optionFragment }

@@ -5,28 +5,51 @@ const url = new URL(window.location.href);
 const id = url.pathname.split('/').pop();
 
 const form = document.getElementById('editTechForm');
-const select = document.getElementById('techtype');
+const selectTechType = document.getElementById('techtype');
+const selectEcosystem = document.getElementById('ecosystem');
 const nameValue = document.getElementById('name');
 
-try {
-    const result = await fetchWithRedirect({
+const result = await fetchWithRedirect({
         url: `/tech/${id}`
-    });
+});
+if (!result) showMessage('error', err.message, false);
+
+try {    
     const options = await fetchWithRedirect({
         url: '/tech/techtypes'
     });
 
-    select.querySelectorAll('option:not(:first-child)').forEach(opt => opt.remove());
+    selectTechType.querySelectorAll('option:not(:first-child)').forEach(opt => opt.remove());
 
     options.forEach(type => {
         const option = document.createElement('option');
         option.value = type.id;
         option.textContent = type.name;
-        select.appendChild(option);
+        selectTechType.appendChild(option);
     });
 
     nameValue.value = result.name;
-    select.value = String(result.typeId);
+    selectTechType.value = String(result.typeId);
+} catch(err) {
+    showMessage('error', err.message, false);
+}
+
+try {    
+    const options = await fetchWithRedirect({
+        url: '/tech/ecosystems'
+    });
+
+    selectEcosystem.querySelectorAll('option:not(:first-child)').forEach(opt => opt.remove());
+
+    options.forEach(type => {
+        const option = document.createElement('option');
+        option.value = type.id;
+        option.textContent = type.name;
+        selectEcosystem.appendChild(option);
+    });
+
+    nameValue.value = result.name;
+    selectEcosystem.value = String(result.ecoId);
 } catch(err) {
     showMessage('error', err.message, false);
 }
@@ -37,7 +60,8 @@ form.addEventListener('submit', async (e) => {
     const data = {
         id,
         name: formData.get('name'),
-        type: formData.get('techtype')
+        type: formData.get('techtype'),
+        ecosystem: formData.get('ecosystem')
     };
 
     try {

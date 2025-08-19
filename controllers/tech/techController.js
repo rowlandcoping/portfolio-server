@@ -16,14 +16,14 @@ const getAllTech =async (req, res) => {
     res.json(tech);
 }
 
-//@desc Get a tech
+//@desc Get all tech by associated ecosystem
 //@route GET /tech/:id
 //@access Private
 const getTechById = async (req, res) => {
     const { id } = req.params;
     if (!id) return res.status(400).json({ message: 'Tech ID required' });
 
-    const tech = await prisma.tech.findUnique({ where: { id: Number(id) } });
+    const tech = await prisma.tech.findMany({ where: { ecoId: Number(id) } });
     if (!tech) return res.status(404).json({ message: 'No tech found' });
 
     res.json(tech);
@@ -33,15 +33,14 @@ const getTechById = async (req, res) => {
 //@route POST /tech/tech
 //@access Private
 const addTech = async (req, res, next) => {
-    const { name, type } = req.body;
-    console.log(type)
+    const { name, type, ecosystem } = req.body;
     //NB validate before making db query
-    if (!name || !type) {
+    if (!name || !type || !ecosystem) {
         return res.status(400).json({ message: 'All fields Required'});
     }
 
     try {
-        const duplicate = await prisma.ecosystem.findFirst({
+        const duplicate = await prisma.tech.findFirst({
             where: {
                 name: {
                 equals: name,
@@ -50,7 +49,7 @@ const addTech = async (req, res, next) => {
             }
         });
         if (duplicate) {
-            return res.status(409).json({ message: 'Ecosytem already exists with this name'});
+            return res.status(409).json({ message: 'Tech already exists with this name'});
         }
     } catch(err) {
         return res.status(500).json({ message: 'server error'});
@@ -61,6 +60,7 @@ const addTech = async (req, res, next) => {
             data: {
                 name,
                 type: { connect: { id: Number(type) } },
+                ecosystem: { connect: { id: Number(ecosystem) } },
             }
         });
         res.status(201).json(newTech);
@@ -77,23 +77,26 @@ const addTech = async (req, res, next) => {
 //@route PATCH /tech/tech
 //@access Private
 const updateTech = async (req, res, next) => { 
-    const { id, name, type } = req.body;
+    const { id, name, type, ecosystem } = req.body;
 
-    if (!id || !name || !type ) {
+    if (!id || !name || !type || !ecosystem ) {
         return res.status(400).json({ message: "All fields are required"});
     }
 
     try {
-        const duplicate = await prisma.ecosystem.findFirst({
+        const duplicate = await prisma.tech.findFirst({
             where: {
                 name: {
                 equals: name,
                 mode: 'insensitive'
-                }
+                },
+                NOT: {
+                    id: Number(id), // exclude the row being updated
+                },
             }
         });
         if (duplicate) {
-            return res.status(409).json({ message: 'Ecosytem already exists with this name'});
+            return res.status(409).json({ message: 'Tech already exists with this name'});
         }
     } catch(err) {
         return res.status(500).json({ message: 'server error'});
@@ -105,16 +108,20 @@ const updateTech = async (req, res, next) => {
             data: {
                 name,
                 type: { connect: { id: Number(type) } },
+                ecosystem: { connect: { id: Number(ecosystem) } },
             }
         });
+
+        /*
         const relatedSkills = await prisma.skill.updateMany({
             where: { techId: Number(id) },
             data: {
                 name
             }
         });
+        */
         res.json({ 
-            message: `Tech updated. ${relatedSkills.count} related skill${relatedSkills.count !== 1 ? 's' : ''} updated.`, 
+            message: `Tech updated.` /* + `${relatedSkills.count} related skill${relatedSkills.count !== 1 ? 's' : ''} updated.`, */,
             tech: updatedTech
         });
     } catch (err) {

@@ -23,7 +23,12 @@ const getSkillById = async (req, res) => {
     const { id } = req.params;
     if (!id) return res.status(400).json({ message: 'Skill ID required' });
 
-    const skill = await prisma.skill.findUnique({ where: { id: Number(id) } });
+    const skill = await prisma.skill.findUnique({ 
+        where: { id: Number(id) },
+        include: {
+            tech: true
+        }
+    });
     if (!skill) return res.status(404).json({ message: 'No skill found' });
     res.json(skill);
 }
@@ -47,8 +52,8 @@ const getSkillsByProfileId = async (req, res) => {
 //@route POST /skills
 //@access Private
 const addSkill = async (req, res, next) => {
-    const { name, ecosystem, tech, competency, personal } = req.body;
-    if (!name || (!ecosystem && !tech) || !competency || !personal) {
+    const { name, ecosystem, tech, personal } = req.body;
+    if (!name || !ecosystem || !personal) {
         return res.status(400).json({ message: "Missing required fields" });
     }
 
@@ -62,14 +67,11 @@ const addSkill = async (req, res, next) => {
         const data = {
             name,           
             personal: { connect: { id: Number(personal) } },
-            competency,
+            ecosystem: { connect: { id: Number(ecosystem) } },
             user: { connect: { id: userId } }
         }
-        if (ecosystem) {
-            data.ecosystem = { connect: { id: Number(ecosystem) } }
-        }
         if (tech) {
-            data.tech = { connect: { id: Number(tech) } }
+            data.tech = { connect: tech.map((tech) => ({ id: Number(tech) })) }
         }
         const newSkill = await prisma.skill.create({ data });
         res.status(201).json({ message: "New Skill Created", skill: newSkill });
@@ -88,22 +90,25 @@ const addSkill = async (req, res, next) => {
 const updateSkill = async (req, res, next) => {
     console.log('req.body:', req.body);
 
-    const { id, ecosystem, tech, competency } = req.body;
+    const { id, ecosystem, tech, name } = req.body;
     
     //NB validate before making db query
-    if (!id || (!ecosystem && !tech) || !competency) {
+    if (!id || !ecosystem || !name) {
         return res.status(400).json({ message: "Missing required fields" });
     }    
 
     try {
+        const data = {
+            name,               
+            ecosystem: { connect: { id: Number(ecosystem) } }
+        }
+        if (tech) {
+            data.tech = { connect: tech.map((tech) => ({ id: Number(tech) })) }
+        }
         const updatedSkill = await prisma.skill.update({ 
             where: { id: Number(id) }, 
-            data: {
-                ecosystem: tech ? { connect: { id: Number(ecosystem) } }: undefined,
-                tech: tech ? { connect: { id: Number(tech) } } : undefined,
-                competency
-            }
-        });
+            data
+        });       
         res.json({ message: "Skill updated", skill: updatedSkill });
     } catch (err) {
         if (err.code === 'P2002') {

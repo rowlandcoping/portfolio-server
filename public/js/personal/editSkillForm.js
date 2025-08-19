@@ -1,117 +1,102 @@
 import showMessage from "../utils/showMessage.js";
 import { fetchWithRedirect } from "../utils/fetchWithRedirect.js";
+import { optionFragment } from '../utils/optionButtons.js';
 
 const url = new URL(window.location.href);
 const id = url.pathname.split('/').pop();
 
+const state = {
+  projectId: null,
+  ecosystemId: null,
+  oldValues: [],
+  techIds: []
+};
+
 const form = document.getElementById('editSkillForm');
-const ecoContainer = document.getElementById('ecoContainer');
-const techContainer = document.getElementById('techContainer');
-const ecoSelect = document.getElementById('ecosystem');
-const techSelect = document.getElementById('technology');
-const ecoButton = document.getElementById('loadEcosystem');
-const techButton = document.getElementById('loadTechnology');
-
-const popEcosystem = async () => {
-    try {
-        if (ecoSelect.options.length < 2) {
-            const result = await fetchWithRedirect({
-                url: '/tech/ecosystems'
-            });            
-            result.forEach(type => {
-                const option = document.createElement('option');
-                option.value = type.id;
-                option.textContent = type.name;
-                ecoSelect.appendChild(option);
-            });
-        }
-    } catch(err) {
-        showMessage('error', err.message, false);
-    }
-    ecoContainer.style.display = "flex"
-    techContainer.style.display = "none"
-}
-
-const popTech = async () => {
-    try {
-        if (techSelect.options.length < 2) {
-            const result = await fetchWithRedirect({
-                url: '/tech'
-            });
-            result.forEach(type => {
-                const option = document.createElement('option');
-                option.value = type.id;
-                option.textContent = type.name;
-                techSelect.appendChild(option);
-            });
-        }
-        //techSelect.querySelectorAll('option:not(:first-child)').forEach(opt => opt.remove());              
-    } catch(err) {
-        showMessage('error', err.message, false);
-    }
-    techContainer.style.display = "flex"
-    ecoContainer.style.display = "none"
-}
+const buttonsContainer = document.getElementById('buttonsContainer');
+const techInput = document.getElementById('tech');
+const select = document.getElementById('ecosystem');
 
 
-//populate form (oh boy)
+window.addEventListener('DOMContentLoaded', () => {
+    techInput.value = '';
+});
+
+const populateTechButtons = (result, techArray, techInput) => {
+  buttonsContainer.replaceChildren(optionFragment({
+    result,
+    optionsArray: techArray,
+    optionsInput: techInput
+  }));
+};
+
 try {
     const result = await fetchWithRedirect({
-        url: `/personal/skills/${id}`
+        url:`/personal/skills/${id}`
+    })
+    console.log(result)
+    state.techArray = result.tech.map(tech => tech.id);
+    const initialValues = state.techArray.join(',');
+    state.oldValues = initialValues;
+    techInput.value = initialValues;
+    state.projectId = result.projectId;
+    
+    const ecoResult = await fetchWithRedirect({
+        url: '/tech/ecosystems'
     });
-    document.getElementById('competency').value = result.competency;
-    if (result.ecoId) {
-        ecoButton.className = 'selected';
-        await popEcosystem();
-        ecoSelect.querySelector(`option[value="${result.ecoId}"]`).selected = true;
-    }
-    if (result.techId) {
-        techButton.className = 'selected';
-        await popTech();
-        techSelect.querySelector(`option[value="${result.techId}"]`).selected = true;
-    }
-} catch (err) {
-    showMessage('error', err.message || 'Update failed');
+    select.querySelectorAll('option:not(:first-child)').forEach(opt => opt.remove());
+    ecoResult.forEach(type => {
+        const option = document.createElement('option');
+        option.value = type.id;
+        option.textContent = type.name;
+        select.appendChild(option);
+    });
+    state.ecosystemId = String(result.ecoId);
+    select.value = String(result.ecoId);
+    const formData = new FormData(form); 
+    const techResult = await fetchWithRedirect({
+        url: `/tech/${formData.get('ecosystem')}`
+    });
+    populateTechButtons(techResult, state.techArray, techInput)
+} catch(err) {
+    showMessage('error', err.message, false);
 }
 
-ecoButton.addEventListener('click', () => {
-    ecoButton.className="selected"
-    techButton.className="deselected"
-    popEcosystem();
+const popButtons = async () => {      
+        try {
+            const result = await fetchWithRedirect({
+                url: `/tech/${select.value}`,
+            });
+            if (select.value === state.ecosystemId) {
+                state.techArray = state.oldValues;
+                techInput.value = state.oldValues;
+            } else {
+                state.techArray = [];
+            }
+            populateTechButtons(result, state.techArray, techInput)
+        } catch(err) {
+            showMessage('error', err.message, false);
+        }
+    //}
+}
+
+select.addEventListener('change', () => {
+    techInput.value = '';
+    buttonsContainer.replaceChildren();
+    popButtons();
 });
 
-techButton.addEventListener('click', () => {    
-    ecoButton.className="deselected"
-    techButton.className="selected"
-    popTech();
-});
 
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const formData = new FormData(form);
-    let optionName; 
-    let selectedTech;
-    let selectedEco;
-    if (techButton.classList.contains('selected')) {        
-        selectedTech = formData.get('technology');
-        optionName = techSelect.options[techSelect.selectedIndex].text;
-        selectedEco = undefined;
-    }
-    if (ecoButton.classList.contains('selected')) {
-        selectedTech = undefined
-        optionName = ecoSelect.options[ecoSelect.selectedIndex].text;
-        selectedEco = formData.get('ecosystem');
-    }
-
+    const tech = techInput.value.split(',').filter(Boolean).map(Number);
+    const optionName = select.options[select.selectedIndex].text;
     const data = {
         id,
         name: optionName,
-        competency: formData.get('competency'),
-        ecosystem: selectedEco,
-        tech: selectedTech
+        ecosystem: select.value,
+        tech
     }
-
-    console.log(data)
 
     try {
         await fetchWithRedirect({

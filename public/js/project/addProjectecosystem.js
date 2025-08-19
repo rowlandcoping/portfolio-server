@@ -29,26 +29,37 @@ try {
     showMessage('error', err.message, false);
 }
 
-try {
-    const result = await fetchWithRedirect({
-        url: '/tech'
-    });
-    buttonsContainer.appendChild(optionFragment({
-        result,
-        optionsInput: techInput
-    }));
-} catch(err) {
-    showMessage('error', err.message, false);
+const popButtons = async () => {   
+    if (select.value) {
+        try {
+            const result = await fetchWithRedirect({
+                url: `/tech/${select.value}`,
+            });
+            buttonsContainer.appendChild(optionFragment({
+                result,
+                optionsInput: techInput
+            }));
+        } catch(err) {
+            showMessage('error', err.message, false);
+        }
+    } else {
+        buttonsContainer.innerHTML = "<p>No Options Found</p>";
+    }
 }
+
+select.addEventListener('change', () => {
+    techInput.value = '';
+    buttonsContainer.replaceChildren();
+    popButtons();
+});
 
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const formData = new FormData(form);
     const tech = techInput.value.split(',').filter(Boolean).map(Number);
     const optionName = select.options[select.selectedIndex].text;
     const data = {
         name: optionName,
-        ecosystem: formData.get('ecosystem'),
+        ecosystem: select.value,
         project,
         tech
     }

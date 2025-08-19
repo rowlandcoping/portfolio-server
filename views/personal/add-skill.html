@@ -12,45 +12,26 @@
             <p id="showMessage"></p>
             <form class="admin-form" id="skillForm" method="POST">
                 <div class="admin-form-container"> 
-                    <div class="input-container select-selector">
-                        <div class="admin-label">
-                            Select Type of SKill to Add
-                        </div>
-
-                        <button type="button" class="deselected" id="loadEcosystem">Ecosystem</button>
-                        <button type="button" class="deselected" id="loadTechnology">Technology</button>
-                    </div>
-                    <div class="input-container" id="ecoContainer">
+                    <div class="input-container">
                         <label class="admin-label" for="ecosystem">Ecosystem</label>
                         <select
                             id="ecosystem"
                             name="ecosystem"
                             class="admin-input"
                             value=""
-                        >
-                            <option value="">---------</option>
-                        </select>
-                    </div>
-                    <div class="input-container" id="techContainer">
-                        <label class="admin-label" for="technology">Technology</label>
-                        <select
-                            id="technology"
-                            name="technology"
-                            class="admin-input"
-                            value=""
+                            required
                         >
                             <option value="">---------</option>
                         </select>
                     </div>
                     <div class="input-container">
-                        <label class="admin-label" for="competency">Competency</label>
+                        <label class="admin-label" for="tech">Related Tech</label>
+                        <div id="buttonsContainer"><p>No Options Found</p></div>
                         <input
-                            class="admin-input"
-                            id="competency"
-                            name="competency"
-                            type="text"
-                            autocomplete="false"
-                            required
+                            id="tech"
+                            name="tech"
+                            type="hidden"
+                            value=""
                         />
                     </div>
                     <button class="admin-button" type="submit">Add Skill</button>                
