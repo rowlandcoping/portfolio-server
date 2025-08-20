@@ -152,8 +152,8 @@ model Tech {
   id                Int                 @id @default(autoincrement())
   type              TechType            @relation(fields: [typeId], references: [id])
   typeId            Int
-  ecosystem         Ecosystem?          @relation(fields: [ecoId], references: [id])
-  ecoId             Int?
+  ecosystem         Ecosystem           @relation(fields: [ecoId], references: [id])
+  ecoId             Int
   name              String              @unique
   skills            Skill[]             @relation("SkillTech")
   projEcosystems    ProjectEcosystem[]  @relation("ProjectTech")

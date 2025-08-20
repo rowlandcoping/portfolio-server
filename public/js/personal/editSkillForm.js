@@ -53,9 +53,8 @@ try {
     });
     state.ecosystemId = String(result.ecoId);
     select.value = String(result.ecoId);
-    const formData = new FormData(form); 
     const techResult = await fetchWithRedirect({
-        url: `/tech/${formData.get('ecosystem')}`
+        url: `/tech/associated/${select.value}`
     });
     populateTechButtons(techResult, state.techArray, techInput)
 } catch(err) {
@@ -65,7 +64,7 @@ try {
 const popButtons = async () => {      
         try {
             const result = await fetchWithRedirect({
-                url: `/tech/${select.value}`,
+                url: `/tech/associated/${select.value}`,
             });
             if (select.value === state.ecosystemId) {
                 state.techArray = state.oldValues;

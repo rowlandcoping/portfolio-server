@@ -16,10 +16,23 @@ const getAllTech =async (req, res) => {
     res.json(tech);
 }
 
-//@desc Get all tech by associated ecosystem
-//@route GET /tech/:id
+//@desc Get selected tech
+//@route GET /tech/associated/:id
 //@access Private
 const getTechById = async (req, res) => {
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ message: 'Tech ID required' });
+
+    const tech = await prisma.tech.findUnique({ where: { id: Number(id) } });
+    if (!tech) return res.status(404).json({ message: 'Tech not found' });
+
+    res.json(tech);
+}
+
+//@desc Get all tech by associated ecosystem
+//@route GET /tech/associated/:id
+//@access Private
+const getTechByEcoId = async (req, res) => {
     const { id } = req.params;
     if (!id) return res.status(400).json({ message: 'Tech ID required' });
 
@@ -161,6 +174,7 @@ const deleteTech = async (req, res, next) => {
 export default {
     getAllTech,
     getTechById,
+    getTechByEcoId,
     addTech, 
     updateTech,
     deleteTech

@@ -33,7 +33,7 @@ const popButtons = async () => {
     if (select.value) {
         try {
             const result = await fetchWithRedirect({
-                url: `/tech/${select.value}`,
+                url: `/tech/associated/${select.value}`,
             });
             buttonsContainer.appendChild(optionFragment({
                 result,

@@ -34,6 +34,8 @@ router.route('/ecotypes')
 //get by id
 router.route('/:id')
     .get(techController.getTechById)
+router.route('/associated/:id')
+    .get(techController.getTechByEcoId)
 router.route('/ecosystems/:id')
     .get(ecosystemsController.getEcosystemById)
 router.route('/techtypes/:id')
