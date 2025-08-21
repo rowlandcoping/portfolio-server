@@ -41,7 +41,7 @@ const getSkillsByProfileId = async (req, res) => {
     if (!id) return res.status(401).json({ message: 'ID not found' });
 
     const skills = await prisma.skill.findMany({ 
-        where: { personId: Number(id) }
+        where: { personId: Number(id) },
     });
     if (!skills) return res.status(404).json({ message: 'No skills found for logged in user' });
     res.json(skills);

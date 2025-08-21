@@ -3,7 +3,7 @@ import { logEvents } from '../../middleware/logger.js';
 
 //TECH ROUTES
 
-//@desc Get all tech types
+//@desc Get all tech
 //@route GET /tech
 //@access Private
 

@@ -35,7 +35,14 @@ const getPersonalByPublicId = async (req, res) => {
     const personal = await prisma.personal.findUnique({
         where: { userId:  Number(user.id) },
         include: {
-            skills: true,
+            skills: {
+                select: {
+                    id: true,
+                    name:true,
+                    ecoId: true,
+                    tech: true
+                },
+            },
             links: true,
             contact: true,
             project: {
