@@ -16,6 +16,7 @@ const form = document.getElementById('editProjectForm');
 const nameInput = document.getElementById('name');
 const overInput = document.getElementById('overview');
 const urlInput = document.getElementById('url');
+const repoInput = document.getElementById('repo');
 const altInput = document.getElementById('imageAlt');
 const dateMvp = document.getElementById('dateMvp');
 const dateProd = document.getElementById('dateProd');
@@ -43,6 +44,8 @@ try {
     });
     nameInput.value = result.name;
     urlInput.value = result.url;
+
+    repoInput.value = result.repo;
     overInput.value = result.overview;
     altInput.value = result.imageAlt;
     currentImage.src = result.imageGrn;

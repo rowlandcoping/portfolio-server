@@ -96,7 +96,7 @@ const getIssuesByProjectId = async (req, res) => {
 //@access Private
 const addProject = async (req, res, next) => {
     //NB features = [] defaults to empty array if there is no value.
-    const { name, overview, url, imageAlt, features=[], issues=[], type, dateMvp, dateProd, user } = req.body;
+    const { name, overview, url, repo, imageAlt, features=[], issues=[], type, dateMvp, dateProd, user } = req.body;
     const id = req.session?.userId;
     const featureArray = JSON.parse(features);    
     const issueArray = JSON.parse(issues);
@@ -122,7 +122,7 @@ const addProject = async (req, res, next) => {
     }
 
     //NB validate before making db query
-    if (!name || !overview || !type || !url) {
+    if (!name || !overview || !type || !url ||!repo) {
         return res.status(400).json({ message: "Missing required fields" });
     }
      
@@ -146,6 +146,7 @@ const addProject = async (req, res, next) => {
             name,
             overview,
             url,
+            repo,
             imageAlt,
             imageOrg,
             imageGrn,
@@ -177,9 +178,9 @@ const addProject = async (req, res, next) => {
 //@route PATCH /projects/projects
 //@access Private
 const updateProject = async (req, res, next) => {
-    const { id, user, name, url, imageAlt, overview, features, issues, type, dateMvp, dateProd, oldOriginal, oldTransformed } = req.body;
+    const { id, user, name, url, repo, imageAlt, overview, features, issues, type, dateMvp, dateProd, oldOriginal, oldTransformed } = req.body;
 
-    if (!id || !name || !overview || !type || !url) {
+    if (!id || !name || !overview || !type || !url ||!repo) {
         return res.status(400).json({ message: "Missing required fields" });
     }
 
@@ -217,6 +218,7 @@ const updateProject = async (req, res, next) => {
                 name,
                 overview,
                 url,
+                repo,
                 imageAlt,
                 imageOrg,
                 imageGrn,
