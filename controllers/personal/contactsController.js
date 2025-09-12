@@ -33,7 +33,21 @@ const getContactById = async (req, res) => {
 //@access Private
 const addContact = async (req, res, next) => {
 
-    const { email, name, project, personal, message } = req.body;
+    const publicId = req.headers['x-user-uuid'];
+    const { projectId, email, name, message } = req.body;
+    if (!publicId) {
+        return res.status(400).json({ message: 'Missing user UUID header' });
+    }
+    const user = await prisma.user.findUnique({
+        where: { publicId }
+    })
+
+    const personal = await prisma.personal.findUnique({
+        where: { userId: Number(user.id) },
+    })
+
+
+    
     
     //NB validate before making db query
     if (!email || !name || !message) {
@@ -44,14 +58,12 @@ const addContact = async (req, res, next) => {
         const data = {
             email,
             name,
-            message
+            message,
+            personal: { connect: { id: Number(personal.id) } }
         }
-        if (project) {
-            data.project = { connect: { id: Number(project) } }
+        if (projectId) {
+            data.project = { connect: { id: Number(projectId) } }
         }
-        if (personal) {
-            data.personal = { connect: { id: Number(personal) } }
-        };
         const newContact = await prisma.contact.create({ data })   
         res.status(201).json(newContact);
     } catch (err) {

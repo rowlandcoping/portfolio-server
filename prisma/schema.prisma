@@ -113,6 +113,7 @@ model Skill {
     userId      Int
     @@unique([ecoId, personId])
 }
+
 model Link {
     id          Int         @id @default(autoincrement())
     name        String      @unique
@@ -124,7 +125,6 @@ model Link {
     personId    Int
     user        User        @relation(fields: [userId], references:[id], onDelete: Cascade)
     userId      Int
-
 }
 
 model Contact {
