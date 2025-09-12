@@ -94,6 +94,11 @@ model Personal {
     id          Int         @id @default(autoincrement())
     user        User        @relation(fields:[userId], references:[id], onDelete: Cascade)
     userId      Int         @unique
+    imageGrn    String?
+    imageOrg    String?
+    imageAlt    String?
+    starSign    String?
+    favColor    String?
     skills      Skill []
     description String
     links       Link []

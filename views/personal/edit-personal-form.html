@@ -8,7 +8,7 @@
     </head>
     <body>
         <main class="center-top">
-            <h1>Manage Profile</h1>
+            <h1>Manage Profile</h1> 
             <p id="showMessage"></p>
             <form class="admin-form" id="editPersonalForm" method="PATCH">
                 <div class="admin-form-container">
@@ -21,6 +21,30 @@
                             autocomplete="false"
                             required
                         ></textarea>
+                    </div>
+                    <div class="input-container">
+                        <label class="admin-label" for="starSign">Star Sign</label>
+                        <input
+                            class="admin-input"
+                            id="starSign"
+                            name="starSign"
+                            type="text"
+                            autocomplete="false"
+                            required
+                            placeholder="enter star sign"
+                        />
+                    </div>  
+                    <div class="input-container">
+                        <label class="admin-label" for="favColor">Favorite Color</label>
+                        <input
+                            class="admin-input"
+                            id="favColor"
+                            name="favColor"
+                            type="text"
+                            autocomplete="false"
+                            required
+                            placeholder="enter favorite color"
+                        />
                     </div>
                     <div class="input-container">
                         <div class="admin-label">Skills</div>
@@ -36,6 +60,32 @@
                             <div id="adminLinkSelect"></div>
                             <button id="addLink" type="button" class="selected">Add Link</button>
                         </div>
+                    </div>
+                    <div class="input-container">
+                        <label class="admin-label" for="imageAlt">Image Description</label>
+                        <input
+                            class="admin-input"
+                            id="imageAlt"
+                            name="imageAlt"
+                            type="text"
+                            placeholder="describe your image for screen-readers"
+                        />
+                    </div>
+                    <div class="input-container">
+                        <label class="admin-label" for="image">Update Image</label>
+                        <input
+                            class="file-input"
+                            type="file" 
+                            id="image"
+                        />
+                    </div>
+                    <button id="imageCancel" type="button" class="hidden">Cancel Upload</button>
+                    
+                    <div class="input-container">
+                        <canvas id="canvas" class="hidden"></canvas>
+                        <img id="imageLoader" class="hidden">
+                        <img id="imagePreview" class="hidden" src="" alt="This is a preview of the uploaded image">
+                        <img id="currentImage" src="" alt="">
                     </div>
                     
                     <button class="admin-button" type="submit">Update Profile</button>                

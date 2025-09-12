@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import prisma from '../../config/db.js';
 import { logEvents } from '../../middleware/logger.js';
 
@@ -78,7 +80,7 @@ const getUserPersonal = async (req, res) => {
 //@route POST /personal
 //@access Private
 const addPersonal = async (req, res, next) => {
-    const { description } = req.body;
+    const { description,  starSign, favColor, imageAlt } = req.body;
     //NB validate before making db query
     const user = req.session?.userId;
 
@@ -88,13 +90,29 @@ const addPersonal = async (req, res, next) => {
     if (!description) {
         return res.status(400).json({ message: 'All fields Required'});
     }
+
+    const originalFile = req.files?.original?.[0];
+    const transformedFile = req.files?.transformed?.[0];
+
+    let imageOrg = undefined;
+    let imageGrn = undefined;
+    if (originalFile && transformedFile) {
+        imageOrg = `/images/${originalFile.filename}`;
+        imageGrn = `/images/${transformedFile.filename}`;
+    }
+
     try {
-        const newPersonal = await prisma.personal.create({
-            data: {
-                user: { connect: { id: Number(user) } },
-                description
-            }
-        });
+        //set data outside of db call 
+        const data = {
+            user: { connect: { id: Number(user) } },
+            description,
+            starSign,
+            favColor,
+            imageAlt,
+            imageOrg,
+            imageGrn,
+        }
+        const newPersonal = await prisma.personal.create({ data });
         res.status(201).json( { message: "Profile Created", personal: newPersonal });
     } catch (err) {
         if (err.code === 'P2002') {
@@ -117,19 +135,42 @@ const addPersonal = async (req, res, next) => {
 //@route PATCH /personal
 //@access Private
 const updatePersonal = async (req, res, next) => { 
-    const { id, description } = req.body;
+    const { id, description, starSign, favColor, imageAlt, oldOriginal, oldTransformed } = req.body;
 
-    if (!id || !description) {
+    if (!id || !description || !starSign  || !favColor) {
         return res.status(400).json({ message: 'All fields Required'});
     }
 
+    const uploadDir = path.join(process.cwd(), 'images');
+        const imageOrg = req.files?.original?.[0]
+            ? `/images/${req.files.original[0].filename}`
+            : undefined;
+        const imageGrn = req.files?.transformed?.[0]
+            ? `/images/${req.files.transformed[0].filename}`
+            : undefined;
+
     try {
         const updatedPersonal = await prisma.personal.update({
-            where: { id },
+            where: { id: Number(id) },
             data: {
-                description
+                description,
+                starSign,
+                favColor,
+                imageAlt,
+                imageOrg,
+                imageGrn,
             }
         });
+        if (req.files.original && oldOriginal) {
+            fs.unlink(path.join(uploadDir, oldOriginal), (err) => {
+                if (err) console.error('Failed to delete old original file:', err);
+            });
+        }
+        if (req.files.transformed && oldTransformed) {
+            fs.unlink(path.join(uploadDir, oldTransformed), (err) => {
+                if (err) console.error('Failed to delete old transformed file:', err);
+            });
+        }
         res.json({ message: "Personal Profile Updated", personal: updatedPersonal });
     } catch (err) {
         if (err.code === 'P2025') {

@@ -179,7 +179,6 @@ form.addEventListener('submit', async (e) => {
         formData.append('original', originalFile);
         formData.append('transformed', transformedFile);
     }
-    console.log(formData)
 
     try {
         await fetchWithRedirect({

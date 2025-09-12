@@ -15,11 +15,18 @@ router.get('/links', linksController.getAllLinks)
 router.get('/skills', skillsController.getAllSkills)
 router.post('/contacts', contactsController.addContact)
 
-router.use(requireSession);
+//router.use(requireSession);
 
 router.route('/')
-    .post(personalController.addPersonal)
-    .patch(personalController.updatePersonal)
+    .post(upload.fields([
+        { name: 'original', maxCount: 1 },
+        { name: 'transformed', maxCount: 1 } 
+    ]), personalController.addPersonal)
+    .patch(upload.fields([
+        { name: 'original', maxCount: 1 },
+        { name: 'transformed', maxCount: 1 }
+    ]),personalController.updatePersonal)
+    
     .delete(personalController.deletePersonal)
 
 router.route('/profile')

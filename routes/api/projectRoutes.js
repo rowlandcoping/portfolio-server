@@ -17,7 +17,7 @@ router.use(requireSession)
 router.route('/')
     .post(upload.fields([
         { name: 'original', maxCount: 1 },
-        { name: 'transformed', maxCount: 1 }
+        { name: 'transformed', maxCount: 1 } 
     ]),projectsController.addProject)
 
     .patch(upload.fields([
