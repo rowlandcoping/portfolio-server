@@ -26,6 +26,13 @@ router.get(['/messages', '/messages.html'], (req, res) => {
     res.sendFile(path.join(viewDir, 'personal', 'view-messages.html'));
 });
 
+router.get(['/about', '/about.html'], (req, res) => {
+    res.sendFile(path.join(viewDir, 'personal', 'add-about.html'));
+});
+router.get(['/about/edit', '/about/edit.html'], (req, res) => {
+    res.sendFile(path.join(viewDir, 'personal', 'edit-about-form.html'));
+});
+
 router.get(['/skill/:id', '/skill.html'], (req, res) => {
     res.sendFile(path.join(viewDir, 'personal', 'add-skill.html'));
 });

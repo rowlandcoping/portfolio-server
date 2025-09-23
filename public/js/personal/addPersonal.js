@@ -22,7 +22,7 @@ try {
         sessionStorage.setItem('flash', 'You already have a profile');
         window.location.href = '/dashboard';
     }
-} catch(err) {
+} catch(err) { 
     showMessage('error', err.message || 'Fail');
 }
 

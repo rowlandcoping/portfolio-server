@@ -7,6 +7,7 @@ const id = url.pathname.split('/').pop();
 
 const state = {
   projectId: null,
+  aboutId: null,
   ecosystemId: null,
   oldValues: [],
   techIds: []
@@ -38,7 +39,14 @@ try {
     const initialValues = state.techArray.join(',');
     state.oldValues = initialValues;
     techInput.value = initialValues;
-    state.projectId = result.projectId;
+    if (result.projectId) {
+        state.projectId = result.projectId;
+        document.getElementById('projects-return').className = "block";
+        document.getElementById('projects-return').href=`/dashboard/project/edit/${state.projectId}`
+    } else {
+        state.aboutId = result.aboutId;
+        document.getElementById('about-return').className = "block";
+    }
     
     const ecoResult = await fetchWithRedirect({
         url: '/tech/ecosystems'
@@ -101,8 +109,9 @@ form.addEventListener('submit', async (e) => {
             url: '/projects/projectecosystems',
             method: 'PATCH',
             data,
-            redirect: `/dashboard/project/edit/${state.projectId}`
+            
         });
+        showMessage('success', 'Updated Project Ecosystem');
     } catch (err) {
         showMessage('error', err.message || 'Updating Project Ecosystem Failed');
     }

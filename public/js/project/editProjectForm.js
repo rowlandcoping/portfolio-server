@@ -272,7 +272,7 @@ form.addEventListener('submit', async (e) => {
         formData.append('oldTransformed', oldTransformedFilename);
         formData.delete('image');
     }
-    formData.append('id', Number(id));
+    formData.append('id', Number(id)); 
 
     try {
         await fetchWithRedirect({

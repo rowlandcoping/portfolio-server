@@ -36,8 +36,14 @@ router.route('/projectecosystems')
     .patch(projectEcosystemsController.updateProjectEcosystem)
     .delete(projectEcosystemsController.deleteProjectEcosystem)
 
+router.route('/projectecosystems/about')
+    .post(projectEcosystemsController.addAboutProjectEcosystem)
+router.route('/projectecosystems/about/:id')
+    .get(projectEcosystemsController.getProjectEcosystemsByAboutId)
+
 router.route('/projectecosystems/projects/:id')
-    .get(projectEcosystemsController.getProjectEcosystemByProjectId)
+    .get(projectEcosystemsController.getProjectEcosystemsByProjectId)
+
 router.route('/types/:id')
     .get(projectTypesController.getProjectTypeById)
 router.route('/features/:id')

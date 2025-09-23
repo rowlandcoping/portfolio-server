@@ -3,21 +3,23 @@ import upload from '../../middleware/imageUpload.js';
 import requireSession from '../../middleware/requireSession.js';
 
 import personalController from '../../controllers/personal/personalController.js';
+import aboutController from '../../controllers/personal/aboutController.js';
 import linksController from '../../controllers/personal/linksController.js';
 import skillsController from '../../controllers/personal/skillsController.js';
 import contactsController from '../../controllers/personal/contactsController.js';
 
 const router = express.Router();
 
-router.get('/', personalController.getAllPersonal)
 router.get('/provider', personalController.getPersonalByPublicId)
 router.get('/links', linksController.getAllLinks)
 router.get('/skills', skillsController.getAllSkills)
 router.post('/contacts', contactsController.addContact)
+router.get('/about/provider', aboutController.getAboutByPublicId)
 
-//router.use(requireSession);
+router.use(requireSession);
 
 router.route('/')
+    .get(personalController.getAllPersonal)
     .post(upload.fields([
         { name: 'original', maxCount: 1 },
         { name: 'transformed', maxCount: 1 } 
@@ -31,6 +33,12 @@ router.route('/')
 
 router.route('/profile')
     .get(personalController.getUserPersonal)
+
+router.route('/about')
+
+    .get(aboutController.getAboutByCurrentUser)
+    .post(aboutController.addAbout)
+    .patch(aboutController.updateAbout)
 
 router.route('/links')
 

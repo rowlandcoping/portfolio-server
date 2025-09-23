@@ -3,10 +3,9 @@ import { fetchWithRedirect } from "../utils/fetchWithRedirect.js";
 import { optionFragment } from '../utils/optionButtons.js';
 
 const url = new URL(window.location.href);
-const profileId = url.pathname.split('/').pop();
+const about = url.pathname.split('/').pop();
 
-const form = document.getElementById('skillForm');
-
+const form = document.getElementById('projectecosystemForm');
 const buttonsContainer = document.getElementById('buttonsContainer');
 const techInput = document.getElementById('tech');
 const select = document.getElementById('ecosystem');
@@ -30,7 +29,7 @@ try {
     showMessage('error', err.message, false);
 }
 
-const popButtons = async () => {    
+const popButtons = async () => {   
     if (select.value) {
         try {
             const result = await fetchWithRedirect({
@@ -60,19 +59,20 @@ form.addEventListener('submit', async (e) => {
     const optionName = select.options[select.selectedIndex].text;
     const data = {
         name: optionName,
-        ecosystem: select.value, 
-        personal: profileId,
+        ecosystem: select.value,
+        about,
         tech
     }
 
     try {
         await fetchWithRedirect({
-            url: '/personal/skills',
+            url: '/projects/projectecosystems/about',
             method: 'POST',
             data,
-            redirect: `/dashboard/personal/edit`
+            redirect: `/dashboard/personal/about/edit`
         });
     } catch (err) {
-        showMessage('error', err.message || 'Adding Skill Failed');
+        showMessage('error', err.message || 'Adding Project Ecosystem Failed');
     }
 });
+

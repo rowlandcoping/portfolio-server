@@ -45,6 +45,7 @@ const getAllPortfolioProjects =async (req, res) => {
             }
         }
     });
+    
     if (!projects.length) {
         //NB any errors not handled here will be handled by our error handline middleware
         return res.status(400).json({message: 'No projects found'})
@@ -148,7 +149,7 @@ const addProject = async (req, res, next) => {
             url,
             repo,
             imageAlt,
-            imageOrg,
+            imageOrg, 
             imageGrn,
             type: { connect: { id: Number(type) } },
             user: { connect: { id: Number(userId) } },
@@ -224,7 +225,7 @@ const updateProject = async (req, res, next) => {
                 imageGrn,
                 type: { connect: { id: Number(type) } },                
                 dateMvp: dateMvp ? new Date(dateMvp) : null,
-                dateProd: dateProd ? new Date(dateProd) : null,
+                dateProd: dateProd ? new Date(dateProd) : null, 
                 features: {
                     deleteMany: {}, // deletes existing features first
                     create: featuresArray.map(f => ({ description: f }))

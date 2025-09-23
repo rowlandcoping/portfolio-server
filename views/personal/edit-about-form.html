@@ -1,0 +1,89 @@
+ <!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Update About Page</title>
+        <link rel="stylesheet" href="/css/style.css" />
+    </head>
+    <body>
+        <main class="center-top">
+            <h1>Update About Page</h1>
+            <p id="showMessage"></p>
+            <form class="admin-form" id="editAboutForm" method="PATCH">                
+                <div class="admin-form-container">
+                    <div class="input-container">
+                        <label class="admin-label" for="type">Select Type of Project</label>
+                        <select
+                            id="type"
+                            name="type"
+                            class="admin-input"
+                            value=""
+                            required
+                        >
+                            <option value="">---------</option>
+                        </select>
+                    </div>
+                    <div class="input-container">
+                        <div class="admin-label">Project Ecosystems</div>
+                        <div class="admin-input">
+                            <div id="adminProjecoSelect"></div>
+                            <button id="addProjeco" type="button" class="selected">Add Project Ecosystem</button>  
+                        </div>
+                    </div>  
+                    <div class="input-container">
+                        <label class="admin-label" for="repo">Github Link</label>
+                        <input
+                            class="admin-input"
+                            id="repo"
+                            name="repo"
+                            type="text"
+                            autocomplete="false"
+                            required
+                            placeholder="enter github url"
+                        />
+                    </div>
+                    <div class="input-container">
+                        <label class="admin-label" for="copyYear">Copyright Year</label>
+                        <input
+                            class="admin-input"
+                            id="copyYear"
+                            name="copyYear"
+                            type="text"
+                            autocomplete="false"
+                            required
+                            placeholder="enter year"
+                        />
+                    </div>
+                    <div class="input-container">
+                        <label class="admin-label" for="copyName">Copyright Name</label>
+                        <input
+                            class="admin-input"
+                            id="copyName"
+                            name="copyName"
+                            type="text"
+                            autocomplete="false"
+                            required
+                            placeholder="enter copyright holder name"
+                        />
+                    </div>
+                    <div class="input-container">
+                        <label class="admin-label" for="overview">Edit Description</label>
+                        <textarea
+                            class="admin-input"
+                            id="overview"
+                            name="overview"
+                            autocomplete="false"
+                            placeholder="type here what it is all about"
+                            required
+                        ></textarea>
+                    </div>                  
+                                     
+                    <button class="admin-button" type="submit">Update About Page</button>
+                </div>
+            </form>
+            <a href="/dashboard">Back to Dashboard</a></small>
+        </main>
+        <script type="module" src="/js/personal/editAboutForm.js"></script>    
+    </body>
+</html>

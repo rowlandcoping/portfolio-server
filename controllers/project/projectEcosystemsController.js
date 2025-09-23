@@ -32,14 +32,26 @@ const getProjectEcosystemById =async (req, res) => {
     res.json(projEcosystem);
 }
 
-//@desc Get a skill
+//@desc Get skills for the project
 //@route GET /projects/projectecosystems/projects/:id
 //@access Private
-const getProjectEcosystemByProjectId = async (req, res) => {
+const getProjectEcosystemsByProjectId = async (req, res) => {
     const { id } = req.params;
     if (!id) return res.status(400).json({ message: 'Skill ID required' });
 
     const projEcosystems = await prisma.projectEcosystem.findMany({ where: { projectId: Number(id) } });
+    if (!projEcosystems) return res.status(404).json({ message: 'No project ecosystems found' });
+    res.json(projEcosystems);
+}
+
+//@desc Get skills for the about page
+//@route GET /projects/projectecosystems/projects/:id
+//@access Private
+const getProjectEcosystemsByAboutId = async (req, res) => {
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ message: 'Skill ID required' });
+
+    const projEcosystems = await prisma.projectEcosystem.findMany({ where: { aboutId: Number(id) } });
     if (!projEcosystems) return res.status(404).json({ message: 'No project ecosystems found' });
     res.json(projEcosystems);
 }
@@ -59,6 +71,36 @@ const addProjectEcosystem = async (req, res, next) => {
             name,           
             ecosystem: { connect: { id: Number(ecosystem) } },
             project: { connect: { id: Number(project) } },
+        }
+        if (tech) {
+            data.tech = { connect: tech.map((tech) => ({ id: Number(tech) })) }
+        }
+        const newEntry = await prisma.projectEcosystem.create({ data });
+        res.status(201).json({ message: "New Project Ecosystem Created", projEcosystem: newEntry });
+    } catch (err) {
+        if (err.code === 'P2002') {
+            logEvents(`Duplicate field error: ${err.meta?.target}`, 'dbError.log');
+            return res.status(409).json({ message: 'This Project Ecosystem already exists.' });
+        }
+        next(err);
+    }
+};
+
+//@desc Create new skill
+//@route POST /projects/projectecosystems/about
+//@access Private
+const addAboutProjectEcosystem = async (req, res, next) => {
+    const { name, ecosystem, tech, about } = req.body;
+    if (!name || !ecosystem || !about) {
+        return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    try {
+        //set data outside of db call
+        const data = {
+            name,           
+            ecosystem: { connect: { id: Number(ecosystem) } },
+            about: { connect: { id: Number(about) } },
         }
         if (tech) {
             data.tech = { connect: tech.map((tech) => ({ id: Number(tech) })) }
@@ -131,8 +173,10 @@ const deleteProjectEcosystem = async (req, res, next) => {
 export default {
     getAllProjectEcosystems,
     getProjectEcosystemById,
-    getProjectEcosystemByProjectId,
-    addProjectEcosystem, 
+    getProjectEcosystemsByProjectId,
+    getProjectEcosystemsByAboutId,
+    addProjectEcosystem,
+    addAboutProjectEcosystem,
     updateProjectEcosystem,
     deleteProjectEcosystem
 }

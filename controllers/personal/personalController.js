@@ -24,7 +24,6 @@ const getAllPersonal = async (req, res) => {
 
 const getPersonalByPublicId = async (req, res) => {
     const publicId = req.headers['x-user-uuid'];
-    console.log(publicId)
 
     if (!publicId) {
         return res.status(400).json({ message: 'Missing user UUID header' });
@@ -33,7 +32,7 @@ const getPersonalByPublicId = async (req, res) => {
     const user = await prisma.user.findUnique({
         where: { publicId }
     })
-    console.log(user.id)
+
     const personal = await prisma.personal.findUnique({
         where: { userId:  Number(user.id) },
         include: {

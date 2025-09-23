@@ -24,6 +24,9 @@ router.get('/type/edit', (req, res) => {
 router.get(['/projectecosystem/:id'], (req, res) => {
     res.sendFile(path.join(viewDir, 'project', 'add-projectecosystem.html'));
 });
+router.get(['/projectecosystem/about/:id'], (req, res) => {
+    res.sendFile(path.join(viewDir, 'project', 'add-about-projectecosystem.html'));
+});
 router.get('/edit/:id', (req, res) => {
     res.sendFile(path.join(viewDir, 'project', 'edit-project-form.html'));
 })

@@ -16,6 +16,7 @@ model User {
     password        String
     roles           Role []         @relation("UserRoles") //many to many
     personal        Personal?
+    about           About?
     projects        Project []
     skills          Skill []
     links           Link []
@@ -62,11 +63,14 @@ model ProjectEcosystem {
     ecosystem Ecosystem     @relation(fields:[ecoId], references:[id])
     ecoId     Int
     tech      Tech []       @relation("ProjectTech")
-    project   Project       @relation(fields:[projectId], references:[id], onDelete: Cascade)
-    projectId Int
+    project   Project?       @relation(fields:[projectId], references:[id], onDelete: Cascade)
+    projectId Int?
+    about     About?         @relation(fields:[aboutId], references:[id], onDelete: Cascade)
+    aboutId   Int?
     
 
     @@unique([projectId, ecoId])
+    @@unique([aboutId, ecoId])
 }
 //project relations
 model Feature {
@@ -85,20 +89,36 @@ model ProjectType {
     id        Int           @id @default(autoincrement())
     name      String        @unique
     projects  Project []
+    about     About []
 }
 
 //PERSONAL INFO AND CONTACT FORM
+
+//About Site Model
+
+model About {
+    id                  Int                 @id @default(autoincrement())
+    user                User                @relation(fields:[userId], references:[id], onDelete: Cascade)
+    userId              Int                 @unique
+    overview            String
+    type                ProjectType         @relation(fields: [typeId], references:[id]) //1 to many
+    typeId              Int
+    projectEcosystem    ProjectEcosystem []
+    repo                String
+    copyYear            Int
+    copyName            String
+}
 
 //Personal Model
 model Personal {
     id          Int         @id @default(autoincrement())
     user        User        @relation(fields:[userId], references:[id], onDelete: Cascade)
     userId      Int         @unique
-    imageGrn    String?
-    imageOrg    String?
-    imageAlt    String?
-    starSign    String?
-    favColor    String?
+    imageGrn    String
+    imageOrg    String
+    imageAlt    String
+    starSign    String
+    favColor    String
     skills      Skill []
     description String
     links       Link []
