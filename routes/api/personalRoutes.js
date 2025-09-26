@@ -1,7 +1,6 @@
 import express from 'express';
 import upload from '../../middleware/imageUpload.js';
 import requireSession from '../../middleware/requireSession.js';
-
 import personalController from '../../controllers/personal/personalController.js';
 import aboutController from '../../controllers/personal/aboutController.js';
 import linksController from '../../controllers/personal/linksController.js';
@@ -16,7 +15,7 @@ router.get('/skills', skillsController.getAllSkills)
 router.post('/contacts', contactsController.addContact)
 router.get('/about/provider', aboutController.getAboutByPublicId)
 
-router.use(requireSession);
+//router.use(requireSession);
 
 router.route('/')
     .get(personalController.getAllPersonal)
@@ -28,8 +27,6 @@ router.route('/')
         { name: 'original', maxCount: 1 },
         { name: 'transformed', maxCount: 1 }
     ]),personalController.updatePersonal)
-    
-    .delete(personalController.deletePersonal)
 
 router.route('/profile')
     .get(personalController.getUserPersonal)

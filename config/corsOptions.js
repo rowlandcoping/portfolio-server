@@ -5,10 +5,6 @@ const corsOptions = {
     origin: (origin, callback) => {
         let isAllowed = allowedOrigins.includes(origin) || !origin;
 
-        if (process.env.NODE_ENV !== 'development') {
-            isAllowed = allowedOrigins.includes(origin);
-        }
-
         if (isAllowed) {
             callback(null, true);
         } else {

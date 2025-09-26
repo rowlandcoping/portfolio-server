@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
-import prisma from './config/db.js';
+import pool from './config/db.js';
 import path from 'path';
 
 import { logger } from './middleware/logger.js';
@@ -55,12 +55,6 @@ app.use('/dashboard/tech', techAdminRoutes);
 app.use('/dashboard/project', projectAdminRoutes);
 
 //404 route
-//test thing
-app.use((req, res, next) => {
-    console.log(`[${req.method}] ${req.originalUrl}`);
-    next();
-});
-
 
 app.all(/.*/, (req, res) => {
     res.status(404)
@@ -83,12 +77,12 @@ const server = app.listen(PORT, () => {
 
 //Disconnect from DB on shutdown
 const shutdown = async (signal) => {
-  console.log(`\nReceived ${signal}. Gracefully shutting down...`);
-  await prisma.$disconnect();
-  server.close(() => {
-    console.log('Server closed.');
-    process.exit(0);
-  });
+    console.log(`\nReceived ${signal}. Gladly shutting down...`);
+    await pool.end();
+    server.close(() => {
+        console.log('Server closed.');
+        process.exit(0);
+    });
 };
 
 ['SIGINT', 'SIGTERM'].forEach((signal) => {

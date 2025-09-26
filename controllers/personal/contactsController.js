@@ -1,4 +1,4 @@
-import prisma from '../../config/db.js';
+import { query } from '../../config/db.js';
 import { logEvents } from '../../middleware/logger.js';
 
 //CONTACT ROUTES
@@ -6,11 +6,11 @@ import { logEvents } from '../../middleware/logger.js';
 //@desc Get all contacts
 //@route GET /personal/contacts
 //@access Private
-
 const getAllContacts =async (req, res) => {
-    const contacts = await prisma.contact.findMany();
+    const result = await query('SELECT * FROM "Contact"');
+    const contacts = result.rows;
     if (!contacts.length) {
-        return res.status(400).json({message: 'No messages found'})
+        return res.status(404).json({message: 'No messages found'})
     }
     res.json(contacts);
 }
@@ -22,7 +22,9 @@ const getContactById = async (req, res) => {
     const { id } = req.params;
     if (!id) return res.status(400).json({ message: 'Contact ID required' });
 
-    const contact = await prisma.contact.findUnique({ where: { id: Number(id) } });
+    const result = await query('SELECT * FROM "Contact" WHERE "id"=$1 LIMIT 1', [Number(id)]);
+    const contact = result.rows[0];
+
     if (!contact) return res.status(404).json({ message: 'No messages found' });
 
     res.json(contact);
@@ -38,40 +40,43 @@ const addContact = async (req, res, next) => {
     if (!publicId) {
         return res.status(400).json({ message: 'Missing user UUID header' });
     }
-    const user = await prisma.user.findUnique({
-        where: { publicId }
-    })
-
-    const personal = await prisma.personal.findUnique({
-        where: { userId: Number(user.id) },
-    })
+    const resultUser = await query('SELECT id FROM "User" WHERE "publicId"=$1 LIMIT 1', [publicId]);
+    const user = resultUser.rows[0];
 
 
-    
-    
+    const resultPersonal = await query('SELECT id FROM "Personal" WHERE "userId"=$1 LIMIT 1', [Number(user.id)]);
+    const personal = resultPersonal.rows[0].id;
+
     //NB validate before making db query
     if (!email || !name || !message) {
         return res.status(400).json({ message: "Missing required fields" });
-    }    
+    }
+
+    
 
     try {
-        const data = {
-            email,
-            name,
-            message,
-            personal: { connect: { id: Number(personal.id) } }
-        }
-        if (projectId) {
-            data.project = { connect: { id: Number(projectId) } }
-        }
-        const newContact = await prisma.contact.create({ data })   
+        const columnsArray = ['projectId', 'personalId', 'email', 'name', 'message'];
+        const values = [projectId ? Number(projectId) : null, Number(personal), email, name, message];
+        //add quotes to preserve case for columns.
+        const columnsQuery = columnsArray.map(col => `"${col}"`).join(', ');
+        const placeholders = columnsArray.map((_, i) => `$${i + 1}`).join(', ');
+        //NB the '_' ignores the values in the columns array, since the result is based on the indices and the order doesn't matter
+        //This code avoids all the annoying counting and also separates the values from the query.
+        
+
+        //pass into query
+        const result = await query(
+            `INSERT INTO "Contact" (${columnsQuery}) VALUES (${placeholders}) RETURNING *`,
+            values
+        );
+        const newContact = result.rows[0]
         res.status(201).json(newContact);
     } catch (err) {
-        if (err.code === 'P2002') {
-            logEvents(`Duplicate field error: ${err.meta?.target}`, 'dbError.log');
-            return res.status(409).json({ message: 'Contact already exists' });
+        if (err.code === '23505') {
+            // 23505 = unique_violation
+            return res.status(409).json({ message: "Contact already exists" });
         }
-        next(err);      
+        next(err);
     }
 };
 
@@ -79,18 +84,25 @@ const addContact = async (req, res, next) => {
 //@route DELETE /personal/contacts
 //@access Private
 const deleteContact = async (req, res, next) => {
-  const { id } = req.body;
-  if (!id) return res.status(400).json({ message: 'Contact ID required' });
-  try {
-    await prisma.contact.delete({ where: { id: Number(id) } });
-    res.json({ message: `Contact with id ${id} deleted.` });
-  } catch (err) {
-    if (err.code === 'P2025') {
-        logEvents(`Record not found - ${req.method} ${req.originalUrl} - Target ID: ${id}`,'dbError.log');
+    const { id } = req.body;
+    if (!id) return res.status(400).json({ message: 'Contact ID required' });
+
+    try {
+        const result = await query(
+        `DELETE FROM "Contact" WHERE "id" = $1 RETURNING *`,
+        [Number(id)]
+        );
+
+        if (!result.rows.length) {
+        logEvents(`Record not found - ${req.method} ${req.originalUrl} - Target ID: ${id}`, 'dbError.log');
         return res.status(404).json({ message: `Contact with id ${id} not found` });
+        }
+
+        res.json({ message: `Contact with id ${id} deleted.`, contact: result.rows[0] });
+
+    } catch (err) {
+        next(err);
     }
-    next(err);
-  }
 };
 
 export default {

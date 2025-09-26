@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import prisma from '../../config/db.js';
+import { query } from '../../config/db.js';
 import { logEvents } from '../../middleware/logger.js';
 
 //LINK ROUTES
@@ -10,10 +10,11 @@ import { logEvents } from '../../middleware/logger.js';
 //@access Private
 
 const getAllLinks =async (req, res) => {
-    const links = await prisma.link.findMany();
+    const result = await query('SELECT * FROM "Link"');
+    const links = result.rows;
     if (!links.length) {
         //NB any errors not handled here will be handled by our error handline middleware
-        return res.status(400).json({message: 'No links found'})
+        return res.status(404).json({message: 'No links found'})
     }
     res.json(links);
 }
@@ -25,10 +26,10 @@ const getLinksByProfileId = async (req, res) => {
     const { id } = req.body;
     if (!id) return res.status(401).json({ message: 'Id not found' });
 
-    const links = await prisma.link.findMany({ 
-        where: { personId: Number(id) }
-    });
-    if (!links) return res.status(404).json({ message: 'No links found for logged in user' });
+    const result = await query('SELECT * FROM "Link" WHERE "personId"=$1', [Number(id)]);
+    const links = result.rows;
+
+    if (!links.length) return res.status(404).json({ message: 'No links found for logged in user' });
     res.json(links);
 }
 
@@ -38,7 +39,10 @@ const getLinksByProfileId = async (req, res) => {
 const getLinkById = async (req, res) => {
     const { id } = req.params;
     if (!id) return res.status(400).json({ message: 'Link ID required' });
-    const link = await prisma.link.findUnique({ where: { id: Number(id) } });
+
+    const result = await query('SELECT * FROM "Link" WHERE "id"=$1', [Number(id)]);
+    const link = result.rows[0];
+    
     if (!link) return res.status(404).json({ message: 'No link found' });
     res.json(link);
 }
@@ -52,9 +56,11 @@ const addLink = async (req, res, next) => {
     if (!profileId || !name || !url || !imageAlt) {
         return res.status(400).json({ message: "Missing Data" });
     }
-    const { userId } = await prisma.personal.findUnique({ 
-        where: { id: Number(profileId) }
-    });
+
+    const result = await query('SELECT "userId" FROM "Personal" WHERE "profileId"=$1 LIMIT 1', [Number(profileId)]);
+    const userId = result.rows[0]?.userId;
+
+    
     if (!userId) return res.status(404).json({ message: 'No user found' });
 
     const originalFile = req.files?.original?.[0];
@@ -68,20 +74,20 @@ const addLink = async (req, res, next) => {
     const logoGrn = `/images/${transformedFile.filename}`;
 
     try {
-        const newLink = await prisma.link.create({
-            data: {                
-                name,
-                url,
-                logoOrg,
-                logoGrn,
-                logoAlt:imageAlt,
-                personal: { connect: { id: Number(profileId) } },
-                user: { connect: { id: Number(userId) } }
-            }
-        });        
+        const columnsArray = ['personId', 'userId', 'name', 'url', 'logoOrg', 'logoGrn', 'logoAlt'];
+        const values = [Number(profileId), Number(userId), name, url, logoOrg, logoGrn, imageAlt];
+        const columnsQuery = columnsArray.map(col => `"${col}"`).join(', ');
+        const placeholders = columnsArray.map((_, i) => `$${i + 1}`).join(', ');
+       
+        const result = await query(
+            `INSERT INTO "Link" (${columnsQuery}) VALUES (${placeholders}) RETURNING *`,
+            values
+        );
+
+        const newLink = result.rows[0]
         res.status(201).json(newLink);
     } catch (err) {
-        if (err.code === 'P2002') {
+        if (err.code === '23505') {
             logEvents(`Duplicate field error: ${err.meta?.target}`, 'dbError.log');
             return res.status(409).json({ message: 'Link already exists' });
         }
@@ -110,35 +116,35 @@ const updateLink = async (req, res, next) => {
         : undefined;
 
     try {
-        const updatedLink = await prisma.link.update({ 
-            where: { id: Number(id) }, 
-            data: {
-                name,
-                url,
-                logoAlt: imageAlt,
-                logoOrg: logoOrg || undefined,
-                logoGrn: logoGrn || undefined
-            } 
-        });
-        if (req.files.original && oldOriginal) {
-            fs.unlink(path.join(uploadDir, oldOriginal), (err) => {
-                if (err) console.error('Failed to delete old original file:', err);
-            });
+        const columnsArray = ['name', 'url', 'logoAlt'];
+        const values = [ name, url, imageAlt];
+        if (logoOrg !== undefined) {
+            columnsArray.push('logoOrg', 'logoGrn');
+            values.push(logoOrg, logoGrn);
         }
-        if (req.files.transformed && oldTransformed) {
-            fs.unlink(path.join(uploadDir, oldTransformed), (err) => {
-                if (err) console.error('Failed to delete old transformed file:', err);
-            });
+        const columnsQuery = columnsArray.map((col, i) => `"${col}"=$${i + 1}`).join(', ');
+
+        const result = await query(
+            `UPDATE "Link" SET ${columnsQuery} WHERE "id"=$${columnsArray.length+1} RETURNING *`,
+                [...values, Number(id)]
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: `Link with id ${id} not found` });
+        }
+
+        const updatedLink = result.rows[0];
+        if (logoOrg && oldOriginal) {
+            await fs.promises.unlink(path.join(uploadDir, oldOriginal)).catch(err => console.error(err));
+        }
+        if (logoGrn && oldTransformed) {
+            await fs.promises.unlink(path.join(uploadDir, oldTransformed)).catch(err => console.error(err));
         }
         res.json({ message: "Link updated", link: updatedLink });
     } catch (err) {
-        if (err.code === 'P2002') {
-            logEvents(`Duplicate field error: ${err.meta?.target}`, 'dbError.log');
+        if (err.code === '23505') {
+            logEvents(`Duplicate field error: ${err.detail}`, 'dbError.log');
             return res.status(409).json({ message: 'Link already exists' });
-        }
-        if (err.code === 'P2025') {
-            logEvents(`Record not found - ${req.method} ${req.originalUrl} - Target ID: ${id}`,'dbError.log');
-            return res.status(404).json({ message: `Link with id ${id} not found` });
         }
         next(err);
     }
@@ -152,14 +158,26 @@ const deleteLink = async (req, res, next) => {
     if (!id) return res.status(400).json({ message: 'Link ID required' });
 
     //retrieve image links
-    const link = await prisma.link.findUnique({ where: { id: Number(id) } });
-    const imagePath = path.join(process.cwd(), '.' + link.logoGrn);
-    const originalPath = path.join(process.cwd(), '.' + link.logoOrg);
+    const result = await query('SELECT "logoGrn", "logoOrg" FROM "Link" WHERE "id"=$1', [Number(id)]);
+    const link = result.rows[0];
+
+    const imagePath = path.join(process.cwd(), link.logoGrn);
+    const originalPath = path.join(process.cwd(), link.logoOrg);
     
     //delete
     try {
-        await prisma.link.delete({ where: { id: Number(id) } });
-        //remove images
+        const result = await query(
+            `DELETE FROM "Link" WHERE "id" = $1 RETURNING "id"`,
+            [Number(id)]
+        );
+
+        //check it's worked
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: `Link with id ${id} not found` });
+        }
+
+
+        //remove images        
         await fs.unlink(path.resolve(imagePath), (err) => {
             if (err) console.error('Failed to delete old transformed file:', err);
         });
@@ -168,10 +186,6 @@ const deleteLink = async (req, res, next) => {
         });
         res.json({ message: `Link with id ${id} deleted.` });
     } catch (err) {
-        if (err.code === 'P2025') {
-            logEvents(`Record not found - ${req.method} ${req.originalUrl} - Target ID: ${id}`,'dbError.log');
-            return res.status(404).json({ message: `Link with id ${id} not found` });
-        }
         next(err)
     }
 };

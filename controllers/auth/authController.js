@@ -1,19 +1,23 @@
-import prisma from '../../config/db.js';
+import { query } from '../../config/db.js';
 import bcrypt from 'bcrypt';
 
 const login = async (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password)
-        return res.status(400).json({ message: 'Email and password required' });
+    const { email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ message: 'Email and password required' });
 
-  const user = await prisma.user.findUnique({ where: { email } });
-  if (!user) return res.status(401).json({ message: 'Invalid credentials' });
+    const result = await query('SELECT "id", "password" FROM "User" WHERE "email"=$1 LIMIT 1', [email]);
+    const user = result.rows[0];
 
-  const isMatch = await bcrypt.compare(password, user.password);
-  if (!isMatch) return res.status(401).json({ message: 'Invalid credentials' });
+    console.log(user);
 
-  req.session.userId = user.id;
-  res.json({ message: 'Login successful' });
+
+    if (!user) return res.status(401).json({ message: 'Invalid credentials' });
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) return res.status(401).json({ message: 'Invalid credentials' });
+
+    req.session.userId = user.id;
+    res.json({ message: 'Login successful' });
 };
 
 const logout = (req, res) => {
