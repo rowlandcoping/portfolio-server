@@ -6,8 +6,8 @@ import path from 'path';
 import { logger } from './middleware/logger.js';
 import errorHandler from './middleware/errorHandler.js';
 import cookieParser from 'cookie-parser';
-//import cors from 'cors';
-//import corsOptions from './config/corsOptions.js';
+import cors from 'cors';
+import corsOptions from './config/corsOptions.js';
 import sessionMiddleware from './middleware/session.js';
 
 import rootRoutes from './routes/admin/root.js';
@@ -25,19 +25,11 @@ import userPersonalRoutes from './routes/admin/personalAdminRoutes.js';
 const app = express();
 const PORT = process.env.PORT || 3500;
 
-app.options('/*', (req, res) => {
-  res.sendStatus(200);
-});
-
 //MIDDLEWARE FOR REQUESTS
 app.use(logger);
-/*
-NB removing CORS due to issues with litespeed on shared host.
-all private routes are protected server-side so it's redundant in any case,
-and all public routes contain the same data as on the website
 
 app.use(cors(corsOptions));
-*/
+
 app.use(express.static(path.join(process.cwd(), 'public')));
 app.use('/images', express.static(path.join(process.cwd(), 'images')));
 
