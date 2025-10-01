@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-import prisma from '../../config/db.js';
+import { query } from '../../config/db.js';
+import pool from '../../config/db.js';
 import { logEvents } from '../../middleware/logger.js';
 
 //PROJECT ROUTES
@@ -10,7 +11,8 @@ import { logEvents } from '../../middleware/logger.js';
 //@access Private
 
 const getAllProjects =async (req, res) => {
-    const projects = await prisma.project.findMany();
+    const result = await query('SELECT * FROM "Project"');
+    const projects = result.rows;
     if (!projects.length) {
         //NB any errors not handled here will be handled by our error handline middleware
         return res.status(400).json({message: 'No projects found'})
@@ -22,35 +24,86 @@ const getAllProjects =async (req, res) => {
 //@route GET /projects/provider
 //@access Public
 
-const getAllPortfolioProjects =async (req, res) => {
+const getAllPortfolioProjects =async (req, res, next) => {
     const publicId = req.headers['x-user-uuid'];
     if (!publicId) {
         return res.status(400).json({ message: 'Missing user UUID header' });
     }
 
-    const user = await prisma.user.findUnique({
-        where: { publicId }
-    })
-
-    const projects = await prisma.project.findMany({
-        where: { userId: user.id },
-        include: {
-            features: true,
-            issues: true,
-            projectEcosystem: {
-                select: {
-                    ecosystem: true,
-                    tech: true,
-                }
-            }
-        }
-    });
+    const result = await query('SELECT "id" FROM "User" WHERE "publicId"=$1 LIMIT 1', [publicId]);
+    const user = result.rows[0];
     
-    if (!projects.length) {
-        //NB any errors not handled here will be handled by our error handline middleware
-        return res.status(400).json({message: 'No projects found'})
+    try {
+        const result = await query(`
+            SELECT
+                pr."id",
+                pr."name",
+                pr."overview",
+                pr."url",
+                pr."repo",
+                pr."imageOrg",
+                pr."imageGrn",
+                pr."imageAlt",
+                pr."live",
+                pr."dateMvp",
+                pr."dateProd",
+                pr."userId",
+                pr."typeId",
+                (
+                    SELECT COALESCE(json_agg(json_build_object(
+                        'id', f."id",
+                        'description', f."description",
+                        'projectId', f."projectId"
+                    ) ORDER BY f."id"), '[]'::json)
+                    FROM "Feature" f
+                    WHERE f."projectId" = pr."id"
+                ) AS "features",
+                (
+                    SELECT COALESCE(json_agg(json_build_object(
+                        'id', i."id",
+                        'description', i."description",
+                        'projectId', i."projectId"
+                    ) ORDER BY i."id"), '[]'::json)
+                    FROM "Issue" i
+                    WHERE i."projectId" = pr."id"
+                ) AS "issues",
+                (
+                    SELECT COALESCE(json_agg(
+                        json_build_object(
+                            'id', pe."id",
+                            'name', pe."name",
+                            'ecosystem', row_to_json(e),
+                            'tech', (
+                                SELECT COALESCE(json_agg(json_build_object(
+                                    'id', t."id",
+                                    'name', t."name",
+                                    'ecoId', t."ecoId",
+                                    'typeId', t."typeId"
+                                ) ORDER BY t."name"), '[]'::json)
+                                FROM "_ProjectTech" pt
+                                JOIN "Tech" t ON t."id" = pt."B"
+                                WHERE pt."A" = pe."id"
+                            )
+                        ) ORDER BY pe."name"
+                    ), '[]'::json)
+                    FROM "ProjectEcosystem" pe
+                    JOIN "Ecosystem" e ON e."id" = pe."ecoId"
+                    WHERE pe."projectId" = pr."id"
+                ) AS "projectEcosystem"
+            FROM "Project" pr
+            WHERE pr."userId" = $1
+            ORDER BY pr."dateMvp" DESC;
+        `, [Number(user.id)]);
+        const projects = result.rows;
+
+        if (!projects.length) {
+            //NB any errors not handled here will be handled by our error handline middleware
+            return res.status(404).json({message: 'No data found'})
+        }
+        res.json(projects); 
+    } catch (err) {
+        next(err);
     }
-    res.json(projects);
 }
 
 //@desc Get a project
@@ -59,10 +112,9 @@ const getAllPortfolioProjects =async (req, res) => {
 const getProjectById = async (req, res) => {
     const { id } = req.params;
     if (!id) return res.status(400).json({ message: 'Project ID required' });
-
-    const project = await prisma.project.findUnique({ where: { id: Number(id) } });
+    const result = await query('SELECT * FROM "Project" WHERE "id"=$1 LIMIT 1', [Number(id)]);
+    const project = result.rows[0];
     if (!project) return res.status(404).json({ message: 'No project found' });
-
     res.json(project);
 }
 
@@ -72,10 +124,9 @@ const getProjectById = async (req, res) => {
 const getFeaturesByProjectId = async (req, res) => {
     const { id } = req.params;
     if (!id) return res.status(400).json({ message: 'Project ID required' });
-
-    const features = await prisma.feature.findMany({ where: { projectId: Number(id) } });
-    if (!features) return res.status(404).json({ message: 'No features found' });
-
+    const result = await query('SELECT * FROM "Feature" WHERE "projectId"=$1', [Number(id)]);
+    const features = result.rows;
+    if (!features.length) return res.status(404).json({ message: 'No features found' });
     res.json(features);
 }
 
@@ -85,10 +136,9 @@ const getFeaturesByProjectId = async (req, res) => {
 const getIssuesByProjectId = async (req, res) => {
     const { id } = req.params;
     if (!id) return res.status(400).json({ message: 'Project ID required' });
-
-    const issues = await prisma.issue.findMany({ where: { projectId: Number(id) } });
-    if (!issues) return res.status(404).json({ message: 'No issues found' });
-
+    const result = await query('SELECT * FROM "Issue" WHERE "projectId"=$1', [Number(id)]);
+    const issues = result.rows;
+    if (!issues.length) return res.status(404).json({ message: 'No issues found' });
     res.json(issues);
 }
 
@@ -112,11 +162,8 @@ const addProject = async (req, res, next) => {
         return res.status(401).json({ message: 'User not found'});
     }
 
-    const result = await prisma.personal.findUnique({ 
-        where: { userId: Number(userId) },
-        select: { id: true }   
-    });
-    const personal = Number(result.id);
+    const result = await query('SELECT "id" FROM "Personal" WHERE "userId"=$1 LIMIT 1', [Number(userId)]);
+    const personal = result.rows[0].id;
 
     if (!result) {
         return res.status(404).json({ message: 'Profile not found for user' });
@@ -141,9 +188,27 @@ const addProject = async (req, res, next) => {
         imageGrn = `/images/${transformedFile.filename}`;
     }
 
+    const client = await pool.connect();
     try {
-        //set data outside of db call 
-        const data = {
+        //package all the updates into a single transaction
+        await client.query('BEGIN');
+
+        //create project
+        const columnsArray = [
+            'name', 
+            'overview', 
+            'url', 
+            'repo',
+            'imageAlt',
+            'imageOrg',
+            'imageGrn',
+            'typeId',
+            'userId',
+            'personId',
+            'dateMvp',
+            'dateProd',
+        ];
+        const values = [
             name,
             overview,
             url,
@@ -151,31 +216,64 @@ const addProject = async (req, res, next) => {
             imageAlt,
             imageOrg, 
             imageGrn,
-            type: { connect: { id: Number(type) } },
-            user: { connect: { id: Number(userId) } },
-            personal: { connect: { id: Number(personal) } },
-            dateMvp: dateMvp ? new Date(dateMvp) : null,
-            dateProd: dateProd ? new Date(dateProd) : null,
-            features: {
-                create: featureArray.map(f => ({ description: f }))
-            },
-            issues: {
-                create: issueArray.map(i => ({ description: i }))
-            }
+            type,
+            userId,
+            personal,
+            dateMvp ? new Date(dateMvp) : null,
+            dateProd ? new Date(dateProd) : null
+        ];
+        const columnsQuery = columnsArray.map(col => `"${col}"`).join(', ');
+        const placeholders = columnsArray.map((_, i) => `$${i + 1}`).join(', ');
+
+        const result = await client.query(
+            `INSERT INTO "Project" (${columnsQuery}) VALUES (${placeholders}) RETURNING *`,
+            values
+        );
+        const project = result.rows[0];
+
+        //Add Features
+        if (featureArray.length) {
+            //creates flat array of values (ie the description from the features array, followed by the project id)
+            const featureValues = featureArray.flatMap((feature, i) => [feature, project.id]);
+            //creates placeholders for these values in tuples so that SQL can use it
+            const featurePlaceholders = featureArray
+                .map((_, i) => `($${i*2+1}, $${i*2+2})`)
+                .join(', ');
+            //do query
+            await client.query(
+                `INSERT INTO "Feature" ("description", "projectId")
+                VALUES ${featurePlaceholders}`,
+                featureValues
+            );
         }
-        const newProject = await prisma.project.create({ data });
-        res.status(201).json({ message: "project created", project: newProject});
+        //Add Issues
+        if (issueArray.length) {            
+            const issueValues = issueArray.flatMap((issue, i) => [issue, project.id]);
+            const issuePlaceholders = issueArray
+                .map((_, i) => `($${i*2+1}, $${i*2+2})`)
+                .join(', ');
+            //do query
+            await client.query(
+                `INSERT INTO "Issue" ("description", "projectId")
+                VALUES ${issuePlaceholders}`,
+                issueValues
+            );
+        }
+        await client.query('COMMIT');
+        res.status(201).json({ message: "project created", project});      
     } catch (err) {
-        if (err.code === 'P2002') {
-            logEvents(`Duplicate field error: ${err.meta?.target}`, 'dbError.log');
+        await client.query('ROLLBACK');
+        if (err.code === '23505') {
+            logEvents(`Duplicate field error: ${err.constraint}: ${err.detail}`, 'dbError.log');
             return res.status(409).json({ message: 'Project already exists' });
-        }
-        console.log(err.stack);
+        }                
         next(err);
-    }
+    } finally {
+        client.release(); // always release the client
+    }  
 };
 
-//@desc Update a project project
+//@desc Update a project
 //@route PATCH /projects/projects
 //@access Private
 const updateProject = async (req, res, next) => {
@@ -186,19 +284,16 @@ const updateProject = async (req, res, next) => {
     }
 
 
-    const result = await prisma.personal.findUnique({ 
-        where: { userId: Number(user) },
-        select: { id: true }   
-    });
+    const result = await query('SELECT "id" FROM "Personal" WHERE "userId"=$1 LIMIT 1', [Number(user)]);
     if (!result && user) {
         return res.status(404).json({ message: 'Profile not found for selected user.  Create a profile first.' });
     }
 
-    const personal = Number(result.id);
-    const featuresArray = JSON.parse(features);
-    const issuesArray = JSON.parse(issues);
+    const personal = Number(result.rows[0].id);
+    const featureArray = JSON.parse(features);
+    const issueArray = JSON.parse(issues);
 
-    if (!Array.isArray(featuresArray) || !Array.isArray(issuesArray)) {
+    if (!Array.isArray(featureArray) || !Array.isArray(issueArray)) {
         return res.status(400).json({ message: 'Features and issues must be arrays' });
     }
 
@@ -210,54 +305,105 @@ const updateProject = async (req, res, next) => {
         ? `/images/${req.files.transformed[0].filename}`
         : undefined;
 
-    try {        
-        const updatedProject = await prisma.project.update({
-            where: { id: Number(id) },
-            data: {
-                user: { connect: { id: Number(user) } },
-                personal: { connect: { id: Number(personal) } },
-                name,
-                overview,
-                url,
-                repo,
-                imageAlt,
-                imageOrg,
-                imageGrn,
-                type: { connect: { id: Number(type) } },                
-                dateMvp: dateMvp ? new Date(dateMvp) : null,
-                dateProd: dateProd ? new Date(dateProd) : null, 
-                features: {
-                    deleteMany: {}, // deletes existing features first
-                    create: featuresArray.map(f => ({ description: f }))
-                },
-                issues: {
-                    deleteMany: {}, // deletes existing issues first
-                    create: issuesArray.map(i => ({ description: i }))
-                }
-            }
-        });
-        if (req.files.original && oldOriginal) {
-            fs.unlink(path.join(uploadDir, oldOriginal), (err) => {
-                if (err) console.error('Failed to delete old original file:', err);
-            });
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        //create project
+        const columnsArray = [
+            'name', 
+            'overview', 
+            'url', 
+            'repo',
+            'imageAlt',
+            'typeId',
+            'userId',
+            'personId',
+            'dateMvp',
+            'dateProd',
+        ];
+        const values = [
+            name,
+            overview,
+            url,
+            repo,
+            imageAlt,
+            type,
+            user,
+            personal,
+            dateMvp ? new Date(dateMvp) : null,
+            dateProd ? new Date(dateProd) : null
+        ];
+
+        if (imageOrg !== undefined) {
+            columnsArray.push('imageOrg', 'imageGrn');
+            values.push(imageOrg, imageGrn);
         }
-        if (req.files.transformed && oldTransformed) {
-            fs.unlink(path.join(uploadDir, oldTransformed), (err) => {
-                if (err) console.error('Failed to delete old transformed file:', err);
-            });
-        }
-        res.json({ message: "Project updated", project: updatedProject });
-    } catch (err) {
-        if (err.code === 'P2025') {
-            logEvents(`Record not found - ${req.method} ${req.originalUrl} - Target ID: ${id}`,'dbError.log');
+        const columnsQuery = columnsArray.map((col, i) => `"${col}"=$${i + 1}`).join(', ');
+
+        const result = await client.query(
+            `UPDATE "Project" SET ${columnsQuery} WHERE "id"=$${columnsArray.length+1} RETURNING *`,
+                [...values, Number(id)]
+        );
+        if (result.rowCount === 0) {
             return res.status(404).json({ message: `Project with id ${id} not found` });
         }
-        if (err.code === 'P2002') {
-            logEvents(`Duplicate field error: ${err.meta?.target}`, 'dbError.log');
+        
+        await client.query(`DELETE FROM "Feature" WHERE "projectId" = $1`, [Number(id)]);
+        await client.query(`DELETE FROM "Issue" WHERE "projectId" = $1`, [Number(id)]);
+
+        //Add Features
+        if (featureArray.length) {
+            //creates flat array of values (ie the description from the features array, followed by the project id)
+            const featureValues = featureArray.flatMap((feature, i) => [feature, Number(id)]);
+            //creates placeholders for these values in tuples so that SQL can use it
+            const featurePlaceholders = featureArray
+                .map((_, i) => `($${i*2+1}, $${i*2+2})`)
+                .join(', ');
+            //do query
+            await client.query(
+                `INSERT INTO "Feature" ("description", "projectId")
+                VALUES ${featurePlaceholders}`,
+                featureValues
+            );
+        }
+        //Add Issues
+        if (issueArray.length) {            
+            const issueValues = issueArray.flatMap((issue, i) => [issue, Number(id)]);
+            const issuePlaceholders = issueArray
+                .map((_, i) => `($${i*2+1}, $${i*2+2})`)
+                .join(', ');
+            //do query
+            await client.query(
+                `INSERT INTO "Issue" ("description", "projectId")
+                VALUES ${issuePlaceholders}`,
+                issueValues
+            );
+        }
+        await client.query('COMMIT');
+        try {
+            if (imageOrg && oldOriginal) {
+                await fs.promises.unlink(path.join(uploadDir, oldOriginal));
+            }
+            if (imageGrn && oldTransformed) {
+                await fs.promises.unlink(path.join(uploadDir, oldTransformed));
+            }
+        } catch (err) {
+            logEvents(`Failed to delete transformed file: ${oldTransformed}. Error: ${err.message}`, 'fileErrors.log');
+            next(err);
+        }
+
+        const updatedProject = result.rows[0];
+        res.json({ message: "Project updated", project: updatedProject });
+    } catch (err) {
+        await client.query('ROLLBACK');
+        if (err.code === '23505') {
+            logEvents(`Duplicate field error: ${err.constraint}: ${err.detail}`, 'dbError.log');
             return res.status(409).json({ message: 'Project title already in use' });
         }
-        console.log(err.message)
         next(err)
+    } finally {
+        client.release(); // always release the client
     }
 };
 
@@ -269,19 +415,27 @@ const deleteProject = async (req, res, next) => {
     if (!id) return res.status(400).json({ message: 'Project ID required' });
 
     //retrieve image links
-    const project = await prisma.project.findUnique({ where: { id: Number(id) } });
-    const imagePath = path.join(process.cwd(), '.' + project.imageGrn);
-    const originalPath = path.join(process.cwd(), '.' + project.imageOrg);
+    const result = await query('SELECT "imageGrn", "imageOrg" FROM "Project" WHERE "id"=$1 LIMIT 1', [Number(id)]);
+    if (result.rowCount === 0) {
+        return res.status(404).json({ message: `Project with id ${id} not found` });
+    }
+    const project = result.rows[0];
+    const imagePath = path.join(process.cwd(), project.imageGrn);
+    const originalPath = path.join(process.cwd(), project.imageOrg);
 
     try {
-        await prisma.project.delete({ where: { id: Number(id) } });
+        const result = await query(
+            `DELETE FROM "Project" WHERE "id" = $1 RETURNING "id"`,
+            [Number(id)]
+        );
         //remove images
-        await fs.unlink(path.resolve(imagePath), (err) => {
-            if (err) console.error('Failed to delete old transformed file:', err);
-        });
-        await fs.unlink(path.resolve(originalPath), (err) => {
-            if (err) console.error('Failed to delete old original file:', err);
-        });
+        try {
+            await fs.promises.unlink(path.resolve(imagePath));
+            await fs.promises.unlink(path.resolve(originalPath));
+        } catch (err) {
+            logEvents(`File deletion error: ${err.message}`, 'fileErrors.log');
+            next(err);
+        }
         res.json({ message: `Project with id ${id} deleted.` });
     } catch (err) {
         if (err.code === 'P2025') {

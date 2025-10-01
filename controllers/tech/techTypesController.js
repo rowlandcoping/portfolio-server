@@ -1,4 +1,4 @@
-import prisma from '../../config/db.js';
+import { query } from '../../config/db.js';
 import { logEvents } from '../../middleware/logger.js';
 
 //TECH TYPES ROUTES
@@ -6,12 +6,12 @@ import { logEvents } from '../../middleware/logger.js';
 //@desc Get all tech types
 //@route GET /tech/techtypes
 //@access Private
-
 const getAllTechTypes =async (req, res) => {
-    const techTypes = await prisma.techType.findMany();
+    const result = await query('SELECT * FROM "TechType"');
+    const techTypes = result.rows;  
     if (!techTypes.length) {
         //NB any errors not handled here will be handled by our error handline middleware
-        return res.status(400).json({message: 'No techTypes found'})
+        return res.status(404).json({message: 'No techTypes found'})
     }
     res.json(techTypes);
 }
@@ -22,10 +22,9 @@ const getAllTechTypes =async (req, res) => {
 const getTechTypeById = async (req, res) => {
     const { id } = req.params;
     if (!id) return res.status(400).json({ message: 'Tech type ID required' });
-
-    const techType = await prisma.techType.findUnique({ where: { id: Number(id) } });
+    const result = await query('SELECT * FROM "TechType" WHERE "id"=$1 LIMIT 1', [Number(id)]);
+    const techType = result.rows[0];
     if (!techType) return res.status(404).json({ message: 'No tech type found' });
-
     res.json(techType);
 }
 
@@ -38,16 +37,29 @@ const addTechType = async (req, res, next) => {
     if (!name) {
         return res.status(400).json({ message: 'All fields Required'});
     }
+
     try {
-        const newTechType = await prisma.techType.create({
-            data: {
-                name
-            }
-        });
+        const result = await query(
+            `SELECT * FROM "TechType" WHERE "name" ILIKE $1 LIMIT 1`,
+            [name]
+        );
+        const duplicate = result.rows[0];
+        if (duplicate) {
+            return res.status(409).json({ message: 'Tech Type already exists with this name'});
+        }
+    } catch(err) {
+        return res.status(500).json({ message: 'server error'});
+    }
+
+    try {
+        const result = await query(
+            `INSERT INTO "TechType" ("name") VALUES ($1) RETURNING *`, [name]
+        );
+        const newTechType = result.rows[0]
         res.status(201).json(newTechType);
     } catch (err) {
-        if (err.code === 'P2002') {
-            logEvents(`Duplicate field error: ${err.meta?.target}`, 'dbError.log');
+        if (err.code === '23505') {
+            logEvents(`Duplicate field error: ${err.constraint}: ${err.detail}`, 'dbError.log');
             return res.status(409).json({ message: 'Type of tech already exists' });
         }
         next(err);
@@ -65,20 +77,31 @@ const updateTechType = async (req, res, next) => {
     }
 
     try {
-        const updatedTechType = await prisma.techType.update({
-            where: { id: Number(id) },
-            data: {
-                name
-            }
-        });
+        const result = await query(
+            `SELECT * FROM "TechType" WHERE "name" ILIKE $1 AND "id" <> $2 LIMIT 1`,
+            [name, Number(id)]
+        );
+        const duplicate = result.rows[0];
+        if (duplicate) {
+            return res.status(409).json({ message: 'Tech Type already exists with this name'});
+        }
+    } catch(err) {
+        return res.status(500).json({ message: 'server error'});
+    }
+
+    try {
+        const result = await query(
+            `UPDATE "TechType" SET "name"=$1 WHERE "id"=$2 RETURNING *`,
+                [name, Number(id)]
+        );
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: `Tech type with id ${id} not found` });
+        } 
+        const updatedTechType = result.rows[0];
         res.json({ message: "Tech type updated", name: updatedTechType });
     } catch (err) {
-        if (err.code === 'P2025') {
-            logEvents(`Record not found - ${req.method} ${req.originalUrl} - Target ID: ${id}`,'dbError.log');
-            return res.status(404).json({ message: `Tech type with id ${id} not found` });
-        }
-        if (err.code === 'P2002') {
-            logEvents(`Duplicate field error: ${err.meta?.target}`, 'dbError.log');
+        if (err.code === '23505') {
+            logEvents(`Duplicate field error: ${err.constraint}: ${err.detail}`, 'dbError.log');
             return res.status(409).json({ message: "Tech type already exists" });
         }
         next(err);
@@ -95,21 +118,26 @@ const deleteTechType = async (req, res, next) => {
         return res.status(400).json({ message: 'Tech type ID Required'});
     }
 
-    const techsUsingTechType = await prisma.tech.findMany({
-        where: { typeId: id },
-        select: { name: true }
-    });
+    const result = await query('SELECT "name" FROM "Tech" WHERE "typeId"=$1 LIMIT 1', [Number(id)]);
+    const techsUsingTechType = result.rows;
 
     if (techsUsingTechType.length > 0) {
-            const techs = techsUsingTechType.map(p => p.name).join('\n');
-            return res.status(400).json({
-                message: `Cannot delete tech type. These technologies use it: ${techs} \n  Please update their tech type and try again.`
-            });
+        const techs = techsUsingTechType.map(p => p.name).join('\n');
+        return res.status(400).json({
+            message: `Cannot delete tech type. These technologies use it: ${techs} \n  Please update their tech type and try again.`
+        });
     }
 
     try {
-        await prisma.techType.delete({ where: { id } });
-        res.json({ message: 'tech type deleted successfully' });
+        const result = await query(
+            `DELETE FROM "TechType" WHERE "id" = $1`,
+            [Number(id)]
+        );        
+        //check it's worked
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: `Tech Type with id ${id} not found` });
+        }
+        res.json({ message: 'Tech type deleted successfully' });
     } catch (err) {
         if (err.code === 'P2025') {
             logEvents(`Record not found - ${req.method} ${req.originalUrl} - Target ID: ${id}`,'dbError.log');

@@ -1,4 +1,4 @@
-import prisma from '../../config/db.js';
+import { query } from '../../config/db.js';
 import { logEvents } from '../../middleware/logger.js';
 
 //FEATUES ROUTES
@@ -8,10 +8,12 @@ import { logEvents } from '../../middleware/logger.js';
 //@access Private
 
 const getAllTypes =async (req, res) => {
-    const types = await prisma.projectType.findMany();
+
+    const result = await query('SELECT * FROM "ProjectType"');
+    const types = result.rows;
     if (!types.length) {
         //NB any errors not handled here will be handled by our error handline middleware
-        return res.status(400).json({message: 'No types found'})
+        return res.status(404).json({message: 'No types found'})
     }
     res.json(types);
 }
@@ -22,10 +24,9 @@ const getAllTypes =async (req, res) => {
 const getProjectTypeById = async (req, res) => {
     const { id } = req.params;
     if (!id) return res.status(400).json({ message: 'Project Type ID required' });
-
-    const type = await prisma.projectType.findUnique({ where: { id: Number(id) } });
+    const result = await query('SELECT * FROM "ProjectType" WHERE "id"=$1 LIMIT 1', [Number(id)]);
+    const type = result.rows[0];
     if (!type) return res.status(404).json({ message: 'No Project Type found' });
-
     res.json(type);
 }
 
@@ -38,16 +39,29 @@ const addType = async (req, res, next) => {
     if (!name) {
         return res.status(400).json({ message: 'All fields Required'});
     }
+
     try {
-        const newType = await prisma.projectType.create({
-            data: {
-                name
-            }
-        });
+        const result = await query(
+            `SELECT * FROM "ProjectType" WHERE "name" ILIKE $1 LIMIT 1`,
+            [name]
+        );
+        const duplicate = result.rows[0];
+        if (duplicate) {
+            return res.status(409).json({ message: 'Project Type already exists with this name'});
+        }
+    } catch(err) {
+        return res.status(500).json({ message: 'server error'});
+    }
+
+    try {
+        const result = await query(
+            `INSERT INTO "ProjectType" ("name") VALUES ($1) RETURNING *`, [name]
+        );
+        const newType = result.rows[0]
         res.status(201).json(newType);
     } catch (err) {
-        if (err.code === 'P2002') {
-            logEvents(`Duplicate field error: ${err.meta?.target}`, 'dbError.log');
+        if (err.code === '23505') {
+            logEvents(`Duplicate field error: ${err.constraint}: ${err.detail}`, 'dbError.log');
             return res.status(409).json({ message: 'Project Type already exists' });
         }
         next(err);
@@ -65,20 +79,32 @@ const updateType = async (req, res, next) => {
     }
 
     try {
-        const updatedType = await prisma.projectType.update({
-            where: { id: Number(id) },
-            data: {
-                name
-            }
-        });
-        res.json({ message: "Project Type updated", name: updatedType });
-    } catch (err) {
-        if (err.code === 'P2025') {
-            logEvents(`Record not found - ${req.method} ${req.originalUrl} - Target ID: ${id}`,'dbError.log');
-            return res.status(404).json({ message: `Project Type with id ${id} not found` });
+        const result = await query(
+            `SELECT * FROM "ProjectType" WHERE "name" ILIKE $1 AND "id" <> $2 LIMIT 1`,
+            [name, Number(id)]
+        );
+        const duplicate = result.rows[0];
+        if (duplicate) {
+            return res.status(409).json({ message: 'Project Type already exists with this name'});
         }
-        if (err.code === 'P2002') {
-            logEvents(`Duplicate field error: ${err.meta?.target}`, 'dbError.log');
+    } catch(err) {
+        return res.status(500).json({ message: 'server error'});
+    }
+
+    try {
+
+        const result = await query(
+            `UPDATE "ProjectType" SET "name"=$1 WHERE "id"=$2 RETURNING *`,
+                [name, Number(id)]
+        );
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: `Project type with id ${id} not found` });
+        }
+        const updatedType = result.rows[0];
+        res.json({ message: "Project Type updated", projectType: updatedType });
+    } catch (err) {
+        if (err.code === '23505') {
+            logEvents(`Duplicate field error: ${err.constraint}: ${err.detail}`, 'dbError.log');
             return res.status(409).json({ message: "Project Type already exists" });
         }
         next(err);
@@ -90,36 +116,33 @@ const updateType = async (req, res, next) => {
 //@access Private
 const deleteType = async (req, res, next) => { 
     const { id } = req.body;
-
     if(!id) {
         return res.status(400).json({ message: 'Project Type ID Required'});
     }
-
-    const projectsUsingType = await prisma.project.findMany({
-        where: { typeId: id },
-        select: { title: true }
-    });
+    
+    const result = await query('SELECT "name" FROM "Project" WHERE "typeId"=$1', [Number(id)]);
+    const projectsUsingType = result.rows;
 
     if (projectsUsingType.length > 0) {
-            const projectTitles = projectsUsingType.map(p => p.title).join('\n');
-            return res.status(400).json({
-                message: `Cannot delete project type. These projects use it: ${projectTitles} \n  Please update their project type and try again.`
-            });
+        const projectTitles = projectsUsingType.map(p => p.name).join('\n');
+        return res.status(400).json({
+            message: `Cannot delete project type. These projects use it: ${projectTitles} \n  Please update their project type and try again.`
+        });
     }
-
     try {
-        await prisma.projectType.delete({ where: { id } });
+        const result = await query(
+            `DELETE FROM "ProjectType" WHERE "id" = $1`,
+            [Number(id)]
+        );        
+        //check it's worked
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: `Project Type with id ${id} not found` });
+        }
         res.json({ message: 'Project type deleted successfully' });
     } catch (err) {
-        if (err.code === 'P2025') {
-            logEvents(`Record not found - ${req.method} ${req.originalUrl} - Target ID: ${id}`,'dbError.log');
-            return res.status(404).json({ message: `Tech with id ${id} not found` });
-        }
         next(err);
     }
 }
-
-
 
 export default {
     getAllTypes,

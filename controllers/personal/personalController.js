@@ -10,7 +10,6 @@ import { logEvents } from '../../middleware/logger.js';
 //@access Private
 
 const getAllPersonal = async (req, res) => {
-
     const result = await query('SELECT * FROM "Personal"');
     const personal = result.rows;
     if (!personal.length) {
@@ -54,7 +53,7 @@ const getPersonalByPublicId = async (req, res, next) => {
                             'id', l.id,
                             'name', l.name,
                             'url', l.url,
-                            'imageGrn', l."imageGrn"
+                            'logoGrn', l."logoGrn"
                         )) AS links_array
                 FROM "Link" l
                 GROUP BY l."personId"
@@ -195,19 +194,27 @@ const updatePersonal = async (req, res, next) => {
         if (result.rowCount === 0) {
             return res.status(404).json({ message: `Profile with id ${id} not found` });
         }
+        try {
+            if (imageOrg && oldOriginal) {
+                await fs.promises.unlink(path.join(uploadDir, oldOriginal));
+            }
+            if (imageGrn && oldTransformed) {
+                await fs.promises.unlink(path.join(uploadDir, oldTransformed));
+            }
+        } catch (err) {
+            logEvents(`Failed to delete transformed file: ${oldTransformed}. Error: ${err.message}`, 'fileErrors.log');
+            next(err);
+        }
 
         const updatedPersonal = result.rows[0];
         
-        if (imageOrg && oldOriginal) {
-            await fs.promises.unlink(path.join(uploadDir, oldOriginal)).catch(err => console.error(err));
-        }
-        if (imageGrn && oldTransformed) {
-            await fs.promises.unlink(path.join(uploadDir, oldTransformed)).catch(err => console.error(err));
-        }
+        
         res.json({ message: "Personal Profile Updated", personal: updatedPersonal });
     } catch (err) {
         next(err);
     }
+    //delete old files seperately from DB transaction
+    
 }
 
 export default {

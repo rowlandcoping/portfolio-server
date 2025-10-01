@@ -1,4 +1,5 @@
 import { query } from '../../config/db.js';
+import pool from '../../config/db.js';
 import { logEvents } from '../../middleware/logger.js';
 
 //SKILL ROUTES
@@ -26,35 +27,35 @@ const getSkillById = async (req, res) => {
     if (!id) return res.status(400).json({ message: 'Skill ID required' });
 
     const result = await query(`
-            SELECT
-                json_build_object(
-                    'id', skill."id",
-                    'name', skill."name",
-                    'ecoId', skill."ecoId",
-                    'personId', skill."personId",
-                    'userId', skill."userId",
-                    'tech', COALESCE(tech.tech_array, '[]'::json)
-                ) AS skill_json
-            FROM "Skill" skill
-            LEFT JOIN (
-                SELECT 
-                    skilltech."A" AS skillId,
-                    json_agg(
-                        json_build_object(
-                            'id', tech."id",
-                            'name', tech."name",
-                            'ecoId', tech."ecoId",
-                            'typeId', tech."typeId"
-                        )
-                    ) AS tech_array
-                FROM "_SkillTech" skilltech
-                JOIN "Tech" tech ON tech."id" = skilltech."B"
-                GROUP BY skilltech."A"
-            ) tech ON tech.skillId = skill."id"
-            
-            WHERE skill."id" = $1
-            LIMIT 1;
-        `, [Number(id)]);
+        SELECT
+            json_build_object(
+                'id', skill."id",
+                'name', skill."name",
+                'ecoId', skill."ecoId",
+                'personId', skill."personId",
+                'userId', skill."userId",
+                'tech', COALESCE(tech.tech_array, '[]'::json)
+            ) AS skill_json
+        FROM "Skill" skill
+        LEFT JOIN (
+            SELECT 
+                skilltech."A" AS skillId,
+                json_agg(
+                    json_build_object(
+                        'id', tech."id",
+                        'name', tech."name",
+                        'ecoId', tech."ecoId",
+                        'typeId', tech."typeId"
+                    )
+                ) AS tech_array
+            FROM "_SkillTech" skilltech
+            JOIN "Tech" tech ON tech."id" = skilltech."B"
+            GROUP BY skilltech."A"
+        ) tech ON tech.skillId = skill."id"
+        
+        WHERE skill."id" = $1
+        LIMIT 1;
+    `, [Number(id)]);
 
     const skill = result.rows[0]?.skill_json;
 
@@ -90,24 +91,23 @@ const addSkill = async (req, res, next) => {
     const userId = result.rows[0]?.userId;
     if (!userId) return res.status(404).json({ message: 'No user found' });
 
+    const client = await pool.connect();
     try {
-
+        await client.query('BEGIN');
         const columnsArray = ['personId', 'userId', 'ecoId', 'name'];
         const values = [Number(personal), Number(userId), Number(ecosystem), name];
         const columnsQuery = columnsArray.map(col => `"${col}"`).join(', ');
         const placeholders = columnsArray.map((_, i) => `$${i + 1}`).join(', ');
        
-        const result = await query(
+        const result = await client.query(
             `INSERT INTO "Skill" (${columnsQuery}) VALUES (${placeholders}) RETURNING *`,
             values
         );
-
         const newSkill = result.rows[0];
-
         if (Array.isArray(tech) && tech.length > 0) {
             //map over tech array to create placeholders
             const placeholders = tech.map((_, i) => `($1, $${i + 2})`).join(', ')
-            await query(
+            await client.query(
                 //values of A and B in the table columns map to the placeholder tuples.
                 `INSERT INTO "_SkillTech" ("A", "B") VALUES ${placeholders}`,
                 //NB this array will assign the skill ID to $1 (which is re-used)
@@ -116,14 +116,17 @@ const addSkill = async (req, res, next) => {
                 [Number(newSkill.id), ...tech.map(Number)]
             );
         }
+        await client.query('COMMIT');
         res.status(201).json({ message: "New Skill Created", skill: newSkill });
-
     } catch (err) {
+        await client.query('ROLLBACK');
         if (err.code === '23505') { 
             logEvents(`Duplicate field error: ${err.detail}`, 'dbError.log');
             return res.status(409).json({ message: 'This Skill already exists.' });
         }
         next(err);
+    } finally {
+        client.release(); // always release the client
     }
 };
 
@@ -140,46 +143,49 @@ const updateSkill = async (req, res, next) => {
         return res.status(400).json({ message: "Missing required fields" });
     }    
 
+    const client = await pool.connect();
     try {
+        await client.query('BEGIN');
         const columnsArray = ['ecoId', 'name'];
         const values = [ Number(ecosystem), name];
         const columnsQuery = columnsArray.map((col, i) => `"${col}"=$${i + 1}`).join(', ');
 
-        const result = await query(
+        const result = await client.query(
             `UPDATE "Skill" SET ${columnsQuery} WHERE "id"=$${columnsArray.length+1} RETURNING *`,
                 [...values, Number(id)]
         );
 
-        if (result.rowCount === 0) {
-            return res.status(404).json({ message: `Skill with id ${id} not found` });
-        }
         const updatedSkill=result.rows[0];
               
         if (Array.isArray(tech)) {
         // 1️⃣ Remove old connections not in the new array
             if (tech.length > 0) {
-                await query(
+                await client.query(
                     `DELETE FROM "_SkillTech"
                     WHERE "A" = $1 AND "B" NOT IN (${tech.map((_, i) => `$${i + 2}`).join(', ')})`,
                     [Number(id), ...tech.map(Number)]
                 );
                 const placeholders = tech.map((_, i) => `($1, $${i + 2})`).join(', ');
-                await query(
+                await client.query(
                     `INSERT INTO "_SkillTech" ("A", "B") VALUES ${placeholders} ON CONFLICT DO NOTHING`,
                     [Number(id), ...tech.map(Number)]
                 );
             } else {
                 // If the new array is empty, remove all connections
-                await query(`DELETE FROM "_SkillTech" WHERE "A" = $1`, [Number(id)]);
+                await client.query(`DELETE FROM "_SkillTech" WHERE "A" = $1`, [Number(id)]);
             }
-        }        
+        }
+        await client.query('COMMIT');    
         res.json({ message: "Skill updated", skill: updatedSkill });
     } catch (err) {
+        await client.query('ROLLBACK');
         if (err.code === '23505') { 
             logEvents(`Duplicate field error: ${err.detail}`, 'dbError.log');
             return res.status(409).json({ message: 'This Skill already exists.' });
         }
         next(err);
+    } finally {
+        client.release(); // always release the client
     }
 };
 

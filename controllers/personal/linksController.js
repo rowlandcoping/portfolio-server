@@ -57,7 +57,7 @@ const addLink = async (req, res, next) => {
         return res.status(400).json({ message: "Missing Data" });
     }
 
-    const result = await query('SELECT "userId" FROM "Personal" WHERE "profileId"=$1 LIMIT 1', [Number(profileId)]);
+    const result = await query('SELECT "userId" FROM "Personal" WHERE "id"=$1 LIMIT 1', [Number(profileId)]);
     const userId = result.rows[0]?.userId;
 
     
@@ -88,7 +88,7 @@ const addLink = async (req, res, next) => {
         res.status(201).json(newLink);
     } catch (err) {
         if (err.code === '23505') {
-            logEvents(`Duplicate field error: ${err.meta?.target}`, 'dbError.log');
+            logEvents(`Duplicate field error: ${err.constraint}: ${err.detail}`, 'dbError.log');
             return res.status(409).json({ message: 'Link already exists' });
         }
         next(err);       
@@ -133,13 +133,18 @@ const updateLink = async (req, res, next) => {
             return res.status(404).json({ message: `Link with id ${id} not found` });
         }
 
-        const updatedLink = result.rows[0];
-        if (logoOrg && oldOriginal) {
-            await fs.promises.unlink(path.join(uploadDir, oldOriginal)).catch(err => console.error(err));
+        try {
+            if (logoOrg && oldOriginal) {
+                await fs.promises.unlink(path.join(uploadDir, oldOriginal));
+            }
+            if (logoGrn && oldTransformed) {
+                await fs.promises.unlink(path.join(uploadDir, oldTransformed));
+            }
+        } catch (err) {
+            logEvents(`File deletion error: ${err.message}`, 'fileErrors.log');
+            next(err);
         }
-        if (logoGrn && oldTransformed) {
-            await fs.promises.unlink(path.join(uploadDir, oldTransformed)).catch(err => console.error(err));
-        }
+        const updatedLink = result.rows[0];        
         res.json({ message: "Link updated", link: updatedLink });
     } catch (err) {
         if (err.code === '23505') {
@@ -148,6 +153,7 @@ const updateLink = async (req, res, next) => {
         }
         next(err);
     }
+    
 };
 
 //@desc Delete a link
@@ -158,9 +164,11 @@ const deleteLink = async (req, res, next) => {
     if (!id) return res.status(400).json({ message: 'Link ID required' });
 
     //retrieve image links
-    const result = await query('SELECT "logoGrn", "logoOrg" FROM "Link" WHERE "id"=$1', [Number(id)]);
+    const result = await query('SELECT "logoGrn", "logoOrg" FROM "Link" WHERE "id"=$1 LIMIT 1', [Number(id)]);
+    if (result.rowCount === 0) {
+        return res.status(404).json({ message: `Link with id ${id} not found` });
+    }
     const link = result.rows[0];
-
     const imagePath = path.join(process.cwd(), link.logoGrn);
     const originalPath = path.join(process.cwd(), link.logoOrg);
     
@@ -170,24 +178,18 @@ const deleteLink = async (req, res, next) => {
             `DELETE FROM "Link" WHERE "id" = $1 RETURNING "id"`,
             [Number(id)]
         );
-
-        //check it's worked
-        if (result.rowCount === 0) {
-            return res.status(404).json({ message: `Link with id ${id} not found` });
+        try {
+            await fs.promises.unlink(path.resolve(imagePath));
+            await fs.promises.unlink(path.resolve(originalPath));
+        } catch (err) {
+            logEvents(`File deletion error: ${err.message}`, 'fileErrors.log');
+            next(err);
         }
-
-
-        //remove images        
-        await fs.unlink(path.resolve(imagePath), (err) => {
-            if (err) console.error('Failed to delete old transformed file:', err);
-        });
-        await fs.unlink(path.resolve(originalPath), (err) => {
-            if (err) console.error('Failed to delete old original file:', err);
-        });
         res.json({ message: `Link with id ${id} deleted.` });
     } catch (err) {
         next(err)
     }
+    
 };
 
 export default {

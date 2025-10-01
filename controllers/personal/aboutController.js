@@ -108,52 +108,48 @@ const getAboutByPublicId = async (req, res, next) => {
     const user = result.rows[0];
 
     try {
-        const about = await query(`
+        const result = await query(`
             SELECT
-                json_build_object(
-                    'id', about."id",
-                    'userId', about."userId",
-                    'overview', about."overview",
-                    'repo', about."repo",
-                    'copyYear', about."copyYear",
-                    'copyName', about."copyName",
-                    'projectEcosystem', COALESCE(pe_json.pe_array, '[]'::json)
-                ) AS about_json
-            FROM "About" about
-            LEFT JOIN (
-                SELECT 
-                    pe."aboutId",
-                    json_agg(
+                a."id",
+                a."userId",
+                a."overview",
+                a."repo",
+                a."copyYear",
+                a."copyName",
+                (
+                    SELECT COALESCE(json_agg(
                         json_build_object(
                             'id', pe."id",
                             'name', pe."name",
-                            'ecosystem', json_build_object(
-                                'id', eco."id",
-                                'name', eco."name",
-                                'tech', COALESCE(tech_json.tech_array, '[]'::json)
+                            'ecosystem', row_to_json(e),
+                            'tech', (
+                                SELECT COALESCE(json_agg(json_build_object(
+                                    'id', t."id",
+                                    'name', t."name",
+                                    'ecoId', t."ecoId",
+                                    'typeId', t."typeId"
+                                ) ORDER BY t."name"), '[]'::json)
+                                FROM "_ProjectTech" pt
+                                JOIN "Tech" t ON t."id" = pt."B"
+                                WHERE pt."A" = pe."id"
                             )
-                        )
-                    ) AS pe_array
-                FROM "ProjectEcosystem" pe
-                LEFT JOIN "Ecosystem" eco ON eco."id" = pe."ecoId"
-                LEFT JOIN (
-                    SELECT pt."A" AS "projectEcosystemId", 
-                        json_agg(json_build_object('id', t."id", 'name', t."name")) AS tech_array
-                    FROM "_ProjectTech" pt
-                    JOIN "Tech" t ON t."id" = pt."B"
-                    GROUP BY pt."A"
-                ) tech_json ON tech_json."projectEcosystemId" = pe."id"
-                GROUP BY pe."aboutId"
-            ) pe_json ON pe_json."aboutId" = about."id"
-            WHERE about."userId" = $1
+                        ) ORDER BY pe."name"
+                    ), '[]'::json)
+                    FROM "ProjectEcosystem" pe
+                    JOIN "Ecosystem" e ON e."id" = pe."ecoId"
+                    WHERE pe."aboutId" = a."id"
+                ) AS "projectEcosystem"
+            FROM "About" a
+            WHERE a."userId" = $1
             LIMIT 1;
         `, [Number(user.id)]);
+        const about = result.rows[0];
 
-        if (!about.rows[0] || !about.rows[0].about_json) {
-            return res.status(404).json({ message: 'No about page found for logged-in user' });
+        if (!about) {
+            //NB any errors not handled here will be handled by our error handline middleware
+            return res.status(404).json({message: 'No data found'})
         }
-
-        res.json(about.rows[0].about_json);
+        res.json(about); 
     } catch (err) {
         next(err);
     }

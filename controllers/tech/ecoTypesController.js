@@ -1,17 +1,18 @@
-import prisma from '../../config/db.js';
+import { query } from '../../config/db.js';
 import { logEvents } from '../../middleware/logger.js';
 
 //ECOSYSTEM TYPES ROUTES
 
 //@desc Get all ecosystem types
-//@route GET /tech/ecotypes
+//@route GET /tech/ecotypes 
 //@access Private
 
 const getAllEcoTypes =async (req, res) => {
-    const ecoTypes = await prisma.ecoType.findMany();
+    const result = await query('SELECT * FROM "EcoType"');
+    const ecoTypes = result.rows;    
     if (!ecoTypes.length) {
         //NB any errors not handled here will be handled by our error handline middleware
-        return res.status(400).json({message: 'No ecoTypes found'})
+        return res.status(404).json({message: 'No ecoTypes found'})
     }
     res.json(ecoTypes);
 }
@@ -22,10 +23,9 @@ const getAllEcoTypes =async (req, res) => {
 const getEcoTypeById = async (req, res) => {
     const { id } = req.params;
     if (!id) return res.status(400).json({ message: 'Ecosytem type ID required' });
-
-    const ecoType = await prisma.ecoType.findUnique({ where: { id: Number(id) } });
+    const result = await query('SELECT * FROM "EcoType" WHERE "id"=$1 LIMIT 1', [Number(id)]);
+    const ecoType = result.rows[0];
     if (!ecoType) return res.status(404).json({ message: 'No Ecosytem type found' });
-
     res.json(ecoType);
 }
 
@@ -38,16 +38,29 @@ const addEcoType = async (req, res, next) => {
     if (!name) {
         return res.status(400).json({ message: 'All fields Required'});
     }
+
     try {
-        const newEcoType = await prisma.ecoType.create({
-            data: {
-                name
-            }
-        });
+        const result = await query(
+            `SELECT * FROM "EcoType" WHERE "name" ILIKE $1 LIMIT 1`,
+            [name]
+        );
+        const duplicate = result.rows[0];
+        if (duplicate) {
+            return res.status(409).json({ message: 'Ecosystem Type already exists with this name'});
+        }
+    } catch(err) {
+        return res.status(500).json({ message: 'server error'});
+    }
+
+    try {
+        const result = await query(
+            `INSERT INTO "EcoType" ("name") VALUES ($1) RETURNING *`, [name]
+        );
+        const newEcoType = result.rows[0]
         res.status(201).json(newEcoType);
     } catch (err) {
-        if (err.code === 'P2002') {
-            logEvents(`Duplicate field error: ${err.meta?.target}`, 'dbError.log');
+        if (err.code === '23505') {
+            logEvents(`Duplicate field error: ${err.constraint}: ${err.detail}`, 'dbError.log');
             return res.status(409).json({ message: 'Type of ecosystem already exists' });
         }
         next(err);
@@ -65,20 +78,32 @@ const updateEcoType = async (req, res, next) => {
     }
 
     try {
-        const updatedEcoType = await prisma.ecoType.update({
-            where: { id: Number(id) },
-            data: {
-                name
-            }
-        });
-        res.json({ message: "Ecosystem type updated", name: updatedEcoType });
-    } catch (err) {
-        if (err.code === 'P2025') {
-            logEvents(`Record not found - ${req.method} ${req.originalUrl} - Target ID: ${id}`,'dbError.log');
+        const result = await query(
+            `SELECT * FROM "EcoType" WHERE "name" ILIKE $1 AND "id" <> $2 LIMIT 1`,
+            [name, Number(id)]
+        );
+        const duplicate = result.rows[0];
+        if (duplicate) {
+            return res.status(409).json({ message: 'Ecosystem Type already exists with this name'});
+        }
+    } catch(err) {
+        return res.status(500).json({ message: 'server error'});
+    }
+
+    
+    try {
+        const result = await query(
+            `UPDATE "EcoType" SET "name"=$1 WHERE "id"=$2 RETURNING *`,
+                [name, Number(id)]
+        );
+        if (result.rowCount === 0) {
             return res.status(404).json({ message: `Ecosystem type with id ${id} not found` });
         }
-        if (err.code === 'P2002') {
-            logEvents(`Duplicate field error: ${err.meta?.target}`, 'dbError.log');
+        const updatedEcoType=result.rows[0];
+        res.json({ message: "Ecosystem type updated", ecoType: updatedEcoType });
+    } catch (err) {
+        if (err.code === '23505') {
+            logEvents(`Duplicate field error: ${err.constraint}: ${err.detail}`, 'dbError.log');
             return res.status(409).json({ message: "Ecosystem type already exists" });
         }
         next(err);
@@ -92,29 +117,30 @@ const deleteEcoType = async (req, res, next) => {
     const { id } = req.body;
 
     if(!id) {
-        return res.status(400).json({ message: 'Tech type ID Required'});
+        return res.status(400).json({ message: 'Ecosystem type ID Required'});
     }
 
-    const ecosystemsUsingEcoType = await prisma.ecosystem.findMany({
-        where: { typeId: id },
-        select: { name: true }
-    });
+    const result = await query('SELECT "name" FROM "Ecosystem" WHERE "typeId"=$1 LIMIT 1', [Number(id)]);
+    const ecosystemsUsingEcoType = result.rows;
 
     if (ecosystemsUsingEcoType.length > 0) {
-            const ecosystems = ecosystemsUsingEcoType.map(p => p.name).join('\n');
-            return res.status(400).json({
-                message: `Cannot delete tech type. These technologies use it: ${ecosystems} \n  Please update their tech type and try again.`
-            });
+        const ecosystems = ecosystemsUsingEcoType.map(p => p.name).join('\n');
+        return res.status(400).json({
+            message: `Cannot delete ecosystem type. These ecosystems use it: ${ecosystems} \n  Please update their tech type and try again.`
+        });
     }
 
     try {
-        await prisma.ecoType.delete({ where: { id } });
-        res.json({ message: 'tech type deleted successfully' });
-    } catch (err) {
-        if (err.code === 'P2025') {
-            logEvents(`Record not found - ${req.method} ${req.originalUrl} - Target ID: ${id}`,'dbError.log');
-            return res.status(404).json({ message: `Tech with id ${id} not found` });
+        const result = await query( 
+            `DELETE FROM "EcoType" WHERE "id" = $1`,
+            [Number(id)]
+        );        
+        //check it's worked
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: `Ecosystem Type with id ${id} not found` });
         }
+        res.json({ message: 'Ecosystem type deleted successfully' });
+    } catch (err) {
         next(err);
     }
 }

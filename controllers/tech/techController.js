@@ -1,4 +1,4 @@
-import prisma from '../../config/db.js';
+import { query } from '../../config/db.js';
 import { logEvents } from '../../middleware/logger.js';
 
 //TECH ROUTES
@@ -8,24 +8,24 @@ import { logEvents } from '../../middleware/logger.js';
 //@access Private
 
 const getAllTech =async (req, res) => {
-    const tech = await prisma.tech.findMany();
+    const result = await query('SELECT * FROM "Tech"');
+    const tech = result.rows;
     if (!tech.length) {
         //NB any errors not handled here will be handled by our error handline middleware
-        return res.status(400).json({message: 'No tech found'})
+        return res.status(404).json({message: 'No tech found'})
     }
     res.json(tech);
 }
 
 //@desc Get selected tech
-//@route GET /tech/associated/:id
+//@route GET /tech/:id
 //@access Private
 const getTechById = async (req, res) => {
     const { id } = req.params;
     if (!id) return res.status(400).json({ message: 'Tech ID required' });
-
-    const tech = await prisma.tech.findUnique({ where: { id: Number(id) } });
+    const result = await query('SELECT * FROM "Tech" WHERE "id"=$1 LIMIT 1', [Number(id)]);
+    const tech = result.rows[0];
     if (!tech) return res.status(404).json({ message: 'Tech not found' });
-
     res.json(tech);
 }
 
@@ -35,10 +35,9 @@ const getTechById = async (req, res) => {
 const getTechByEcoId = async (req, res) => {
     const { id } = req.params;
     if (!id) return res.status(400).json({ message: 'Tech ID required' });
-
-    const tech = await prisma.tech.findMany({ where: { ecoId: Number(id) } });
-    if (!tech) return res.status(404).json({ message: 'No tech found' });
-
+    const result = await query('SELECT * FROM "Tech" WHERE "ecoId"=$1', [Number(id)]);
+    const tech = result.rows;
+    if (!tech.length) return res.status(404).json({ message: 'No tech found' });
     res.json(tech);
 }
 
@@ -53,14 +52,11 @@ const addTech = async (req, res, next) => {
     }
 
     try {
-        const duplicate = await prisma.tech.findFirst({
-            where: {
-                name: {
-                equals: name,
-                mode: 'insensitive'
-                }
-            }
-        });
+        const result = await query(
+            `SELECT * FROM "Tech" WHERE "name" ILIKE $1 LIMIT 1`,
+            [name]
+        );
+        const duplicate = result.rows[0];
         if (duplicate) {
             return res.status(409).json({ message: 'Tech already exists with this name'});
         }
@@ -69,17 +65,19 @@ const addTech = async (req, res, next) => {
     }
 
     try {
-        const newTech = await prisma.tech.create({
-            data: {
-                name,
-                type: { connect: { id: Number(type) } },
-                ecosystem: { connect: { id: Number(ecosystem) } },
-            }
-        });
+        const columnsArray = ['typeId', 'ecoId', 'name'];
+        const values = [Number(type), Number(ecosystem), name];
+        const columnsQuery = columnsArray.map(col => `"${col}"`).join(', ');
+        const placeholders = columnsArray.map((_, i) => `$${i + 1}`).join(', ');        
+        const result = await query(
+            `INSERT INTO "Tech" (${columnsQuery}) VALUES (${placeholders}) RETURNING *`,
+            values
+        );
+        const newTech = result.rows[0]
         res.status(201).json(newTech);
     } catch (err) {
-        if (err.code === 'P2002') {
-            logEvents(`Duplicate field error: ${err.meta?.target}`, 'dbError.log');
+        if (err.code === '23505') {
+            logEvents(`Duplicate field error: ${err.constraint}: ${err.detail}`, 'dbError.log');
             return res.status(409).json({ message: 'Type of tech already exists' });
         }
         next(err);
@@ -97,17 +95,11 @@ const updateTech = async (req, res, next) => {
     }
 
     try {
-        const duplicate = await prisma.tech.findFirst({
-            where: {
-                name: {
-                equals: name,
-                mode: 'insensitive'
-                },
-                NOT: {
-                    id: Number(id), // exclude the row being updated
-                },
-            }
-        });
+        const result = await query(
+            `SELECT * FROM "Tech" WHERE "name" ILIKE $1 AND "id" <> $2 LIMIT 1`,
+            [name, Number(id)]
+        );
+        const duplicate = result.rows[0];
         if (duplicate) {
             return res.status(409).json({ message: 'Tech already exists with this name'});
         }
@@ -116,33 +108,25 @@ const updateTech = async (req, res, next) => {
     }
 
     try {
-        const updatedTech = await prisma.tech.update({
-            where: { id: Number(id) },
-            data: {
-                name,
-                type: { connect: { id: Number(type) } },
-                ecosystem: { connect: { id: Number(ecosystem) } },
-            }
-        });
-
-        /*
-        const relatedSkills = await prisma.skill.updateMany({
-            where: { techId: Number(id) },
-            data: {
-                name
-            }
-        });
-        */
+        //values to be inserted only
+        const columnsArray = ['typeId', 'ecoId', 'name'];
+        const values = [Number(type), Number(ecosystem), name];
+        const columnsQuery = columnsArray.map((col, i) => `"${col}"=$${i + 1}`).join(', ');
+        const result = await query(
+            `UPDATE "Tech" SET ${columnsQuery} WHERE "id"=$${columnsArray.length+1} RETURNING *`,
+                [...values, Number(id)]
+        );
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: `Tech with id ${id} not found` });
+        } 
+        const updatedTech=result.rows[0];
         res.json({ 
-            message: `Tech updated.` /* + `${relatedSkills.count} related skill${relatedSkills.count !== 1 ? 's' : ''} updated.`, */,
+            message: `Tech updated.`,
             tech: updatedTech
         });
     } catch (err) {
-        if (err.code === 'P2025') {
-            return res.status(404).json({ message: `Tech with id ${id} not found` });
-        }
-        if (err.code === 'P2002') {
-            logEvents(`Duplicate field error: ${err.meta?.target}`, 'dbError.log');
+        if (err.code === '23505') {
+            logEvents(`Duplicate field error: ${err.constraint}: ${err.detail}`, 'dbError.log');
             return res.status(409).json({ message: "Tech already exists" });
         }
         next(err);
@@ -160,13 +144,16 @@ const deleteTech = async (req, res, next) => {
     }
 
     try {
-        await prisma.tech.delete({ where: { id } });
-        res.json({ message: 'Tech (and associated skills) deleted successfully' });
-    } catch (err) {
-        if (err.code === 'P2025') {
-            logEvents(`Record not found - ${req.method} ${req.originalUrl} - Target ID: ${id}`,'dbError.log');
+        const result = await query(
+            `DELETE FROM "Tech" WHERE "id" = $1`,
+            [Number(id)]
+        );
+        //check it's worked
+        if (result.rowCount === 0) {
             return res.status(404).json({ message: `Tech with id ${id} not found` });
         }
+        res.json({ message: 'Tech (and associated skills) deleted successfully' });
+    } catch (err) {
         next(err);
     }
 }

@@ -1,4 +1,5 @@
-import prisma from '../../config/db.js';
+
+import { query } from '../../config/db.js';
 import { logEvents } from '../../middleware/logger.js';
 
 //ECOSYSTEM ROUTES
@@ -8,10 +9,13 @@ import { logEvents } from '../../middleware/logger.js';
 //@access Private
 
 const getAllEcosystems =async (req, res) => {
-    const ecosystems = await prisma.ecosystem.findMany();
+
+    const result = await query('SELECT * FROM "Ecosystem"');
+    const ecosystems = result.rows;
+
     if (!ecosystems.length) {
         //NB any errors not handled here will be handled by our error handline middleware
-        return res.status(400).json({message: 'No ecosystems found'})
+        return res.status(404).json({message: 'No ecosystems found'})
     }
     res.json(ecosystems);
 }
@@ -23,7 +27,9 @@ const getEcosystemById = async (req, res) => {
     const { id } = req.params;
     if (!id) return res.status(400).json({ message: 'Ecosystem ID required' });
 
-    const ecosystem = await prisma.ecosystem.findUnique({ where: { id: Number(id) } });
+    const result = await query('SELECT * FROM "Ecosystem" WHERE "id"=$1 LIMIT 1', [Number(id)]);
+    const ecosystem = result.rows[0];
+
     if (!ecosystem) return res.status(404).json({ message: 'No ecosystem found' });
 
     res.json(ecosystem);
@@ -40,32 +46,27 @@ const addEcosystem = async (req, res, next) => {
     }
 
     try {
-        const duplicate = await prisma.tech.findFirst({
-            where: {
-                name: {
-                equals: name,
-                mode: 'insensitive'
-                }
-            }
-        });
+        const result = await query(
+            `SELECT * FROM "Ecosystem" WHERE "name" ILIKE $1 LIMIT 1`,
+            [name]
+        );
+        const duplicate = result.rows[0];
         if (duplicate) {
-            return res.status(409).json({ message: 'Technology already exists with this name'});
+            return res.status(409).json({ message: 'Ecosystem already exists with this name'});
         }
     } catch(err) {
         return res.status(500).json({ message: 'server error'});
     }
 
     try {
-        const newEcosystem = await prisma.ecosystem.create({
-            data: {
-                name,
-                type: { connect: { id: Number(type) } },
-            }
-        });
+        const result = await query(
+            `INSERT INTO "Ecosystem" ("name", "typeId") VALUES ($1, $2) RETURNING *`, [name.toLowerCase(), Number(type)]
+        );
+        const newEcosystem = result.rows[0]        
         res.status(201).json(newEcosystem);
     } catch (err) {
-        if (err.code === 'P2002') {
-            logEvents(`Duplicate field error: ${err.meta?.target}`, 'dbError.log');
+        if (err.code === '23505') {
+            logEvents(`Duplicate field error: ${err.constraint}: ${err.detail}`, 'dbError.log');
             return res.status(409).json({ message: 'Ecosystem already exists' });
         }
         next(err);
@@ -83,57 +84,35 @@ const updateEcosystem = async (req, res, next) => {
     }
 
     try {
-        const duplicate = await prisma.tech.findFirst({
-            where: {
-                name: {
-                equals: name,
-                mode: 'insensitive'
-                }
-            }
-        });
+        const result = await query(
+            `SELECT * FROM "Ecosystem" WHERE "name" ILIKE $1 AND "id" <> $2 LIMIT 1`,
+            [name, Number(id)]
+        );
+        const duplicate = result.rows[0];
         if (duplicate) {
-            return res.status(409).json({ message: 'Technology already exists with this name'});
+            return res.status(409).json({ message: 'Ecosystem already exists with this name'});
         }
     } catch(err) {
         return res.status(500).json({ message: 'server error'});
     }
 
-
-
-
     try {
-        const updatedEcosystem = await prisma.ecosystem.update({
-            where: { id: Number(id) },
-            data: {
-                name,
-                type: { connect: { id: Number(type) } },
-            }
-        });
-        const relatedSkills = await prisma.skill.updateMany({
-            where: { ecoId: Number(id) },
-            data: {
-                name
-            }
-        });
-        const relatedProjectEcosystems = await prisma.projectEcosystem.updateMany({
-            where: { ecoId: Number(id) },
-            data: {
-                name
-            }
-        });
-        res.json({ 
-            message: `Ecosystem updated. ${relatedSkills.count} related skill${
-                relatedSkills.count !== 1 ? 's' : ''} and ${relatedProjectEcosystems.count} related projects${
-                relatedProjectEcosystems.count !== 1 ? 's' : ''} updated.`,
-            ecosystem: updatedEcosystem 
-        });
-    } catch (err) {
-        if (err.code === 'P2025') {
-            logEvents(`Record not found - ${req.method} ${req.originalUrl} - Target ID: ${id}`,'dbError.log');
+        const result = await query(
+            `UPDATE "Ecosystem" SET "name"=$1, "typeId"=$2 WHERE "id"=$3 RETURNING *`,
+                [name.toLowerCase(), Number(type), Number(id)]
+        );
+        if (result.rowCount === 0) {
             return res.status(404).json({ message: `Ecosystem with id ${id} not found` });
         }
-        if (err.code === 'P2002') {
-            logEvents(`Duplicate field error: ${err.meta?.target}`, 'dbError.log');
+        const updatedEcosystem=result.rows[0];
+
+        res.json({ 
+            message: 'Ecosystem updated.',
+            ecosystem: updatedEcosystem
+        });
+    } catch (err) {
+        if (err.code === '23505') {
+            logEvents(`Duplicate field error: ${err.constraint}: ${err.detail}`, 'dbError.log');
             return res.status(409).json({ message: "Ecosystem already exists" });
         }
         next(err);
@@ -150,32 +129,29 @@ const deleteEcosystem = async (req, res, next) => {
         return res.status(400).json({ message: 'Ecosystem ID Required'});
     }
 
-    const relatedProjects = await prisma.projectEcosystem.findMany({
-        where: {
-            ecoId: Number(id) 
-        },
-        select: {
-            project: {
-            select: { name: true }
-            }
-        }
-    });
+    const result = await query('SELECT * FROM "ProjectEcosystem" WHERE "ecoId"=$1 LIMIT 1', [Number(id)]);
+    const related = result.rows;
 
-    if (relatedProjects.length > 0) {
-        const projectTitles = projectsUsingEcosystem.map(p => p.name).join('\n');
+
+    if (related.length > 0) {
         return res.status(400).json({
-            message: `Cannot delete ecosystem. These projects use it:\n${projectTitles}\nPlease remove the ecosystem from these projects and try again.`
+            message: `Cannot delete ecosystem because it is already in use.`
         });
     }
 
     try {
-        await prisma.ecosystem.delete({ where: { id } });
-        res.json({ message: 'ecosystem deleted successfully' });
-    } catch (err) {
-        if (err.code === 'P2025') {
-            logEvents(`Record not found - ${req.method} ${req.originalUrl} - Target ID: ${id}`,'dbError.log');
-            return res.status(404).json({ message: `Tech with id ${id} not found` });
+        const result = await query(
+            `DELETE FROM "Ecosystem" WHERE "id" = $1`,
+            [Number(id)]
+        );
+                
+        //check it's worked
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: `Ecosystem with id ${id} not found` });
         }
+
+        res.json({ message: 'Ecosystem deleted successfully' });
+    } catch (err) {
         next(err);
     }
 }

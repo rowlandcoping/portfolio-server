@@ -15,7 +15,7 @@ router.get('/skills', skillsController.getAllSkills)
 router.post('/contacts', contactsController.addContact)
 router.get('/about/provider', aboutController.getAboutByPublicId)
 
-//router.use(requireSession);
+router.use(requireSession);
 
 router.route('/')
     .get(personalController.getAllPersonal)

@@ -5,11 +5,8 @@ const login = async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) return res.status(400).json({ message: 'Email and password required' });
 
-    const result = await query('SELECT "id", "password" FROM "User" WHERE "email"=$1 LIMIT 1', [email]);
+    const result = await query('SELECT "id", "password" FROM "User" WHERE "email"=$1 LIMIT 1', [email.toLowerCase()]);
     const user = result.rows[0];
-
-    console.log(user);
-
 
     if (!user) return res.status(401).json({ message: 'Invalid credentials' });
 
