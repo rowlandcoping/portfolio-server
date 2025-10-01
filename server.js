@@ -25,6 +25,10 @@ import userPersonalRoutes from './routes/admin/personalAdminRoutes.js';
 const app = express();
 const PORT = process.env.PORT || 3500;
 
+app.options('/*', (req, res) => {
+  res.sendStatus(200);
+});
+
 //MIDDLEWARE FOR REQUESTS
 app.use(logger);
 /*
