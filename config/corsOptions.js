@@ -1,4 +1,4 @@
-const allowedOrigins = process.env.ORIGINS.split(' ');
+const allowedOrigins = process.env.ORIGINS.split(',').map(o => o.trim());
 console.log(allowedOrigins)
 
 const corsOptions = {
