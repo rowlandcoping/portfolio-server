@@ -55,7 +55,7 @@ const getPersonalByPublicId = async (req, res, next) => {
                             'name', l.name,
                             'url', l.url,
                             'logoGrn', l."logoGrn",
-                            'logoGry', l."logoGry",
+                            'logoGry', l."logoGry"
                         )) AS links_array
                 FROM "Link" l
                 GROUP BY l."personId"

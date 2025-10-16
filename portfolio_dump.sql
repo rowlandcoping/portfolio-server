@@ -1,27 +1,34 @@
---
--- PostgreSQL database dump
---
+GRANT cookeryc_rowland TO cookeryc;
 
--- Dumped from database version 17.5 (Ubuntu 17.5-1.pgdg22.04+1)
--- Dumped by pg_dump version 17.5 (Ubuntu 17.5-1.pgdg22.04+1)
+DO $$
+DECLARE
+    obj RECORD;
+BEGIN
+    -- Tables
+    FOR obj IN
+        SELECT tablename FROM pg_tables WHERE schemaname = 'public'
+    LOOP
+        EXECUTE format('ALTER TABLE public.%I OWNER TO cookeryc_rowland;', obj.tablename);
+    END LOOP;
 
-SET statement_timeout = 0;
-SET lock_timeout = 0;
-SET idle_in_transaction_session_timeout = 0;
-SET client_encoding = 'UTF8';
-SET standard_conforming_strings = on;
-SELECT pg_catalog.set_config('search_path', '', false);
-SET check_function_bodies = false;
-SET xmloption = content;
-SET client_min_messages = warning;
-SET row_security = off;
+    -- Sequences
+    FOR obj IN
+        SELECT sequencename FROM pg_sequences WHERE schemaname = 'public'
+    LOOP
+        EXECUTE format('ALTER SEQUENCE public.%I OWNER TO cookeryc_rowland;', obj.sequencename);
+    END LOOP;
 
+    -- Views
+    FOR obj IN
+        SELECT table_name FROM information_schema.views WHERE table_schema = 'public'
+    LOOP
+        EXECUTE format('ALTER VIEW public.%I OWNER TO cookeryc_rowland;', obj.table_name);
+    END LOOP;
+END$$;
 
+-- Grant all privileges on the public schema
+GRANT ALL ON SCHEMA public TO cookeryc_rowland;
 
-CREATE TRIGGER ecosystem_name_update
-AFTER UPDATE OF name
-ON public."Ecosystem"
-FOR EACH ROW
-EXECUTE PROCEDURE public.update_related_names();
-
-
+-- Grant privileges on all tables and sequences
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO cookeryc_rowland;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO cookeryc_rowland;
