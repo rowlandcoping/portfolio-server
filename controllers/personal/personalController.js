@@ -38,11 +38,12 @@ const getPersonalByPublicId = async (req, res, next) => {
             SELECT
                 p.id,
                 p."userId",
+                p."imageGry",
                 p."imageGrn",
                 p."imageOrg",
                 p."imageAlt",
-                p."starSign",
-                p."favColor",
+                p."jobTitle",
+                p."attributes",
                 p."description",
                 COALESCE(links.links_array, '[]'::json) AS links,
                 COALESCE(skills.skills_array, '[]'::json) AS skills
@@ -53,7 +54,8 @@ const getPersonalByPublicId = async (req, res, next) => {
                             'id', l.id,
                             'name', l.name,
                             'url', l.url,
-                            'logoGrn', l."logoGrn"
+                            'logoGrn', l."logoGrn",
+                            'logoGry', l."logoGry",
                         )) AS links_array
                 FROM "Link" l
                 GROUP BY l."personId"
@@ -116,7 +118,7 @@ const getUserPersonal = async (req, res) => {
 //@route POST /personal
 //@access Private
 const addPersonal = async (req, res, next) => {
-    const { description,  starSign, favColor, imageAlt } = req.body;
+    const { description, jobTitle, attributes, imageAlt } = req.body;
     //NB validate before making db query
     const user = req.session?.userId;
 
@@ -127,19 +129,19 @@ const addPersonal = async (req, res, next) => {
         return res.status(400).json({ message: 'All fields Required'});
     }
 
-    const originalFile = req.files?.original?.[0];
-    const transformedFile = req.files?.transformed?.[0];
-
-    let imageOrg = undefined;
-    let imageGrn = undefined;
-    if (originalFile && transformedFile) {
-        imageOrg = `/images/${originalFile.filename}`;
-        imageGrn = `/images/${transformedFile.filename}`;
-    }
+    const imageOrg = req.files?.original?.[0]
+        ? `/images/${req.files.original[0].filename}`
+        : undefined;
+    const imageGrn = req.files?.transformedGreen?.[0]
+        ? `/images/${req.files.transformedGreen[0].filename}`
+        : undefined;
+    const imageGry = req.files?.transformedGrayscale?.[0]
+        ? `/images/${req.files.transformedGrayscale[0].filename}`
+        : undefined;
 
     try {
-        const columnsArray = ['userId', 'description', 'starSign', 'favColor', 'imageOrg', 'imageGrn', 'imageAlt'];
-        const values = [Number(user), description, starSign, favColor, imageOrg, imageGrn, imageAlt];
+        const columnsArray = ['userId', 'description', 'jobTitle', 'attributes', 'imageOrg', 'imageGrn', 'imageGry', 'imageAlt'];
+        const values = [Number(user), description, jobTitle, attributes, imageOrg, imageGrn, imageGry, imageAlt];
         const columnsQuery = columnsArray.map(col => `"${col}"`).join(', ');
         const placeholders = columnsArray.map((_, i) => `$${i + 1}`).join(', ');
        
@@ -163,26 +165,30 @@ const addPersonal = async (req, res, next) => {
 //@route PATCH /personal
 //@access Private
 const updatePersonal = async (req, res, next) => { 
-    const { id, description, starSign, favColor, imageAlt, oldOriginal, oldTransformed } = req.body;
+    const { id, description, jobTitle, attributes, imageAlt, oldOriginal, oldGreenTransformed, oldGrayscaleTransformed } = req.body;
 
-    if (!id || !description || !starSign  || !favColor) {
+    if (!id || !description || !jobTitle  || !attributes) {
         return res.status(400).json({ message: 'All fields Required'});
     }
 
     const uploadDir = path.join(process.cwd(), 'images');
-        const imageOrg = req.files?.original?.[0]
-            ? `/images/${req.files.original[0].filename}`
-            : undefined;
-        const imageGrn = req.files?.transformed?.[0]
-            ? `/images/${req.files.transformed[0].filename}`
-            : undefined;
+    const imageOrg = req.files?.original?.[0]
+        ? `/images/${req.files.original[0].filename}`
+        : undefined;
+    const imageGrn = req.files?.transformedGreen?.[0]
+        ? `/images/${req.files.transformedGreen[0].filename}`
+        : undefined;
+    const imageGry = req.files?.transformedGrayscale?.[0]
+        ? `/images/${req.files.transformedGrayscale[0].filename}`
+        : undefined;
+
 
     try {
-        const columnsArray = ['description', 'starSign', 'favColor', 'imageAlt'];
-        const values = [description, starSign, favColor, imageAlt];
+        const columnsArray = ['description', 'jobTitle', 'attributes', 'imageAlt'];
+        const values = [description, jobTitle, attributes, imageAlt];
         if (imageOrg !== undefined) {
-            columnsArray.push('imageOrg', 'imageGrn');
-            values.push(imageOrg, imageGrn);
+            columnsArray.push('imageOrg', 'imageGrn', 'imageGry');
+            values.push(imageOrg, imageGrn, imageGry);
         }
         const columnsQuery = columnsArray.map((col, i) => `"${col}"=$${i + 1}`).join(', ');
 
@@ -198,11 +204,14 @@ const updatePersonal = async (req, res, next) => {
             if (imageOrg && oldOriginal) {
                 await fs.promises.unlink(path.join(uploadDir, oldOriginal));
             }
-            if (imageGrn && oldTransformed) {
-                await fs.promises.unlink(path.join(uploadDir, oldTransformed));
+            if (imageGrn && oldGreenTransformed) {
+                await fs.promises.unlink(path.join(uploadDir, oldGreenTransformed));
+            }
+            if (imageGry && oldGrayscaleTransformed) {
+                await fs.promises.unlink(path.join(uploadDir, oldGrayscaleTransformed));
             }
         } catch (err) {
-            logEvents(`Failed to delete transformed file: ${oldTransformed}. Error: ${err.message}`, 'fileErrors.log');
+            logEvents(`Failed to delete transformed file: ${oldGreenTransformed}. Error: ${err.message}`, 'fileErrors.log');
             next(err);
         }
 

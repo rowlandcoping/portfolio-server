@@ -21,20 +21,20 @@ const getAboutByCurrentUser = async (req, res) => {
 //@route POST /personal/about
 //@access Private
 const addAbout = async (req, res, next) => {
-    const { overview, type, repo, copyYear, copyName } = req.body;
+    const { overview, type, clientRepo, serverRepo, copyYear, copyName } = req.body;
     const user = req.session?.userId;
 
     if (!user) {
         return res.status(401).json({ message: 'Session not found'});
     }
-    if (!overview || !type || !repo || !copyYear || !copyName) {
+    if (!overview || !type || !clientRepo || !serverRepo || !copyYear || !copyName) {
         return res.status(400).json({ message: 'All fields Required'});
     }
 
     try {
         //set data outside of db call
-        const columnsArray = ['userId', 'typeId', 'overview', 'repo', 'copyYear', 'copyName'];
-        const values = [Number(user), Number(type), overview, repo, Number(copyYear), copyName];
+        const columnsArray = ['userId', 'typeId', 'overview', 'clientRepo', 'serverRepo', 'copyYear', 'copyName'];
+        const values = [Number(user), Number(type), overview, clientRepo, serverRepo , Number(copyYear), copyName];
 
         const columnsQuery = columnsArray.map(col => `"${col}"`).join(', ');
         const placeholders = columnsArray.map((_, i) => `$${i + 1}`).join(', ');
@@ -63,17 +63,16 @@ const addAbout = async (req, res, next) => {
 //@route PATCH /personal/about
 //@access Private
 const updateAbout = async (req, res, next) => {
-    const { id, overview, type, repo, copyYear, copyName } = req.body;
+    const { id, overview, type, clientRepo, serverRepo, copyYear, copyName } = req.body;
 
-    if (!id || !overview || !type || !repo || !copyYear || !copyName) {
+    if (!id || !overview || !type || !clientRepo || !serverRepo || !copyYear || !copyName) {
         return res.status(400).json({ message: 'All fields Required'});
     }
-
+    
     try {
-
         //values to be inserted only
-        const columnsArray = ['overview', 'repo', 'copyYear', 'copyName', 'typeId'];
-        const values = [overview, repo, Number(copyYear), copyName, Number(type)];
+        const columnsArray = ['overview', 'clientRepo', 'serverRepo', 'copyYear', 'copyName', 'typeId'];
+        const values = [overview, clientRepo, serverRepo, Number(copyYear), copyName, Number(type)];
         
         //with update the columns are tied to specific placeholders (ie overview = $1, etc), but we can dynamiclaly create this
         const columnsQuery = columnsArray.map((col, i) => `"${col}"=$${i + 1}`).join(', ');
@@ -113,7 +112,8 @@ const getAboutByPublicId = async (req, res, next) => {
                 a."id",
                 a."userId",
                 a."overview",
-                a."repo",
+                a."clientRepo",
+                a."serverRepo",
                 a."copyYear",
                 a."copyName",
                 (

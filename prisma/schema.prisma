@@ -41,6 +41,7 @@ model Project {
     repo      String?    
     imageOrg  String?
     imageGrn  String?
+    imageGry  String?
     imageAlt  String?
     features  Feature [] //1 to many
     issues    Issue []
@@ -104,7 +105,8 @@ model About {
     type                ProjectType         @relation(fields: [typeId], references:[id]) //1 to many
     typeId              Int
     projectEcosystem    ProjectEcosystem []
-    repo                String
+    clientRepo          String?
+    serverRepo          String?
     copyYear            Int
     copyName            String
 }
@@ -115,10 +117,11 @@ model Personal {
     user        User        @relation(fields:[userId], references:[id], onDelete: Cascade)
     userId      Int         @unique
     imageGrn    String
+    imageGry    String?
     imageOrg    String
     imageAlt    String
-    starSign    String
-    favColor    String
+    jobTitle    String?
+    attributes  String?
     skills      Skill []
     description String
     links       Link []
@@ -144,6 +147,7 @@ model Link {
     name        String      @unique
     url         String      @unique
     logoGrn     String
+    logoGry     String?
     logoOrg     String
     logoAlt     String
     personal    Personal    @relation(fields: [personId], references:[id], onDelete: Cascade)

@@ -21,11 +21,13 @@ router.route('/')
     .get(personalController.getAllPersonal)
     .post(upload.fields([
         { name: 'original', maxCount: 1 },
-        { name: 'transformed', maxCount: 1 } 
+        { name: 'transformedGreen', maxCount: 1 },
+        { name: 'transformedGrayscale', maxCount: 1 }
     ]), personalController.addPersonal)
     .patch(upload.fields([
         { name: 'original', maxCount: 1 },
-        { name: 'transformed', maxCount: 1 }
+        { name: 'transformedGreen', maxCount: 1 },
+        { name: 'transformedGrayscale', maxCount: 1 }
     ]),personalController.updatePersonal)
 
 router.route('/profile')
@@ -41,12 +43,14 @@ router.route('/links')
 
     .post(upload.fields([
         { name: 'original', maxCount: 1 },
-        { name: 'transformed', maxCount: 1 }
+        { name: 'transformedGreen', maxCount: 1 },
+        { name: 'transformedGrayscale', maxCount: 1 }
     ]),linksController.addLink)
 
     .patch(upload.fields([
         { name: 'original', maxCount: 1 },
-        { name: 'transformed', maxCount: 1 }
+        { name: 'transformedGreen', maxCount: 1 },
+        { name: 'transformedGrayscale', maxCount: 1 }
     ]),linksController.updateLink)
 
     .delete(linksController.deleteLink)

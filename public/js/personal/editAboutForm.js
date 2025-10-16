@@ -11,7 +11,8 @@ if (message) {
 const data = {}
 const form = document.getElementById('editAboutForm');
 const overInput = document.getElementById('overview');
-const repoInput = document.getElementById('repo');
+const clientRepoInput = document.getElementById('clientRepo');
+const serverRepoInput = document.getElementById('serverRepo');
 const copyYearInput = document.getElementById('copyYear');
 const copyNameInput = document.getElementById('copyName');
 const select = document.getElementById('type');
@@ -35,7 +36,8 @@ try {
     });    
     data.id = Number(result.id);
     overInput.value = result.overview;
-    repoInput.value = result.repo;
+    clientRepoInput.value = result.clientRepo;
+    serverRepoInput.value = result.serverRepo;
     copyYearInput.value = result.copyYear;
     copyNameInput.value = result.copyName;
     select.value = String(result.typeId);
@@ -82,7 +84,8 @@ addProjeco.addEventListener('click', () => {
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
     data.overview = overInput.value
-    data.repo = repoInput.value
+    data.clientRepo = clientRepoInput.value
+    data.serverRepo = serverRepoInput.value
     data.copyYear = copyYearInput.value
     data.copyName = copyNameInput.value
     data.type = select.value

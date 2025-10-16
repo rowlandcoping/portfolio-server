@@ -5,18 +5,20 @@ import { processImageHelper } from "../utils/imageProcessor.js";
 
 const form = document.getElementById('editPersonalForm');
 const descriptionInput = document.getElementById('description');
-const starSignInput =  document.getElementById('starSign');
-const favColorInput =  document.getElementById('favColor');
+const jobTitleInput =  document.getElementById('jobTitle');
+const attributeInput =  document.getElementById('attributeInput');
 
 
 const altInput = document.getElementById('imageAlt');
 const imageUpload = document.getElementById('image');
 const imageLoader = document.getElementById('imageLoader');
-const imagePreview = document.getElementById('imagePreview');
+const imageGreenPreview = document.getElementById('imageGreenPreview');
+const imageGrayscalePreview = document.getElementById('imageGrayscalePreview');
 const imageCancel = document.getElementById('imageCancel');
 const currentImage = document.getElementById('currentImage');
 let originalBlob = null;
-let transformedBlob = null;
+let transformedGreenBlob = null;
+let transformedGrayscaleBlob = null;
 window.onload=imageUpload.value = "";
 
 const data = {}
@@ -35,10 +37,23 @@ try {
     });
     data.id = Number(result.id);
     descriptionInput.value = result.description;
-    favColorInput.value = result.favColor;
-    starSignInput.value = result.starSign;
+    jobTitleInput.value = result.jobTitle;
     altInput.value = result.imageAlt;
     currentImage.src = result.imageGrn;
+    console.log(result.attributes)
+    console.log(typeof result.attributes);
+    const attributeArray = JSON.parse(result.attributes);
+    console.log(attributeArray);
+
+    console.log(typeof attributeArray);
+    console.log(Array.isArray(attributeArray));
+
+    attributeArray.forEach(item => {
+        attributeInput.value = item;
+        updateFeatureList("attribute");
+    });
+
+
 } catch (err) {
     showMessage('error', err.message || 'Retrieving Data Failed');
 }
@@ -108,6 +123,84 @@ addSkill.addEventListener('click', () => {
     window.location.href = `/dashboard/personal/skill/${data.id}`;
 });
 
+//adding a personal attribute
+//add outline to attribute input if selected:
+document.querySelectorAll('.nested-input').forEach(element => {
+    element.addEventListener('focus', function () {
+        this.closest('.input-wrapper').style.outline = 'rgb(89, 255, 47) 1px solid';
+    });
+    element.addEventListener('blur', function () {
+        this.closest('.input-wrapper').style.outline = 'none';
+    });
+});
+//Add placeholders if needed
+document.querySelectorAll('.item-list').forEach(list => {
+    if (list.children.length === 0) {
+        const noItems = document.createElement('div');
+        noItems.className = 'placeholder';
+        noItems.textContent = 'Nothing added yet!';
+        list.appendChild(noItems);
+    }
+});
+//define functions to update lists
+function updateHiddenInput(list, hiddenInput) {
+    const items = Array.from(list.children).map(div => div.firstChild.textContent);
+    hiddenInput.value = JSON.stringify(items);
+}
+//check placeholders after list update
+function checkPlaceholder(list) {
+    if (list.children.length === 0) {
+        const noItems = document.createElement('div');
+        noItems.className = 'placeholder';
+        noItems.textContent = 'No items found';
+        list.appendChild(noItems);
+    }
+}
+
+//update feature list function (we could possibly simplify)
+
+function updateFeatureList(listType) {
+    const hiddenInput = document.getElementById(`${listType}s`);
+    const input =  document.getElementById(`${listType}Input`);
+    const value = input.value.trim();
+    const list = document.getElementById(`${listType}List`);
+
+    // Remove "No items found" placeholder if present
+    const placeholder = list.querySelector('.placeholder');
+    if (placeholder) placeholder.remove();
+
+    // Create the list item
+    const item = document.createElement('div');
+    item.className = 'feature-item';
+    item.textContent = value;
+
+    // Create and append delete button
+    const delBtn = document.createElement('button');
+    delBtn.innerHTML = '&#216;';
+    delBtn.type = 'button';
+    delBtn.className = 'delete-button'; // Add class for styling
+    delBtn.addEventListener('click', () => {
+        item.remove();
+        updateHiddenInput(list, hiddenInput);
+        checkPlaceholder(list);
+    });
+
+    item.appendChild(delBtn);
+    list.appendChild(item);
+    updateHiddenInput(list, hiddenInput);
+    input.value = '';
+}
+// Add button listeners
+document.querySelectorAll('.add-button').forEach(button => {
+    button.addEventListener('click', () => {
+        const listType = button.id.replace(/^add/i, '').toLowerCase();        
+        updateFeatureList(listType);
+    });
+});
+
+
+
+
 //IMAGE HANDLING
 //previews images due for upload
 imageUpload.addEventListener('change', () => {
@@ -118,12 +211,17 @@ imageUpload.addEventListener('change', () => {
 
 //seperate function to avoid endless image loading loop
 imageLoader.onload = async () => {
-  const result = await processImageHelper(imageLoader);
-  originalBlob = result.originalBlob;
-  transformedBlob = result.transformedBlob;
-  const previewUrl = URL.createObjectURL(transformedBlob);
-  imagePreview.src = previewUrl;
-  imagePreview.style.display = 'block';
+  const greenResult = await processImageHelper(imageLoader, "green");
+  const grayscaleResult = await processImageHelper(imageLoader, "grayscale");
+  originalBlob = greenResult.originalBlob;
+  transformedGreenBlob = greenResult.transformedBlob;
+  transformedGrayscaleBlob = grayscaleResult.transformedBlob;
+  const greenPreviewUrl = URL.createObjectURL(transformedGreenBlob);
+  const grayscalePreviewUrl = URL.createObjectURL(transformedGrayscaleBlob);
+  imageGreenPreview.src = greenPreviewUrl;
+  imageGreenPreview.style.display = 'block';
+  imageGrayscalePreview.src = grayscalePreviewUrl;
+  imageGrayscalePreview.style.display = 'block';
   imageCancel.style.display = "block";
   currentImage.style.display = "none";
   // clean up
@@ -133,30 +231,41 @@ imageLoader.onload = async () => {
 // cancel image update/add
 imageCancel.addEventListener('click', (e) => {
     e.preventDefault();
-    imagePreview.style.display="none";
-    imagePreview.src = "";
+    imageGreenPreview.style.display="none";
+    imageGreenPreview.src = "";
+    imageGrayscalePreview.style.display="none";
+    imageGrayscalePreview.src = "";
     imageUpload.value = "";
     imageCancel.style.display = "none";
     currentImage.style.display = "block";
     originalBlob = null;
-    transformedBlob = null;
+    transformedGreenBlob = null;
+    transformedGrayscaleBlob = null;
 });
 
 
-//update description
+//update images
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const formData = new FormData(form);
     if (imageUpload.files.length > 0) {
         const baseName = imageUpload.files[0].name.replace(/\.[^/.]+$/, ''); // remove file extension
         const originalFile = new File([originalBlob], `${baseName}.webp`, { type: 'image/webp' });
-        const transformedFile = new File([transformedBlob], `green-${baseName}.webp`, { type: 'image/webp' });
-        const oldTransformedFilename = currentImage.src.split('/').pop();
-        const oldFilename = oldTransformedFilename.split('-').slice(1).join('-');        
+        const transformedGreenFile = new File([transformedGreenBlob], `green-${baseName}.webp`, { type: 'image/webp' });
+        const transformedGrayscaleFile = new File([transformedGrayscaleBlob], `grayscale-${baseName}.webp`, { type: 'image/webp' });
+
+        const oldGreenTransformedFilename = currentImage.src.split('/').pop();
+        const oldGrayscaleTransformedFilename = "grayscale-" + oldGreenTransformedFilename.split('-').slice(1).join('-');
+        const oldFilename = oldGreenTransformedFilename.split('-').slice(1).join('-');   
+
         formData.append('original', originalFile);
-        formData.append('transformed', transformedFile);
+        formData.append('transformedGreen', transformedGreenFile);
+        formData.append('transformedGrayscale', transformedGrayscaleFile);
+
         formData.append('oldOriginal', oldFilename);
-        formData.append('oldTransformed', oldTransformedFilename);
+        formData.append('oldGreenTransformed', oldGreenTransformedFilename);
+        formData.append('oldGrayscaleTransformed', oldGrayscaleTransformedFilename);
+
         formData.delete('image');
     }
     formData.append('id', data.id);

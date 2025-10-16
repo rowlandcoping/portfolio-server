@@ -43,6 +43,7 @@ const getAllPortfolioProjects =async (req, res, next) => {
                 pr."repo",
                 pr."imageOrg",
                 pr."imageGrn",
+                pr."imageGry",
                 pr."imageAlt",
                 pr."live",
                 pr."dateMvp",
@@ -179,13 +180,16 @@ const addProject = async (req, res, next) => {
     }
 
     const originalFile = req.files?.original?.[0];
-    const transformedFile = req.files?.transformed?.[0];
+    const transformedGreenFile = req.files?.transformedGreen?.[0];
+    const transformedGrayscaleFile = req.files?.transformedGrayscale?.[0];
 
     let imageOrg = undefined;
     let imageGrn = undefined;
-    if (originalFile && transformedFile) {
+    let imageGry = undefined;
+    if (originalFile && transformedGreenFile && transformedGrayscaleFile) {
         imageOrg = `/images/${originalFile.filename}`;
-        imageGrn = `/images/${transformedFile.filename}`;
+        imageGrn = `/images/${transformedGreenFile.filename}`;
+        imageGry = `/images/${transformedGrayscaleFile.filename}`;
     }
 
     const client = await pool.connect();
@@ -202,6 +206,7 @@ const addProject = async (req, res, next) => {
             'imageAlt',
             'imageOrg',
             'imageGrn',
+            'imageGry',
             'typeId',
             'userId',
             'personId',
@@ -216,6 +221,7 @@ const addProject = async (req, res, next) => {
             imageAlt,
             imageOrg, 
             imageGrn,
+            imageGry,
             type,
             userId,
             personal,
@@ -277,7 +283,7 @@ const addProject = async (req, res, next) => {
 //@route PATCH /projects/projects
 //@access Private
 const updateProject = async (req, res, next) => {
-    const { id, user, name, url, repo, imageAlt, overview, features, issues, type, dateMvp, dateProd, oldOriginal, oldTransformed } = req.body;
+    const { id, user, name, url, repo, imageAlt, overview, features, issues, type, dateMvp, dateProd, oldOriginal, oldGreenTransformed, oldGrayscaleTransformed } = req.body;
 
     if (!id || !name || !overview || !type || !url ||!repo) {
         return res.status(400).json({ message: "Missing required fields" });
@@ -301,8 +307,11 @@ const updateProject = async (req, res, next) => {
     const imageOrg = req.files?.original?.[0]
         ? `/images/${req.files.original[0].filename}`
         : undefined;
-    const imageGrn = req.files?.transformed?.[0]
-        ? `/images/${req.files.transformed[0].filename}`
+    const imageGrn = req.files?.transformedGreen?.[0]
+        ? `/images/${req.files.transformedGreen[0].filename}`
+        : undefined;
+    const imageGry = req.files?.transformedGrayscale?.[0]
+        ? `/images/${req.files.transformedGrayscale[0].filename}`
         : undefined;
 
     const client = await pool.connect();
@@ -336,8 +345,8 @@ const updateProject = async (req, res, next) => {
         ];
 
         if (imageOrg !== undefined) {
-            columnsArray.push('imageOrg', 'imageGrn');
-            values.push(imageOrg, imageGrn);
+            columnsArray.push('imageOrg', 'imageGrn', 'imageGry');
+            values.push(imageOrg, imageGrn, imageGry);
         }
         const columnsQuery = columnsArray.map((col, i) => `"${col}"=$${i + 1}`).join(', ');
 
@@ -385,11 +394,14 @@ const updateProject = async (req, res, next) => {
             if (imageOrg && oldOriginal) {
                 await fs.promises.unlink(path.join(uploadDir, oldOriginal));
             }
-            if (imageGrn && oldTransformed) {
-                await fs.promises.unlink(path.join(uploadDir, oldTransformed));
+            if (imageGrn && oldGreenTransformed) {
+                await fs.promises.unlink(path.join(uploadDir, oldGreenTransformed));
+            }
+            if (imageGry && oldGrayscaleTransformed) {
+                await fs.promises.unlink(path.join(uploadDir, oldGrayscaleTransformed));
             }
         } catch (err) {
-            logEvents(`Failed to delete transformed file: ${oldTransformed}. Error: ${err.message}`, 'fileErrors.log');
+            logEvents(`Failed to delete transformed file: ${oldGreenTransformed}. Error: ${err.message}`, 'fileErrors.log');
             next(err);
         }
 
@@ -415,12 +427,13 @@ const deleteProject = async (req, res, next) => {
     if (!id) return res.status(400).json({ message: 'Project ID required' });
 
     //retrieve image links
-    const result = await query('SELECT "imageGrn", "imageOrg" FROM "Project" WHERE "id"=$1 LIMIT 1', [Number(id)]);
+    const result = await query('SELECT "imageGrn", "imageOrg", "imageGry" FROM "Project" WHERE "id"=$1 LIMIT 1', [Number(id)]);
     if (result.rowCount === 0) {
         return res.status(404).json({ message: `Project with id ${id} not found` });
     }
     const project = result.rows[0];
     const imagePath = path.join(process.cwd(), project.imageGrn);
+    const imageGrayPath = path.join(process.cwd(), project.imageGry);
     const originalPath = path.join(process.cwd(), project.imageOrg);
 
     try {
@@ -431,6 +444,7 @@ const deleteProject = async (req, res, next) => {
         //remove images
         try {
             await fs.promises.unlink(path.resolve(imagePath));
+            await fs.promises.unlink(path.resolve(imageGrayPath));
             await fs.promises.unlink(path.resolve(originalPath));
         } catch (err) {
             logEvents(`File deletion error: ${err.message}`, 'fileErrors.log');

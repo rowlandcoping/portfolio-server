@@ -2,7 +2,6 @@ import showMessage from "../utils/showMessage.js";
 import { fetchWithRedirect } from "../utils/fetchWithRedirect.js";
 
 const form = document.getElementById('aboutForm');
-console.log(form)
 const select = document.getElementById('type');
 
 
@@ -32,7 +31,8 @@ form.addEventListener('submit', async (e) => {
     const data = {
         type: formData.get('type'),
         overview: formData.get('overview'), 
-        repo: formData.get('repo'),
+        clientRepo: formData.get('clientRepo'),
+        serverRepo: formData.get('serverRepo'),
         copyYear:formData.get('copyYear'),
         copyName:formData.get('copyName')
     }

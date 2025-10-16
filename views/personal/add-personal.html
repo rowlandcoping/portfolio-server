@@ -23,28 +23,41 @@
                         ></textarea>
                     </div>
                     <div class="input-container">
-                        <label class="admin-label" for="starSign">Star Sign</label>
+                        <label class="admin-label" for="starSign">Job Role</label>
                         <input
                             class="admin-input"
-                            id="starSign"
-                            name="starSign"
+                            id="jobTitle"
+                            name="jobTitle"
                             type="text"
                             autocomplete="false"
                             required
-                            placeholder="enter star sign"
+                            placeholder="enter preferred job title"
                         />
-                    </div>  
+                    </div>
                     <div class="input-container">
-                        <label class="admin-label" for="favColor">Favorite Color</label>
+                        <label class="admin-label">Add Attribute</label>
+                        <div class="admin-input input-wrapper">
+                            <label for="attributeInput" class="sr-only">Add Attribute</label>
+                            <input
+                                class="nested-input"
+                                id="attributeInput"
+                                type="text"
+                                autocomplete="false"
+                                placeholder="click here to add attribute"
+                            />
+                            <button class="add-button selected" id="addAttribute" type="button">Add Attribute</button>
+                        </div>
                         <input
-                            class="admin-input"
-                            id="favColor"
-                            name="favColor"
-                            type="text"
+                            id="attributes"
+                            name="attributes"
+                            type="hidden"
                             autocomplete="false"
                             required
-                            placeholder="enter favorite color"
                         />
+                    </div>
+                    <div class="input-container">                        
+                        <h4 class="admin-label">Attributes List</h4>                           
+                        <div id="attributeList" class="admin-input item-list"></div>
                     </div>
                     <div class="input-container">
                         <label class="admin-label" for="imageAlt">Image Description</label>
@@ -69,7 +82,8 @@
                     <div class="input-container">
                         <canvas id="canvas" class="hidden"></canvas>
                         <img id="imageLoader" class="hidden">
-                        <img id="imagePreview" class="hidden" src="" alt="This is a preview of the uploaded image">
+                        <img id="imageGreenPreview" class="hidden" src="" alt="This is a preview of the green uploaded image">
+                        <img id="imageGrayscalePreview" class="hidden" src="" alt="This is a preview of the black and white uploaded image">
                     </div>
 
                     <small>Manage profile once created to add skills and social links.</small>

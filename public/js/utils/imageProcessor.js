@@ -1,6 +1,6 @@
 
   
-async function processImageHelper(imageElement) {
+async function processImageHelper(imageElement, mode) {
     const MAX_SIZE = 400;
     let { width: w, height: h } = imageElement;
     if (w > MAX_SIZE || h > MAX_SIZE) {
@@ -12,8 +12,7 @@ async function processImageHelper(imageElement) {
             h = MAX_SIZE;
             w = Math.round(MAX_SIZE * ratio);
         }
-    }
-    
+    }    
 
     // Create a canvas for original compression
     const canvas = document.getElementById("canvas");
@@ -44,13 +43,27 @@ async function processImageHelper(imageElement) {
 
     const imageData = ctx.getImageData(0, 0, w, h);
     const data = imageData.data;
-    const tintStrength = 0.5;
-    for (let i = 0; i < data.length; i += 4) {
+
+    if (mode === "green") {
+        const tintStrength = 0.5;
+        for (let i = 0; i < data.length; i += 4) {
+            const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+            data[i] = 0;
+            data[i + 1] = gray * tintStrength;
+            data[i + 2] = 0;
+        }
+    } else if (mode === "grayscale") {
+        // grayscale (black-and-white)
+        for (let i = 0; i < data.length; i += 4) {
         const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
-        data[i] = 0;
-        data[i + 1] = gray * tintStrength;
-        data[i + 2] = 0;
+        data[i] = gray;
+        data[i + 1] = gray;
+        data[i + 2] = gray;
+        }
     }
+
+
+
     ctx.putImageData(imageData, 0, 0);
 
     const transformedBlob = await new Promise(resolve =>

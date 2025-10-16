@@ -25,11 +25,13 @@ const issueInput = document.getElementById('issueInput');
 
 const imageUpload = document.getElementById('image');
 const imageLoader = document.getElementById('imageLoader');
-const imagePreview = document.getElementById('imagePreview');
+const imageGreenPreview = document.getElementById('imageGreenPreview');
+const imageGrayscalePreview = document.getElementById('imageGrayscalePreview');
 const imageCancel = document.getElementById('imageCancel');
 const currentImage = document.getElementById('currentImage');
 let originalBlob = null;
-let transformedBlob = null;
+let transformedGreenBlob = null;
+let transformedGrayscaleBlob = null;
 
 const select = document.getElementById('type');
 const userSelector = document.getElementById('user');
@@ -232,12 +234,17 @@ imageUpload.addEventListener('change', () => {
 
 //seperate function to avoid endless image loading loop
 imageLoader.onload = async () => {
-  const result = await processImageHelper(imageLoader);
-  originalBlob = result.originalBlob;
-  transformedBlob = result.transformedBlob;
-  const previewUrl = URL.createObjectURL(transformedBlob);
-  imagePreview.src = previewUrl;
-  imagePreview.style.display = 'block';
+  const greenResult = await processImageHelper(imageLoader, "green");
+  const grayscaleResult = await processImageHelper(imageLoader, "grayscale");
+  originalBlob = greenResult.originalBlob;
+  transformedGreenBlob = greenResult.transformedBlob;
+  transformedGrayscaleBlob = grayscaleResult.transformedBlob;
+  const greenPreviewUrl = URL.createObjectURL(transformedGreenBlob);
+  const grayscalePreviewUrl = URL.createObjectURL(transformedGrayscaleBlob);
+  imageGreenPreview.src = greenPreviewUrl;
+  imageGreenPreview.style.display = 'block';
+  imageGrayscalePreview.src = grayscalePreviewUrl;
+  imageGrayscalePreview.style.display = 'block';
   imageCancel.style.display = "block";
   currentImage.style.display = "none";
   // clean up
@@ -247,13 +254,16 @@ imageLoader.onload = async () => {
 // cancel image update/add
 imageCancel.addEventListener('click', (e) => {
     e.preventDefault();
-    imagePreview.style.display="none";
-    imagePreview.src = "";
+    imageGreenPreview.style.display="none";
+    imageGreenPreview.src = "";
+    imageGrayscalePreview.style.display="none";
+    imageGrayscalePreview.src = "";
     imageUpload.value = "";
     imageCancel.style.display = "none";
     currentImage.style.display = "block";
     originalBlob = null;
-    transformedBlob = null;
+    transformedGreenBlob = null;
+    transformedGrayscaleBlob = null;
 });
 
 //SUBMIT FORM
@@ -263,13 +273,21 @@ form.addEventListener('submit', async (e) => {
     if (imageUpload.files.length > 0) {
         const baseName = imageUpload.files[0].name.replace(/\.[^/.]+$/, ''); // remove file extension
         const originalFile = new File([originalBlob], `${baseName}.webp`, { type: 'image/webp' });
-        const transformedFile = new File([transformedBlob], `green-${baseName}.webp`, { type: 'image/webp' });
-        const oldTransformedFilename = currentImage.src.split('/').pop();
-        const oldFilename = oldTransformedFilename.split('-').slice(1).join('-');        
+        const transformedGreenFile = new File([transformedGreenBlob], `green-${baseName}.webp`, { type: 'image/webp' });
+        const transformedGrayscaleFile = new File([transformedGrayscaleBlob], `grayscale-${baseName}.webp`, { type: 'image/webp' });
+
+        const oldGreenTransformedFilename = currentImage.src.split('/').pop();
+        const oldGrayscaleTransformedFilename = "grayscale-" + oldGreenTransformedFilename.split('-').slice(1).join('-');
+        const oldFilename = oldGreenTransformedFilename.split('-').slice(1).join('-');   
+
         formData.append('original', originalFile);
-        formData.append('transformed', transformedFile);
+        formData.append('transformedGreen', transformedGreenFile);
+        formData.append('transformedGrayscale', transformedGrayscaleFile);
+
         formData.append('oldOriginal', oldFilename);
-        formData.append('oldTransformed', oldTransformedFilename);
+        formData.append('oldGreenTransformed', oldGreenTransformedFilename);
+        formData.append('oldGrayscaleTransformed', oldGrayscaleTransformedFilename);
+
         formData.delete('image');
     }
     formData.append('id', Number(id)); 

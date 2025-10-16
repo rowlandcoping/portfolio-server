@@ -17,12 +17,14 @@ router.use(requireSession)
 router.route('/')
     .post(upload.fields([
         { name: 'original', maxCount: 1 },
-        { name: 'transformed', maxCount: 1 } 
+        { name: 'transformedGreen', maxCount: 1 },
+        { name: 'transformedGrayscale', maxCount: 1 } 
     ]),projectsController.addProject)
 
     .patch(upload.fields([
         { name: 'original', maxCount: 1 },
-        { name: 'transformed', maxCount: 1 }
+        { name: 'transformedGreen', maxCount: 1 },
+        { name: 'transformedGrayscale', maxCount: 1 }
     ]),projectsController.updateProject)
 
     .delete(projectsController.deleteProject)

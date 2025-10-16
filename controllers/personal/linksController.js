@@ -64,18 +64,20 @@ const addLink = async (req, res, next) => {
     if (!userId) return res.status(404).json({ message: 'No user found' });
 
     const originalFile = req.files?.original?.[0];
-    const transformedFile = req.files?.transformed?.[0];
+    const transformedGreenFile = req.files?.transformedGreen?.[0];
+    const transformedGrayscaleFile = req.files?.transformedGrayscale?.[0];
 
-    if (!originalFile || !transformedFile) {
+    if (!originalFile || !transformedGreenFile || !transformedGrayscaleFile) {
         return res.status(400).json({ message: 'Missing uploaded files' });
     }
 
     const logoOrg = `/images/${originalFile.filename}`;
-    const logoGrn = `/images/${transformedFile.filename}`;
+    const logoGrn = `/images/${transformedGreenFile.filename}`;
+    const logoGry = `/images/${transformedGrayscaleFile.filename}`;
 
     try {
-        const columnsArray = ['personId', 'userId', 'name', 'url', 'logoOrg', 'logoGrn', 'logoAlt'];
-        const values = [Number(profileId), Number(userId), name, url, logoOrg, logoGrn, imageAlt];
+        const columnsArray = ['personId', 'userId', 'name', 'url', 'logoOrg', 'logoGrn', 'logoGry', 'logoAlt'];
+        const values = [Number(profileId), Number(userId), name, url, logoOrg, logoGrn, logoGry, imageAlt];
         const columnsQuery = columnsArray.map(col => `"${col}"`).join(', ');
         const placeholders = columnsArray.map((_, i) => `$${i + 1}`).join(', ');
        
@@ -100,7 +102,7 @@ const addLink = async (req, res, next) => {
 //@access Private
 const updateLink = async (req, res, next) => {
 
-    const { id, name, url, imageAlt, oldOriginal, oldTransformed } = req.body;
+    const { id, name, url, imageAlt, oldOriginal, oldGreenTransformed, oldGrayscaleTransformed } = req.body;
     
     //NB validate before making db query
     if (!id || !name || !url || !imageAlt) {
@@ -111,16 +113,19 @@ const updateLink = async (req, res, next) => {
     const logoOrg = req.files?.original?.[0]
         ? `/images/${req.files.original[0].filename}`
         : undefined;
-    const logoGrn = req.files?.transformed?.[0]
-        ? `/images/${req.files.transformed[0].filename}`
+    const logoGrn = req.files?.transformedGreen?.[0]
+        ? `/images/${req.files.transformedGreen[0].filename}`
+        : undefined;
+    const logoGry = req.files?.transformedGrayscale?.[0]
+        ? `/images/${req.files.transformedGrayscale[0].filename}`
         : undefined;
 
     try {
         const columnsArray = ['name', 'url', 'logoAlt'];
         const values = [ name, url, imageAlt];
         if (logoOrg !== undefined) {
-            columnsArray.push('logoOrg', 'logoGrn');
-            values.push(logoOrg, logoGrn);
+            columnsArray.push('logoOrg', 'logoGrn', 'logoGry');
+            values.push(logoOrg, logoGrn, logoGry);
         }
         const columnsQuery = columnsArray.map((col, i) => `"${col}"=$${i + 1}`).join(', ');
 
@@ -137,8 +142,11 @@ const updateLink = async (req, res, next) => {
             if (logoOrg && oldOriginal) {
                 await fs.promises.unlink(path.join(uploadDir, oldOriginal));
             }
-            if (logoGrn && oldTransformed) {
-                await fs.promises.unlink(path.join(uploadDir, oldTransformed));
+            if (logoGrn && oldGreenTransformed) {
+                await fs.promises.unlink(path.join(uploadDir, oldGreenTransformed));
+            }
+            if (logoGry && oldGrayscaleTransformed) {
+                await fs.promises.unlink(path.join(uploadDir, oldGrayscaleTransformed));
             }
         } catch (err) {
             logEvents(`File deletion error: ${err.message}`, 'fileErrors.log');
@@ -164,12 +172,13 @@ const deleteLink = async (req, res, next) => {
     if (!id) return res.status(400).json({ message: 'Link ID required' });
 
     //retrieve image links
-    const result = await query('SELECT "logoGrn", "logoOrg" FROM "Link" WHERE "id"=$1 LIMIT 1', [Number(id)]);
+    const result = await query('SELECT "logoGrn", "logoOrg", "logoGry" FROM "Link" WHERE "id"=$1 LIMIT 1', [Number(id)]);
     if (result.rowCount === 0) {
         return res.status(404).json({ message: `Link with id ${id} not found` });
     }
     const link = result.rows[0];
     const imagePath = path.join(process.cwd(), link.logoGrn);
+    const imageGrayPath = path.join(process.cwd(), link.logoGry);
     const originalPath = path.join(process.cwd(), link.logoOrg);
     
     //delete
@@ -180,6 +189,7 @@ const deleteLink = async (req, res, next) => {
         );
         try {
             await fs.promises.unlink(path.resolve(imagePath));
+            await fs.promises.unlink(path.resolve(imageGrayPath));
             await fs.promises.unlink(path.resolve(originalPath));
         } catch (err) {
             logEvents(`File deletion error: ${err.message}`, 'fileErrors.log');
