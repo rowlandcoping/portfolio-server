@@ -101,7 +101,7 @@ const addLink = async (req, res, next) => {
 //@route PATCH /personal/links
 //@access Private
 const updateLink = async (req, res, next) => {
-
+ console.log('FILES RECEIVED:', Object.keys(req.files || {}));
     const { id, name, url, imageAlt, oldOriginal, oldGreenTransformed, oldGrayscaleTransformed } = req.body;
     
     //NB validate before making db query

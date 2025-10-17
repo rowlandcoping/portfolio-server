@@ -211,7 +211,7 @@ const addProject = async (req, res, next) => {
             'userId',
             'personId',
             'dateMvp',
-            'dateProd',
+            'dateProd'
         ];
         const values = [
             name,
@@ -284,7 +284,7 @@ const addProject = async (req, res, next) => {
 //@access Private
 const updateProject = async (req, res, next) => {
     const { id, user, name, url, repo, imageAlt, overview, features, issues, type, dateMvp, dateProd, oldOriginal, oldGreenTransformed, oldGrayscaleTransformed } = req.body;
-
+    console.log('FILES RECEIVED:', Object.keys(req.files || {}));
     if (!id || !name || !overview || !type || !url ||!repo) {
         return res.status(400).json({ message: "Missing required fields" });
     }
@@ -329,7 +329,7 @@ const updateProject = async (req, res, next) => {
             'userId',
             'personId',
             'dateMvp',
-            'dateProd',
+            'dateProd'
         ];
         const values = [
             name,
