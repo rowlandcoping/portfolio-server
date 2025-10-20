@@ -137,21 +137,6 @@ const updateLink = async (req, res, next) => {
         if (result.rowCount === 0) {
             return res.status(404).json({ message: `Link with id ${id} not found` });
         }
-
-        try {
-            if (logoOrg && oldOriginal) {
-                await fs.promises.unlink(path.join(uploadDir, oldOriginal));
-            }
-            if (logoGrn && oldGreenTransformed) {
-                await fs.promises.unlink(path.join(uploadDir, oldGreenTransformed));
-            }
-            if (logoGry && oldGrayscaleTransformed) {
-                await fs.promises.unlink(path.join(uploadDir, oldGrayscaleTransformed));
-            }
-        } catch (err) {
-            logEvents(`File deletion error: ${err.message}`, 'fileErrors.log');
-            next(err);
-        }
         const updatedLink = result.rows[0];        
         res.json({ message: "Link updated", link: updatedLink });
     } catch (err) {
@@ -160,6 +145,19 @@ const updateLink = async (req, res, next) => {
             return res.status(409).json({ message: 'Link already exists' });
         }
         next(err);
+    }
+    try {
+        if (logoOrg && oldOriginal) {
+            await fs.promises.unlink(path.join(uploadDir, oldOriginal));
+        }
+        if (logoGrn && oldGreenTransformed) {
+            await fs.promises.unlink(path.join(uploadDir, oldGreenTransformed));
+        }
+        if (logoGry && oldGrayscaleTransformed) {
+            await fs.promises.unlink(path.join(uploadDir, oldGrayscaleTransformed));
+        }
+    } catch (err) {
+        logEvents(`File deletion error: ${err.message}`, 'fileErrors.log');
     }
     
 };
@@ -187,17 +185,16 @@ const deleteLink = async (req, res, next) => {
             `DELETE FROM "Link" WHERE "id" = $1 RETURNING "id"`,
             [Number(id)]
         );
-        try {
-            await fs.promises.unlink(path.resolve(imagePath));
-            await fs.promises.unlink(path.resolve(imageGrayPath));
-            await fs.promises.unlink(path.resolve(originalPath));
-        } catch (err) {
-            logEvents(`File deletion error: ${err.message}`, 'fileErrors.log');
-            next(err);
-        }
         res.json({ message: `Link with id ${id} deleted.` });
     } catch (err) {
         next(err)
+    }
+    try {
+        await fs.promises.unlink(path.resolve(imagePath));
+        await fs.promises.unlink(path.resolve(imageGrayPath));
+        await fs.promises.unlink(path.resolve(originalPath));
+    } catch (err) {
+        logEvents(`File deletion error: ${err.message}`, 'fileErrors.log');
     }
     
 };

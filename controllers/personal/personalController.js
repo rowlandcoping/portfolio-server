@@ -182,7 +182,6 @@ const updatePersonal = async (req, res, next) => {
         ? `/images/${req.files.transformedGrayscale[0].filename}`
         : undefined;
 
-
     try {
         const columnsArray = ['description', 'jobTitle', 'attributes', 'imageAlt'];
         const values = [description, jobTitle, attributes, imageAlt];
@@ -200,30 +199,25 @@ const updatePersonal = async (req, res, next) => {
         if (result.rowCount === 0) {
             return res.status(404).json({ message: `Profile with id ${id} not found` });
         }
-        try {
-            if (imageOrg && oldOriginal) {
-                await fs.promises.unlink(path.join(uploadDir, oldOriginal));
-            }
-            if (imageGrn && oldGreenTransformed) {
-                await fs.promises.unlink(path.join(uploadDir, oldGreenTransformed));
-            }
-            if (imageGry && oldGrayscaleTransformed) {
-                await fs.promises.unlink(path.join(uploadDir, oldGrayscaleTransformed));
-            }
-        } catch (err) {
-            logEvents(`Failed to delete transformed file: ${oldGreenTransformed}. Error: ${err.message}`, 'fileErrors.log');
-            next(err);
-        }
-
-        const updatedPersonal = result.rows[0];
-        
-        
+        const updatedPersonal = result.rows[0];       
         res.json({ message: "Personal Profile Updated", personal: updatedPersonal });
     } catch (err) {
         next(err);
     }
     //delete old files seperately from DB transaction
-    
+    try {
+        if (imageOrg && oldOriginal) {
+            await fs.promises.unlink(path.join(uploadDir, oldOriginal));
+        }
+        if (imageGrn && oldGreenTransformed) {
+            await fs.promises.unlink(path.join(uploadDir, oldGreenTransformed));
+        }
+        if (imageGry && oldGrayscaleTransformed) {
+            await fs.promises.unlink(path.join(uploadDir, oldGrayscaleTransformed));
+        }
+    } catch (err) {
+        logEvents(`Failed to delete all old files. Error: ${err.message}`, 'fileErrors.log'); 
+    }    
 }
 
 export default {

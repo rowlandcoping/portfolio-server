@@ -390,21 +390,6 @@ const updateProject = async (req, res, next) => {
             );
         }
         await client.query('COMMIT');
-        try {
-            if (imageOrg && oldOriginal) {
-                await fs.promises.unlink(path.join(uploadDir, oldOriginal));
-            }
-            if (imageGrn && oldGreenTransformed) {
-                await fs.promises.unlink(path.join(uploadDir, oldGreenTransformed));
-            }
-            if (imageGry && oldGrayscaleTransformed) {
-                await fs.promises.unlink(path.join(uploadDir, oldGrayscaleTransformed));
-            }
-        } catch (err) {
-            logEvents(`Failed to delete transformed file: ${oldGreenTransformed}. Error: ${err.message}`, 'fileErrors.log');
-            next(err);
-        }
-
         const updatedProject = result.rows[0];
         res.json({ message: "Project updated", project: updatedProject });
     } catch (err) {
@@ -416,6 +401,21 @@ const updateProject = async (req, res, next) => {
         next(err)
     } finally {
         client.release(); // always release the client
+    }
+
+    try {
+        if (imageOrg && oldOriginal) {
+            await fs.promises.unlink(path.join(uploadDir, oldOriginal));
+        }
+        if (imageGrn && oldGreenTransformed) {
+            await fs.promises.unlink(path.join(uploadDir, oldGreenTransformed));
+        }
+        if (imageGry && oldGrayscaleTransformed) {
+            await fs.promises.unlink(path.join(uploadDir, oldGrayscaleTransformed));
+        }
+    } catch (err) {
+        logEvents(`Failed to delete transformed files. Error: ${err.message}`, 'fileErrors.log');
+        //don't call next(err) here to avoid hanging on the form page if image deletion fails.
     }
 };
 
@@ -442,14 +442,6 @@ const deleteProject = async (req, res, next) => {
             [Number(id)]
         );
         //remove images
-        try {
-            await fs.promises.unlink(path.resolve(imagePath));
-            await fs.promises.unlink(path.resolve(imageGrayPath));
-            await fs.promises.unlink(path.resolve(originalPath));
-        } catch (err) {
-            logEvents(`File deletion error: ${err.message}`, 'fileErrors.log');
-            next(err);
-        }
         res.json({ message: `Project with id ${id} deleted.` });
     } catch (err) {
         if (err.code === 'P2025') {
@@ -457,6 +449,14 @@ const deleteProject = async (req, res, next) => {
             return res.status(404).json({ message: `Project with id ${id} not found` });
         }
         next(err);
+    }
+    //separeate image cleanup logic to prevent weird errors
+    try {
+        await fs.promises.unlink(path.resolve(imagePath));
+        await fs.promises.unlink(path.resolve(imageGrayPath));
+        await fs.promises.unlink(path.resolve(originalPath));
+    } catch (err) {
+        logEvents(`File deletion error: ${err.message}`, 'fileErrors.log');
     }
 };
 
