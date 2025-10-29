@@ -4,7 +4,7 @@ Welcome to the Readme for my portfolio server. This is the REST API platform for
 
 Please note the admin front-end is very much in an MVP state - whilst fully functional and fully validated in the various controllers, front-end form validation is spotty and by no means complete.  Whilst roles are included in the data models they are not yet active; the styling is rudimentary, it is not html5 compliant and page responsiveness has not been refined. This means that whilst this project could easily be scaled to support multiple users, and could certainly provide a platform for more than one similar site even in its current state, it is not yet ready to provide access to third parties.
 
-## Live Demo
+## Live Platform
 You can view the live server [here](https://server.rowlandnet.online).
 
 ## Features
@@ -41,11 +41,11 @@ The great thing about using Node.js is how easy it is to set up and implement.
 5) In the terminal switch to the superuser and access the postgres shell:
     - `sudo -i -u postgres`
     - `psql`
-6) Create the database and the user (as required)
+6) Create the database and the user (as required).
     - `CREATE DATABASE portfolio;`
     - `CREATE USER myUser WITH PASSWORD myPassword;`
     - `GRANT ALL PRIVILEDGES ON DATABASE portfolio TO myUser;`
-7) Extended priviledges (!important!) - you may not need all of these but this should alleviate many permissions issues you may have, especially on a shared host. Postgres is picky about who it gives access to.
+7) Extended privileges (!important!) - you may not need all of these but this should alleviate many permissions issues you may have, especially on a shared host. Postgres is picky about who it gives access to.
     - `GRANT ALL ON SCHEMA public TO myUser;`;
     - `GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO myUser;`
     - `GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO myUser;`
@@ -59,7 +59,7 @@ The great thing about using Node.js is how easy it is to set up and implement.
     - `DB_PORT=5432`
     - `DB_NAME=portfolio`
     - `DB_SSL=false`
-9) You *should* now be ready to apply the Prisma schema to your virgin database. If something goes wrong at this point I'm not surprised.  Setting this up took a lot of wrangling and I tried many things before I got it running.
+9) You *should* now be ready to apply the Prisma schema to your virgin database. If something goes wrong at this point I'm not surprised. Setting this up took a lot of wrangling and I tried many things before I got it running.
     - `npx prisma db push`
 10) Finally, apply the other .env settings:
     - `NODE_ENV=development` (assuming this is a dev server)
@@ -67,4 +67,4 @@ The great thing about using Node.js is how easy it is to set up and implement.
     - `SESSION_SECRET=yourSecretKey` (you should generate this yourself, it's for managing secure sessions)
 11) You will need to create your first user manually, I suggest using postman for this. When you create this user take note of the UUID that is echoed back - this needs to be entered into the environment variables of your client so that it can pull in your projects and profile.
 
-If you are interested in using the node server as a back-end for your own portfolio please [contact me](https://rowlandnet.online/profile/contact), I'm always happy to help (although I'll need to to a bunch of work to make it ready for such things!)
+If you are interested in using the node server as a back-end for your own portfolio please [contact me](https://rowlandnet.online/profile/contact), I'm always happy to help (although I'll need to do a bunch of work to make it ready for such things!)
