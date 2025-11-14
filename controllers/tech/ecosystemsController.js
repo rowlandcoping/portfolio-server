@@ -60,7 +60,7 @@ const addEcosystem = async (req, res, next) => {
 
     try {
         const result = await query(
-            `INSERT INTO "Ecosystem" ("name", "typeId") VALUES ($1, $2) RETURNING *`, [name.toLowerCase(), Number(type)]
+            `INSERT INTO "Ecosystem" ("name", "typeId") VALUES ($1, $2) RETURNING *`, [name, Number(type)]
         );
         const newEcosystem = result.rows[0]        
         res.status(201).json(newEcosystem);
@@ -99,7 +99,7 @@ const updateEcosystem = async (req, res, next) => {
     try {
         const result = await query(
             `UPDATE "Ecosystem" SET "name"=$1, "typeId"=$2 WHERE "id"=$3 RETURNING *`,
-                [name.toLowerCase(), Number(type), Number(id)]
+                [name, Number(type), Number(id)]
         );
         if (result.rowCount === 0) {
             return res.status(404).json({ message: `Ecosystem with id ${id} not found` });
