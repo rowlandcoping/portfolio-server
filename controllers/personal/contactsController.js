@@ -55,7 +55,7 @@ const addContact = async (req, res, next) => {
     
 
     try {
-        const columnsArray = ['projectId', 'personalId', 'email', 'name', 'message'];
+        const columnsArray = ['projectId', 'personId', 'email', 'name', 'message'];
         const values = [projectId ? Number(projectId) : null, Number(personal), email, name, message];
         //add quotes to preserve case for columns.
         const columnsQuery = columnsArray.map(col => `"${col}"`).join(', ');

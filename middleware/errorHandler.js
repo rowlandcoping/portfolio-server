@@ -6,7 +6,8 @@ const errorHandler = (err, req, res, next) => {
         'errLog.log'
     );
     console.error(err.stack);
-    const status = res.statusCode ? res.statusCode : 500;
+
+    const status = res.statusCode === 200 ? 500 : res.statusCode || 500;
     res.status(status);
     res.json({ message: err.message, isError: true });
 };
