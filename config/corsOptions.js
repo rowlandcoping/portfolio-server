@@ -1,4 +1,4 @@
-const allowedOrigins = process.env.ORIGINS.split(',').map(o => o.trim().replace('://www.', '://'));
+const allowedOrigins = process.env.ORIGINS.split(',').map(o => o.trim());
 
 const corsOptions = {
     origin: (origin, callback) => {
