@@ -6,6 +6,7 @@ import projectTypesController from '../../controllers/project/projectTypesContro
 import projectEcosystemsController from '../../controllers/project/projectEcosystemsController.js';
 import requireSession from '../../middleware/requireSession.js';
 import requireAdmin from '../../middleware/requireAdmin.js';
+import requireOwnership from '../../middleware/requireOwnership.js';
 
 const router = express.Router();
 
@@ -14,53 +15,76 @@ router.get('/provider', projectsController.getAllPortfolioProjects)
 router.get('/types', projectTypesController.getAllTypes)
 
 const sessionRouter = express.Router();
-const adminRouter = express.Router();
 sessionRouter.use(requireSession);
-adminRouter.use([requireSession, requireAdmin]);
 router.use('/', sessionRouter);
-router.use('/', adminRouter);
 
-sessionRouter.route('/')
-    .post(upload.fields([
+//POST operations for projects
+sessionRouter.post(
+    '/', 
+    upload.fields([
         { name: 'original', maxCount: 1 },
         { name: 'transformedGreen', maxCount: 1 },
         { name: 'transformedGrayscale', maxCount: 1 } 
-    ]),projectsController.addProject)
+    ]),
+    projectsController.addProject
+)
 
-    .patch(upload.fields([
-        { name: 'original', maxCount: 1 },
-        { name: 'transformedGreen', maxCount: 1 },
-        { name: 'transformedGrayscale', maxCount: 1 }
-    ]),projectsController.updateProject)
-
-    .delete(projectsController.deleteProject)
-
-
+//retrieve projects by user
 sessionRouter.route('/user')
     .get(projectsController.getUserProjects)
 
-adminRouter.route('/types')
-    .post(projectTypesController.addType)
-    .patch(projectTypesController.updateType)
-    .delete(projectTypesController.deleteType)
+//adding and updating project types
+sessionRouter.route('/types')
+    .post(requireAdmin, projectTypesController.addType)
+    .patch(requireAdmin, projectTypesController.updateType)
+    .delete(requireAdmin, projectTypesController.deleteType)
 
+
+
+
+
+//project ecosystem CRUD routes
 sessionRouter.route('/projectecosystems')
     .post(projectEcosystemsController.addProjectEcosystem)
     .patch(projectEcosystemsController.updateProjectEcosystem)
     .delete(projectEcosystemsController.deleteProjectEcosystem)
-
 sessionRouter.route('/projectecosystems/about')
     .post(projectEcosystemsController.addAboutProjectEcosystem)
+
+
+
+//OTHER CRUD operations for projects
+sessionRouter.get(
+    '/:id', 
+    requireOwnership, 
+    projectsController.getProjectById
+)
+sessionRouter.patch(
+    '/:id',
+    requireOwnership,
+    upload.fields([
+        { name: 'original', maxCount: 1 },
+        { name: 'transformedGreen', maxCount: 1 },
+        { name: 'transformedGrayscale', maxCount: 1 } 
+    ]),
+    projectsController.updateProject
+)
+sessionRouter.delete(
+    '/:id',
+    requireOwnership,
+    projectsController.deleteProject
+)
+
+
+//retrieve individual project ecosystems for editing
 sessionRouter.route('/projectecosystems/about/:id')
     .get(projectEcosystemsController.getProjectEcosystemsByAboutId)
-
 sessionRouter.route('/projectecosystems/projects/:id')
     .get(projectEcosystemsController.getProjectEcosystemsByProjectId)
 
-sessionRouter.route('/:id') 
-.get(projectsController.getProjectById)
+//routes with parameters to retrieve specific data
 sessionRouter.route('/types/:id')
-    .get(projectTypesController.getProjectTypeById)
+    .get(requireAdmin, projectTypesController.getProjectTypeById)
 sessionRouter.route('/features/:id')
     .get(projectsController.getFeaturesByProjectId)
 sessionRouter.route('/issues/:id')

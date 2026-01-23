@@ -10,7 +10,7 @@ if (message) {
 }
 
 const url = new URL(window.location.href);
-const id = url.pathname.split('/').pop();
+const id = Number(url.pathname.split('/').pop());
 
 const form = document.getElementById('editProjectForm');
 const nameInput = document.getElementById('name');
@@ -33,6 +33,7 @@ let originalBlob = null;
 let transformedGreenBlob = null;
 let transformedGrayscaleBlob = null;
 let admin = false;
+let userId = null;
 
 const select = document.getElementById('type');
 const userSelector = document.getElementById('user');
@@ -93,6 +94,7 @@ try {
         });
         userSelector.value = String(result.userId);
     } else {
+        userId = result.userId;
         document.getElementById("user-selector").style.display="none";
     }
 
@@ -308,11 +310,11 @@ form.addEventListener('submit', async (e) => {
 
         formData.delete('image');
     }
-    formData.append('id', Number(id)); 
-
+    formData.append('user', userSelector.value || userId);
+    console.log(id);
     try {
         await fetchWithRedirect({
-            url: '/projects',
+            url: `/projects/${id}`,
             method: 'PATCH',
             data: formData,
             redirect: '/dashboard'

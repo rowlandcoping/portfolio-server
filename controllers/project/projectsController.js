@@ -126,17 +126,8 @@ const getAllPortfolioProjects =async (req, res, next) => {
 //@route GET /projects/:id
 //@access Private
 const getProjectById = async (req, res) => {
-    const roles = req.session?.roles;
-    const userId = req.session?.userId;
-    const { id } = req.params;
-    if (!id) return res.status(400).json({ message: 'Project ID required' });
-    const result = await query('SELECT * FROM "Project" WHERE "id"=$1 LIMIT 1', [Number(id)]);
-    const project = result.rows[0];
-    if (!project) return res.status(404).json({ message: 'No project found' });
-    if ((Number(userId) !== Number(project.userId)) && !roles.includes('admin') && !roles.includes('owner')) { 
-        return res.status(403).json({ message: 'You cannot access this resource' });
-    }
-    res.json(project); 
+    //NB data passed from requireOwnership middleware.
+    res.json(req.project);
 }
 
 //@desc Get a project
@@ -300,12 +291,12 @@ const addProject = async (req, res, next) => {
 };
 
 //@desc Update a project
-//@route PATCH /projects/projects
+//@route PATCH /projects/projects/:id
 //@access Private
 const updateProject = async (req, res, next) => {
-    const { id, user, name, url, repo, imageAlt, overview, features, issues, type, dateMvp, dateProd, oldOriginal, oldGreenTransformed, oldGrayscaleTransformed } = req.body;
-    console.log('FILES RECEIVED:', Object.keys(req.files || {}));
-    if (!id || !name || !overview || !type || !url ||!repo) {
+    const { id } = req.params;
+    const { user, name, url, repo, imageAlt, overview, features, issues, type, dateMvp, dateProd, oldOriginal, oldGreenTransformed, oldGrayscaleTransformed } = req.body;
+    if (!name || !overview || !type || !url ||!repo) {
         return res.status(400).json({ message: "Missing required fields" });
     }
 
@@ -338,7 +329,7 @@ const updateProject = async (req, res, next) => {
     try {
         await client.query('BEGIN');
 
-        //create project
+        //update project
         const columnsArray = [
             'name', 
             'overview', 
@@ -440,10 +431,10 @@ const updateProject = async (req, res, next) => {
 };
 
 //@desc Delete a project
-//@route DELETE /projects
+//@route DELETE /projects/:id
 //@access Private
 const deleteProject = async (req, res, next) => {
-    const { id } = req.body;
+    const { id } = req.params;
     if (!id) return res.status(400).json({ message: 'Project ID required' });
 
     //retrieve image links

@@ -21,7 +21,7 @@ try {
         fragment.appendChild(createListLink({
             listItem: type,
             showDelete: true,
-            deleteUrl: '/projects'    
+            deleteUrl: `/projects/${type.id}`   
         }));
     }
     adminSelect.appendChild(fragment);
