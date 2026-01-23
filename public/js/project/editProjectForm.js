@@ -32,6 +32,7 @@ const currentImage = document.getElementById('currentImage');
 let originalBlob = null;
 let transformedGreenBlob = null;
 let transformedGrayscaleBlob = null;
+let admin = false;
 
 const select = document.getElementById('type');
 const userSelector = document.getElementById('user');
@@ -39,6 +40,19 @@ const userSelector = document.getElementById('user');
 window.onload=imageUpload.value = "";
 
 //POPULATE FIELDS
+
+
+
+try {
+    const roles = await fetchWithRedirect({
+        url: '/users/roles/userroles'
+    });
+    if (roles && Array.isArray(roles) && roles.includes("admin") || roles.includes("owner")) {
+        admin = true;
+    }
+} catch(err) {
+    showMessage('error', err.message || 'No user roles found');
+}
 
 try {
     const result = await fetchWithRedirect({
@@ -66,17 +80,21 @@ try {
     select.value = String(result.typeId);
 
     //populate users selector
-    const userResult = await fetchWithRedirect({
-        url:'/users'
-    });
-    userSelector.querySelectorAll('option').forEach(opt => opt.remove());
-    userResult.forEach(type => {
-        const option = document.createElement('option');
-        option.value = type.id;
-        option.textContent = type.name;
-        userSelector.appendChild(option);
-    });
-    userSelector.value = String(result.userId);
+    if (admin) {
+        const userResult = await fetchWithRedirect({
+            url:'/users'
+        });
+        userSelector.querySelectorAll('option').forEach(opt => opt.remove());
+        userResult.forEach(type => {
+            const option = document.createElement('option');
+            option.value = type.id;
+            option.textContent = type.name;
+            userSelector.appendChild(option);
+        });
+        userSelector.value = String(result.userId);
+    } else {
+        document.getElementById("user-selector").style.display="none";
+    }
 
     //populate dates
     if (result?.dateMvp) {

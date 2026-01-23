@@ -13,8 +13,20 @@ const login = async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(401).json({ message: 'Invalid credentials' });
 
-    req.session.userId = user.id;
-    res.json({ message: 'Login successful' });
+    const rolesQuery = await query(`SELECT r.name
+         FROM "Role" r
+         JOIN "_UserRoles" ur ON r.id = ur."A"
+         WHERE ur."B" = $1`,
+        [Number(user.id)]
+    );
+    const roles = rolesQuery.rows.map(row => row.name);
+    if (roles.length === 0) return res.status(404).json({ message: 'No roles found for logged in user' });
+    req.session.regenerate(err => {
+        if (err) return res.status(500).json({ message: 'Session error' });
+        req.session.userId = user.id;
+        req.session.roles = roles;
+        res.json({ message: 'Login successful' });
+    });
 };
 
 const logout = (req, res) => {

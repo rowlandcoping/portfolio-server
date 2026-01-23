@@ -3,6 +3,27 @@ import { logEvents } from '../../middleware/logger.js';
 
 //ROLES ROUTES
 
+//@desc get roles for logged in user
+//@route GET /users/userroles
+//@access Private
+const getRolesForCurrentUser = async (req, res) => {
+    
+    const user = req.session?.userId;
+    if (!user) {
+        return res.status(401).json({ message: 'Session not found'});
+    }
+
+    const result = await query(`SELECT r.name
+         FROM "Role" r
+         JOIN "_UserRoles" ur ON r.id = ur."A"
+         WHERE ur."B" = $1`,
+        [Number(user)]
+    );
+    const roles = result.rows.map(row => row.name);
+    if (roles.length === 0) return res.status(404).json({ message: 'No roles found for logged in user' });
+    res.json(roles);
+}
+
 //@desc Get all roles
 //@route GET /users/roles
 //@access Private
@@ -17,6 +38,7 @@ const getAllRoles =async (req, res) => {
     }
     res.json(roles);
 }
+
 
 //@desc Get a role
 //@route GET /users/roles/:id
@@ -85,6 +107,7 @@ const updateRole = async (req, res, next) => {
 }
 
 export default {
+    getRolesForCurrentUser,
     getAllRoles,
     getRoleById,
     addRole, 

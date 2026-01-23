@@ -4,43 +4,54 @@ import ecosystemsController from '../../controllers/tech/ecosystemsController.js
 import techTypesController from '../../controllers/tech/techTypesController.js';
 import ecoTypesController from '../../controllers/tech/ecoTypesController.js';
 import requireSession from '../../middleware/requireSession.js';
+import requireAdmin from '../../middleware/requireAdmin.js';
 
 const router = express.Router();
+
+//these routes are public
 
 router.get('/', techController.getAllTech)
 router.get('/ecosystems', ecosystemsController.getAllEcosystems)
 router.get('/techtypes', techTypesController.getAllTechTypes)
 router.get('/ecotypes', ecoTypesController.getAllEcoTypes)
 
-router.use(requireSession);
+const sessionRouter = express.Router();
+const adminRouter = express.Router();
+sessionRouter.use(requireSession);
+adminRouter.use([requireSession, requireAdmin]);
+router.use('/', sessionRouter);
+router.use('/', adminRouter);
 
-router.route('/')
+//these routes require admin only access
+
+adminRouter.route('/')
     .post(techController.addTech)
     .patch(techController.updateTech)
     .delete(techController.deleteTech)
-router.route('/ecosystems')  
+adminRouter.route('/ecosystems')  
     .post(ecosystemsController.addEcosystem)
     .patch(ecosystemsController.updateEcosystem)
     .delete(ecosystemsController.deleteEcosystem)
-router.route('/techtypes')
+adminRouter.route('/techtypes')
     .post(techTypesController.addTechType)
     .patch(techTypesController.updateTechType)
     .delete(techTypesController.deleteTechType)
-router.route('/ecotypes')
+adminRouter.route('/ecotypes')
     .post(ecoTypesController.addEcoType)
     .patch(ecoTypesController.updateEcoType)
     .delete(ecoTypesController.deleteEcoType)
 
 //get by id
-router.route('/:id')
+//these routes require session only access (not admin only)
+adminRouter.route('/:id')
     .get(techController.getTechById)
-router.route('/associated/:id')
-    .get(techController.getTechByEcoId)
-router.route('/ecosystems/:id')
+adminRouter.route('/ecosystems/:id')
     .get(ecosystemsController.getEcosystemById)
-router.route('/techtypes/:id')
+adminRouter.route('/techtypes/:id')
     .get(techTypesController.getTechTypeById)
-router.route('/ecotypes/:id')
+adminRouter.route('/ecotypes/:id')
     .get(ecoTypesController.getEcoTypeById)
+sessionRouter.route('/associated/:id')
+    .get(techController.getTechByEcoId)
 
 export default router

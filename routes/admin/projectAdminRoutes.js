@@ -1,6 +1,7 @@
 import express from 'express';
 import path from 'path';
 import requireSession from '../../middleware/requireSession.js';
+import requireAdmin from '../../middleware/requireAdmin.js';
 
 const router = express.Router();
 const viewDir = path.join(process.cwd(), 'views');
@@ -13,14 +14,6 @@ router.get(['/', '/.html'], (req, res) => {
 router.get('/edit', (req, res) => {
     res.sendFile(path.join(viewDir, 'project', 'edit-project.html'));
 });
-router.get(['/type', '/type.html'], (req, res) => {
-   res.sendFile(path.join(viewDir, 'project', 'add-projtype.html'));
-});
-router.get('/type/edit', (req, res) => {
-    res.sendFile(path.join(viewDir, 'project', 'edit-projtype.html'));
-});
-
-
 router.get(['/projectecosystem/:id'], (req, res) => {
     res.sendFile(path.join(viewDir, 'project', 'add-projectecosystem.html'));
 });
@@ -30,11 +23,20 @@ router.get(['/projectecosystem/about/:id'], (req, res) => {
 router.get('/edit/:id', (req, res) => {
     res.sendFile(path.join(viewDir, 'project', 'edit-project-form.html'));
 })
-router.get('/type/edit/:id', (req, res) => {
-    res.sendFile(path.join(viewDir, 'project', 'edit-projtype-form.html'));
-})
 router.get(['/projectecosystem/edit/:id'], (req, res) => {
     res.sendFile(path.join(viewDir, 'project', 'edit-projectecosystem-form.html'));
 });
+
+router.use(requireAdmin);
+
+router.get(['/type', '/type.html'], (req, res) => {
+   res.sendFile(path.join(viewDir, 'project', 'add-projtype.html'));
+});
+router.get('/type/edit', (req, res) => {
+    res.sendFile(path.join(viewDir, 'project', 'edit-projtype.html'));
+});
+router.get('/type/edit/:id', (req, res) => {
+    res.sendFile(path.join(viewDir, 'project', 'edit-projtype-form.html'));
+})
 
 export default router;

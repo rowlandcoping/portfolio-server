@@ -1,6 +1,22 @@
-import { logoutUser } from '../utils/logout.js';
+import { logoutUser } from '../utils/logout.js'; 
 import showMessage from "../utils/showMessage.js";
 import { fetchWithRedirect } from "../utils/fetchWithRedirect.js";
+
+
+let admin = false;
+
+try {
+    const roles = await fetchWithRedirect({
+        url: '/users/roles/userroles'
+    });
+    if (roles && Array.isArray(roles) && roles.includes("admin") || roles.includes("owner")) {
+        admin = true;
+    }
+} catch(err) {
+    showMessage('error', err.message || 'No user roles found');
+}
+
+
 
 //display messages for user
 try {
@@ -13,7 +29,7 @@ try {
         document.getElementById('manageProfile').style.display = 'none';
     }
 } catch (err) {
-    showMessage('error', err.message || 'Updating Link Failed');
+    showMessage('error', err.message);
 }
 
 const message = sessionStorage.getItem('flash');
@@ -22,7 +38,18 @@ if (message) {
     sessionStorage.removeItem('flash');
 }
 
+
+//Hide various menus for non-admins
+if (!admin) {
+    const adminOnly = document.getElementsByClassName('admin-only');
+    for (const el of adminOnly) {
+        el.style.display = 'none';
+    }
+}
+
 document.getElementById('logout').addEventListener('click', logoutUser);
+
+
 
 //refactored code for menus
 

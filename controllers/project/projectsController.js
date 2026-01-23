@@ -7,11 +7,26 @@ import { logEvents } from '../../middleware/logger.js';
 //PROJECT ROUTES
 
 //@desc Get all projects
-//@route GET /projects
+//@route GET /projects/
 //@access Private
 
 const getAllProjects =async (req, res) => {
     const result = await query('SELECT * FROM "Project"');
+    const projects = result.rows;
+    if (!projects.length) {
+        //NB any errors not handled here will be handled by our error handline middleware
+        return res.status(400).json({message: 'No projects found'})
+    }
+    res.json(projects);
+}
+
+//@desc Get all projects belonging to logged in user
+//@route GET /projects/user
+//@access Private
+
+const getUserProjects =async (req, res) => {
+    const id = req.session?.userId;
+    const result = await query('SELECT "id", "name" FROM "Project" WHERE "userId"=$1', [Number(id)]);
     const projects = result.rows;
     if (!projects.length) {
         //NB any errors not handled here will be handled by our error handline middleware
@@ -111,12 +126,17 @@ const getAllPortfolioProjects =async (req, res, next) => {
 //@route GET /projects/:id
 //@access Private
 const getProjectById = async (req, res) => {
+    const roles = req.session?.roles;
+    const userId = req.session?.userId;
     const { id } = req.params;
     if (!id) return res.status(400).json({ message: 'Project ID required' });
     const result = await query('SELECT * FROM "Project" WHERE "id"=$1 LIMIT 1', [Number(id)]);
     const project = result.rows[0];
     if (!project) return res.status(404).json({ message: 'No project found' });
-    res.json(project);
+    if ((Number(userId) !== Number(project.userId)) && !roles.includes('admin') && !roles.includes('owner')) { 
+        return res.status(403).json({ message: 'You cannot access this resource' });
+    }
+    res.json(project); 
 }
 
 //@desc Get a project
@@ -462,6 +482,7 @@ const deleteProject = async (req, res, next) => {
 
 export default {
     getAllProjects,
+    getUserProjects,
     getAllPortfolioProjects,
     getProjectById,
     getFeaturesByProjectId,

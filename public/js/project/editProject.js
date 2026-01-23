@@ -11,7 +11,7 @@ if (message) {
 
 try {
     const result = await fetchWithRedirect({
-        url: '/projects'
+        url: '/projects/user'
     });
     const adminSelect = document.getElementById('adminSelect');
     adminSelect.innerHTML = '';

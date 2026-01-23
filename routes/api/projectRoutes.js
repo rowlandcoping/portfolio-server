@@ -5,6 +5,7 @@ import projectsController from '../../controllers/project/projectsController.js'
 import projectTypesController from '../../controllers/project/projectTypesController.js';
 import projectEcosystemsController from '../../controllers/project/projectEcosystemsController.js';
 import requireSession from '../../middleware/requireSession.js';
+import requireAdmin from '../../middleware/requireAdmin.js';
 
 const router = express.Router();
 
@@ -12,9 +13,14 @@ router.get('/', projectsController.getAllProjects)
 router.get('/provider', projectsController.getAllPortfolioProjects)
 router.get('/types', projectTypesController.getAllTypes)
 
-router.use(requireSession)
+const sessionRouter = express.Router();
+const adminRouter = express.Router();
+sessionRouter.use(requireSession);
+adminRouter.use([requireSession, requireAdmin]);
+router.use('/', sessionRouter);
+router.use('/', adminRouter);
 
-router.route('/')
+sessionRouter.route('/')
     .post(upload.fields([
         { name: 'original', maxCount: 1 },
         { name: 'transformedGreen', maxCount: 1 },
@@ -28,34 +34,40 @@ router.route('/')
     ]),projectsController.updateProject)
 
     .delete(projectsController.deleteProject)
-router.route('/types')
+
+
+sessionRouter.route('/user')
+    .get(projectsController.getUserProjects)
+
+adminRouter.route('/types')
     .post(projectTypesController.addType)
     .patch(projectTypesController.updateType)
     .delete(projectTypesController.deleteType)
 
-router.route('/projectecosystems')
+sessionRouter.route('/projectecosystems')
     .post(projectEcosystemsController.addProjectEcosystem)
     .patch(projectEcosystemsController.updateProjectEcosystem)
     .delete(projectEcosystemsController.deleteProjectEcosystem)
 
-router.route('/projectecosystems/about')
+sessionRouter.route('/projectecosystems/about')
     .post(projectEcosystemsController.addAboutProjectEcosystem)
-router.route('/projectecosystems/about/:id')
+sessionRouter.route('/projectecosystems/about/:id')
     .get(projectEcosystemsController.getProjectEcosystemsByAboutId)
 
-router.route('/projectecosystems/projects/:id')
+sessionRouter.route('/projectecosystems/projects/:id')
     .get(projectEcosystemsController.getProjectEcosystemsByProjectId)
 
-router.route('/types/:id')
+sessionRouter.route('/:id') 
+.get(projectsController.getProjectById)
+sessionRouter.route('/types/:id')
     .get(projectTypesController.getProjectTypeById)
-router.route('/features/:id')
+sessionRouter.route('/features/:id')
     .get(projectsController.getFeaturesByProjectId)
-router.route('/issues/:id')
+sessionRouter.route('/issues/:id')
     .get(projectsController.getIssuesByProjectId)
-router.route('/projectecosystems/:id')
+sessionRouter.route('/projectecosystems/:id')
     .get(projectEcosystemsController.getProjectEcosystemById)
-router.route('/:id') 
-    .get(projectsController.getProjectById)
+
 
 
 export default router

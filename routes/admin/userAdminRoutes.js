@@ -1,11 +1,12 @@
 import express from 'express';
 import path from 'path';
 import requireSession from '../../middleware/requireSession.js';
+import requireAdmin from '../../middleware/requireAdmin.js';
 
 const router = express.Router();
 const viewDir = path.join(process.cwd(), 'views');
 
-router.use(requireSession);
+router.use([requireSession, requireAdmin]);
 
 router.get(['/', '.html'], (req, res) => {
     res.sendFile(path.join(viewDir, 'user', 'add-user.html'));

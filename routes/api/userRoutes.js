@@ -2,12 +2,20 @@ import express from 'express';
 import usersController from '../../controllers/user/usersController.js';
 import rolesController from '../../controllers/user/rolesController.js';
 import requireSession from '../../middleware/requireSession.js';
+import requireAdmin from '../../middleware/requireAdmin.js';
 
 const router = express.Router();
 
 router.get('/provider', usersController.getPortfolioUser)
 
 router.use(requireSession);
+
+router.route('/roles/userroles')
+    .get(rolesController.getRolesForCurrentUser)
+router.route('/:id')
+    .get(usersController.getUserById)
+
+router.use(requireAdmin);
 
 router.route('/')
     .get(usersController.getAllUsers)
@@ -20,8 +28,6 @@ router.route('/roles')
     .post(rolesController.addRole)
     .patch(rolesController.updateRole)
 
-router.route('/:id')
-    .get(usersController.getUserById)
 router.route('/roles/:id')
     .get(rolesController.getRoleById)
 

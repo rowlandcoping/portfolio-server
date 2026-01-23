@@ -2,14 +2,12 @@ import 'dotenv/config';
 import express from 'express';
 import pool from './config/db.js';
 import path from 'path';
-
 import { logger } from './middleware/logger.js';
 import errorHandler from './middleware/errorHandler.js';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import corsOptions from './config/corsOptions.js';
 import sessionMiddleware from './middleware/session.js';
-
 import rootRoutes from './routes/admin/root.js';
 import dashRoutes from './routes/admin/dashRoutes.js';
 import authRoutes from './routes/api/authRoutes.js';

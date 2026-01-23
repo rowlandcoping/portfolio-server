@@ -26,6 +26,11 @@ export async function fetchWithRedirect({
         const result = await response.json();
 
         if (!response.ok) {
+            if (response.status === 403) {
+                sessionStorage.setItem('flash', result.message || 'Unauthorised Access Detected');
+                window.location.href = '/dashboard';
+                return;
+            }
             showMessage('error', result.message || 'Unknown error');
             throw new Error(result.message || 'Unknown error');
         }
