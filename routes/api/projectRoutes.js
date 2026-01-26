@@ -7,6 +7,8 @@ import projectEcosystemsController from '../../controllers/project/projectEcosys
 import requireSession from '../../middleware/requireSession.js';
 import requireAdmin from '../../middleware/requireAdmin.js';
 import requireOwnership from '../../middleware/requireOwnership.js';
+import requireProjectOwnership from '../../middleware/requireProjectOwnership.js';
+import requireAboutOwnership from '../../middleware/requireAboutOwnership.js';
 
 const router = express.Router();
 
@@ -40,18 +42,9 @@ sessionRouter.route('/types')
     .delete(requireAdmin, projectTypesController.deleteType)
 
 
-
-
-
 //project ecosystem CRUD routes
 sessionRouter.route('/projectecosystems')
-    .post(projectEcosystemsController.addProjectEcosystem)
-    .patch(projectEcosystemsController.updateProjectEcosystem)
-    .delete(projectEcosystemsController.deleteProjectEcosystem)
-sessionRouter.route('/projectecosystems/about')
-    .post(projectEcosystemsController.addAboutProjectEcosystem)
-
-
+    .post(requireProjectOwnership, projectEcosystemsController.addProjectEcosystem)
 
 //OTHER CRUD operations for projects
 sessionRouter.get(
@@ -76,21 +69,33 @@ sessionRouter.delete(
 )
 
 
-//retrieve individual project ecosystems for editing
-sessionRouter.route('/projectecosystems/about/:id')
-    .get(projectEcosystemsController.getProjectEcosystemsByAboutId)
-sessionRouter.route('/projectecosystems/projects/:id')
-    .get(projectEcosystemsController.getProjectEcosystemsByProjectId)
+sessionRouter.route('/projectecosystems/about')
+    .post(requireAboutOwnership, projectEcosystemsController.addAboutProjectEcosystem)
+
+sessionRouter.route('/projectecosystems/:id')
+    .get(requireProjectOwnership, projectEcosystemsController.getProjectEcosystemById)
+    .patch(requireProjectOwnership, projectEcosystemsController.updateProjectEcosystem)
+    .delete(requireProjectOwnership, projectEcosystemsController.deleteProjectEcosystem)
+
 
 //routes with parameters to retrieve specific data
 sessionRouter.route('/types/:id')
     .get(requireAdmin, projectTypesController.getProjectTypeById)
 sessionRouter.route('/features/:id')
-    .get(projectsController.getFeaturesByProjectId)
+    .get(requireOwnership, projectsController.getFeaturesByProjectId)
 sessionRouter.route('/issues/:id')
-    .get(projectsController.getIssuesByProjectId)
-sessionRouter.route('/projectecosystems/:id')
-    .get(projectEcosystemsController.getProjectEcosystemById)
+    .get(requireOwnership, projectsController.getIssuesByProjectId)    
+
+
+//retrieve individual project ecosystems for editing
+
+//NB this route is used only used as an API client side and protected via the controller.
+sessionRouter.route('/projectecosystems/about/:id')
+    .get(projectEcosystemsController.getProjectEcosystemsByAboutId)
+sessionRouter.route('/projectecosystems/projects/:id')
+    .get(requireOwnership, projectEcosystemsController.getProjectEcosystemsByProjectId)
+
+
 
 
 

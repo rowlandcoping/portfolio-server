@@ -78,8 +78,15 @@ const getProjectEcosystemsByProjectId = async (req, res) => {
 //@access Private
 const getProjectEcosystemsByAboutId = async (req, res) => {
     const { id } = req.params;
+    const { userId, roles } = req.session;
     if (!id) return res.status(400).json({ message: 'Skill ID required' });
 
+    const idCheck = await query('SELECT "userId" FROM "About" WHERE "id"=$1 LIMIT 1', [Number(id)]);
+    const about = idCheck.rows[0];
+    if (!roles.includes("admin") && !roles.includes("owner") && Number(about.userId) !== Number(userId)) {
+        logEvents('Unauthorised access attmpt', 'errLog.log');
+        return res.status(403).json({ message: 'Permission Denied.' });
+    }
     const result = await query('SELECT * FROM "ProjectEcosystem" WHERE "aboutId"=$1', [Number(id)]);
     const projEcosystems = result.rows;
     if (!projEcosystems) return res.status(404).json({ message: 'No project ecosystems found' });
@@ -170,10 +177,11 @@ const addAboutProjectEcosystem = async (req, res, next) => {
 //@route PATCH /projects/projectecosystems
 //@access Private
 const updateProjectEcosystem = async (req, res, next) => {
-
-    const { id, name, ecosystem, tech  } = req.body;    
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ message: 'Project ID required' });
+    const { name, ecosystem, tech  } = req.body;    
     //NB validate before making db query
-    if (!id || !ecosystem || !name) {
+    if (!ecosystem || !name) {
         return res.status(400).json({ message: "Missing required fields" });
     }
 
@@ -223,8 +231,8 @@ const updateProjectEcosystem = async (req, res, next) => {
 //@route DELETE /projects/projectEcosystems
 //@access Private
 const deleteProjectEcosystem = async (req, res, next) => {
-    const { id } = req.body;
-    if (!id) return res.status(400).json({ message: 'Project Ecosystems ID required' });
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ message: 'Project ID required' });
     try {
         const result = await query(
             `DELETE FROM "ProjectEcosystem" WHERE "id" = $1 RETURNING "id"`,

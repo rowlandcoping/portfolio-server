@@ -98,7 +98,6 @@ form.addEventListener('submit', async (e) => {
     const tech = techInput.value.split(',').filter(Boolean).map(Number);
     const optionName = select.options[select.selectedIndex].text;
     const data = {
-        id,
         name: optionName,
         ecosystem: select.value,
         tech
@@ -106,7 +105,7 @@ form.addEventListener('submit', async (e) => {
 
     try {
         await fetchWithRedirect({
-            url: '/projects/projectecosystems',
+            url: `/projects/projectecosystems/${id}`,
             method: 'PATCH',
             data,
             

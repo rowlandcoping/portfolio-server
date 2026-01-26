@@ -10,25 +10,24 @@ router.get('/provider', usersController.getPortfolioUser)
 
 router.use(requireSession);
 
-router.route('/roles/userroles')
-    .get(rolesController.getRolesForCurrentUser)
+router.route('/')
+    .get(requireAdmin, usersController.getAllUsers)
+    .post(requireAdmin, usersController.addUser)
+    .patch(requireAdmin, usersController.updateUser)
+    .delete(requireAdmin, usersController.deleteUser)
+
+router.route('/roles')
+    .get(requireAdmin, rolesController.getAllRoles)
+    .post(requireAdmin, rolesController.addRole)
+    .patch(requireAdmin, rolesController.updateRole)
+
 router.route('/:id')
     .get(usersController.getUserById)
 
-router.use(requireAdmin);
-
-router.route('/')
-    .get(usersController.getAllUsers)
-    .post(usersController.addUser)
-    .patch(usersController.updateUser)
-    .delete(usersController.deleteUser)
-
-router.route('/roles')
-    .get(rolesController.getAllRoles)
-    .post(rolesController.addRole)
-    .patch(rolesController.updateRole)
+router.route('/roles/userroles')
+    .get(rolesController.getRolesForCurrentUser)
 
 router.route('/roles/:id')
-    .get(rolesController.getRoleById)
+    .get(requireAdmin, rolesController.getRoleById)
 
 export default router

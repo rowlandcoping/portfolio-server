@@ -139,7 +139,6 @@ try {
         url: `/projects/projectecosystems/projects/${id}`
     });
     const adminProjecoSelect = document.getElementById('adminProjecoSelect');
-    console.log(projectEcosystems)
     adminProjecoSelect.innerHTML = '';
     if (projectEcosystems?.length) {
         const fragment = document.createDocumentFragment();
@@ -147,7 +146,7 @@ try {
             fragment.appendChild(createListLink({
                 listItem: link,
                 showDelete: true,
-                deleteUrl: '/projects/projectecosystems',
+                deleteUrl: `/projects/projectecosystems/${link.id}`,
                 baseUrl: '/dashboard/project/projectecosystem/edit'
             }));
         }
