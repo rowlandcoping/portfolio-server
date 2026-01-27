@@ -1,7 +1,8 @@
 import { query } from '../../config/db.js';
 import { logEvents } from '../../middleware/logger.js';
 
-//@desc get about page by logged in user
+
+//@desc get about page by logged-in user
 //@route GET /personal/about
 //@access Private
 const getAboutByCurrentUser = async (req, res) => {
@@ -14,6 +15,13 @@ const getAboutByCurrentUser = async (req, res) => {
     const about = result.rows[0];
     if (!about) return res.status(404).json({ message: 'No about page found for logged in user' });
     res.json(about);
+}
+
+//@desc get about page by user (future admin use)
+//@route GET /personal/about/:id
+//@access Private
+const getAbout = async (req, res) => {
+    res.json(req.about);
 }
 
 
@@ -60,12 +68,12 @@ const addAbout = async (req, res, next) => {
 }
 
 //@desc Update about page
-//@route PATCH /personal/about
+//@route PATCH /personal/about/:id
 //@access Private
 const updateAbout = async (req, res, next) => {
-    const { id, overview, type, clientRepo, serverRepo, copyYear, copyName } = req.body;
-
-    if (!id || !overview || !type || !clientRepo || !serverRepo || !copyYear || !copyName) {
+    const id = req.params.id;
+    const {overview, type, clientRepo, serverRepo, copyYear, copyName } = req.body;
+    if (!overview || !type || !clientRepo || !serverRepo || !copyYear || !copyName) {
         return res.status(400).json({ message: 'All fields Required'});
     }
     
@@ -156,7 +164,8 @@ const getAboutByPublicId = async (req, res, next) => {
 }
 
 export default {
-    getAboutByCurrentUser,   
+    getAboutByCurrentUser,
+    getAbout,   
     addAbout,
     updateAbout,
     getAboutByPublicId,

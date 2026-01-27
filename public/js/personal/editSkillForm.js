@@ -34,7 +34,6 @@ try {
     const result = await fetchWithRedirect({
         url:`/personal/skills/${id}`
     })
-    console.log(result)
     state.techArray = result.tech.map(tech => tech.id);
     const initialValues = state.techArray.join(',');
     state.oldValues = initialValues;
@@ -91,7 +90,6 @@ form.addEventListener('submit', async (e) => {
     const tech = techInput.value.split(',').filter(Boolean).map(Number);
     const optionName = select.options[select.selectedIndex].text;
     const data = {
-        id,
         name: optionName,
         ecosystem: select.value,
         tech
@@ -99,7 +97,7 @@ form.addEventListener('submit', async (e) => {
 
     try {
         await fetchWithRedirect({
-            url: '/personal/skills',
+            url: `/personal/skills/${id}`,
             method: 'PATCH',
             data,
             redirect: '/dashboard/personal/edit'

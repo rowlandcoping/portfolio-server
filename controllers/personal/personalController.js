@@ -166,10 +166,18 @@ const addPersonal = async (req, res, next) => {
 //@access Private
 const updatePersonal = async (req, res, next) => { 
     const { id, description, jobTitle, attributes, imageAlt, oldOriginal, oldGreenTransformed, oldGrayscaleTransformed } = req.body;
-
     if (!id || !description || !jobTitle  || !attributes) {
         return res.status(400).json({ message: 'All fields Required'});
     }
+    const { userId, roles } = req.session;
+
+    const idCheck = await query('SELECT "userId" FROM "Personal" WHERE "id"=$1 LIMIT 1', [Number(id)]);
+    const personal = idCheck.rows[0];
+    if (!roles.includes("admin") && !roles.includes("owner") && Number(personal.userId) !== Number(userId)) {
+        logEvents('Unauthorised access attmpt', 'errLog.log');
+        return res.status(403).json({ message: 'Permission Denied.' });
+    }
+
 
     const uploadDir = path.join(process.cwd(), 'images');
     const imageOrg = req.files?.original?.[0]

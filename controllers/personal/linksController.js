@@ -25,11 +25,18 @@ const getAllLinks =async (req, res) => {
 const getLinksByProfileId = async (req, res) => {
     const { id } = req.body;
     if (!id) return res.status(401).json({ message: 'Id not found' });
+    const { userId, roles } = req.session;
 
     const result = await query('SELECT * FROM "Link" WHERE "personId"=$1', [Number(id)]);
     const links = result.rows;
 
     if (!links.length) return res.status(404).json({ message: 'No links found for logged in user' });
+    
+    if (!roles.includes("admin") && !roles.includes("owner") && Number(links[0]?.userId) !== Number(userId)) {
+        logEvents('Unauthorised access attmpt', 'errLog.log');
+        return res.status(403).json({ message: 'Permission Denied.' });
+    }
+
     res.json(links);
 }
 
@@ -56,12 +63,16 @@ const addLink = async (req, res, next) => {
     if (!profileId || !name || !url || !imageAlt) {
         return res.status(400).json({ message: "Missing Data" });
     }
+    const { userId, roles } = req.session;
 
     const result = await query('SELECT "userId" FROM "Personal" WHERE "id"=$1 LIMIT 1', [Number(profileId)]);
-    const userId = result.rows[0]?.userId;
-
+    const id = result.rows[0]?.userId;    
+    if (!id) return res.status(404).json({ message: 'No user found' });
     
-    if (!userId) return res.status(404).json({ message: 'No user found' });
+    if (!roles.includes("admin") && !roles.includes("owner") && Number(userId) !== Number(id)) {
+        logEvents('Unauthorised access attmpt', 'errLog.log');
+        return res.status(403).json({ message: 'Permission Denied.' });
+    }
 
     const originalFile = req.files?.original?.[0];
     const transformedGreenFile = req.files?.transformedGreen?.[0];
@@ -77,7 +88,7 @@ const addLink = async (req, res, next) => {
 
     try {
         const columnsArray = ['personId', 'userId', 'name', 'url', 'logoOrg', 'logoGrn', 'logoGry', 'logoAlt'];
-        const values = [Number(profileId), Number(userId), name, url, logoOrg, logoGrn, logoGry, imageAlt];
+        const values = [Number(profileId), Number(id), name, url, logoOrg, logoGrn, logoGry, imageAlt];
         const columnsQuery = columnsArray.map(col => `"${col}"`).join(', ');
         const placeholders = columnsArray.map((_, i) => `$${i + 1}`).join(', ');
        
@@ -98,16 +109,16 @@ const addLink = async (req, res, next) => {
 };
 
 //@desc Update link
-//@route PATCH /personal/links
+//@route PATCH /personal/links/:id
 //@access Private
 const updateLink = async (req, res, next) => {
- console.log('FILES RECEIVED:', Object.keys(req.files || {}));
-    const { id, name, url, imageAlt, oldOriginal, oldGreenTransformed, oldGrayscaleTransformed } = req.body;
-    
+    const { name, url, imageAlt, oldOriginal, oldGreenTransformed, oldGrayscaleTransformed } = req.body;
     //NB validate before making db query
-    if (!id || !name || !url || !imageAlt) {
+    if ( !name || !url || !imageAlt) {
         return res.status(400).json({ message: "Missing required fields" });
     }
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ message: 'Link ID required' });
     
     const uploadDir = path.join(process.cwd(), 'images');
     const logoOrg = req.files?.original?.[0]
@@ -163,10 +174,10 @@ const updateLink = async (req, res, next) => {
 };
 
 //@desc Delete a link
-//@route DELETE /personal/links 
+//@route DELETE /personal/links/:id
 //@access Private
 const deleteLink = async (req, res, next) => {
-    const { id } = req.body;
+    const { id } = req.params;
     if (!id) return res.status(400).json({ message: 'Link ID required' });
 
     //retrieve image links

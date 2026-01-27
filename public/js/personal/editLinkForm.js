@@ -97,12 +97,11 @@ form.addEventListener('submit', async (e) => {
         formData.append('oldGrayscaleTransformed', oldGrayscaleTransformedFilename);
     }
     
-    formData.append('id', Number(id));
     formData.delete('logo');
     
     try {
         await fetchWithRedirect({
-            url: '/personal/links',
+            url: `/personal/links/${id}`,
             method: 'PATCH',
             data: formData,
             redirect: '/dashboard'

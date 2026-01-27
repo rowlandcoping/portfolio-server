@@ -10,7 +10,7 @@ const attributeInput =  document.getElementById('attributeInput');
 
 
 const altInput = document.getElementById('imageAlt');
-const imageUpload = document.getElementById('image');
+const imageUpload = document.getElementById('image'); 
 const imageLoader = document.getElementById('imageLoader');
 const imageGreenPreview = document.getElementById('imageGreenPreview');
 const imageGrayscalePreview = document.getElementById('imageGrayscalePreview');
@@ -40,13 +40,7 @@ try {
     jobTitleInput.value = result.jobTitle;
     altInput.value = result.imageAlt;
     currentImage.src = result.imageGrn;
-    console.log(result.attributes)
-    console.log(typeof result.attributes);
     const attributeArray = JSON.parse(result.attributes);
-    console.log(attributeArray);
-
-    console.log(typeof attributeArray);
-    console.log(Array.isArray(attributeArray));
 
     attributeArray.forEach(item => {
         attributeInput.value = item;
@@ -73,7 +67,7 @@ try {
             fragment.appendChild(createListLink({
                 listItem: skill,
                 showDelete: true,
-                deleteUrl: '/personal/skills',
+                deleteUrl: `/personal/skills/${skill.id}`,
                 baseUrl: '/dashboard/personal/skill/edit'
             }));
         }
@@ -100,7 +94,7 @@ try {
             fragment.appendChild(createListLink({
                 listItem: link,
                 showDelete: true,
-                deleteUrl: '/personal/links',
+                deleteUrl: `/personal/links/${link.id}`,
                 baseUrl: '/dashboard/personal/link/edit'
             }));
         }

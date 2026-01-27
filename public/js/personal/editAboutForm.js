@@ -90,7 +90,7 @@ form.addEventListener('submit', async (e) => {
     data.type = select.value
     try {
         await fetchWithRedirect({
-            url: '/personal/about',
+            url: `/personal/about/${data.id}`,
             method: 'PATCH',
             data,
             redirect: "/dashboard"

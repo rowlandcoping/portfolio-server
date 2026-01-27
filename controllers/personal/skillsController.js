@@ -69,11 +69,18 @@ const getSkillById = async (req, res) => {
 const getSkillsByProfileId = async (req, res) => {
     const { id } = req.body;
     if (!id) return res.status(401).json({ message: 'ID not found' });
+    const { userId, roles } = req.session;
 
     const result = await query('SELECT * FROM "Skill" WHERE "personId"=$1', [Number(id)]);
     const skills = result.rows;
 
     if (!skills) return res.status(404).json({ message: 'No skills found for logged in user' });
+
+    if (!roles.includes("admin") && !roles.includes("owner") && Number(skills[0]?.userId) !== Number(userId)) {
+        logEvents('Unauthorised access attmpt', 'errLog.log');
+        return res.status(403).json({ message: 'Permission Denied.' });
+    }
+
     res.json(skills);
 }
 
@@ -86,16 +93,22 @@ const addSkill = async (req, res, next) => {
     if (!name || !ecosystem || !personal) {
         return res.status(400).json({ message: "Missing required fields" });
     }
+    const { userId, roles } = req.session;
 
     const result = await query('SELECT "userId" FROM "Personal" WHERE "id"=$1', [Number(personal)]);
-    const userId = result.rows[0]?.userId;
-    if (!userId) return res.status(404).json({ message: 'No user found' });
+    const id = result.rows[0]?.userId;
+    if (!id) return res.status(404).json({ message: 'No user found' });
+
+    if (!roles.includes("admin") && !roles.includes("owner") && Number(userId) !== Number(id)) {
+        logEvents('Unauthorised access attmpt', 'errLog.log');
+        return res.status(403).json({ message: 'Permission Denied.' });
+    }
 
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
         const columnsArray = ['personId', 'userId', 'ecoId', 'name'];
-        const values = [Number(personal), Number(userId), Number(ecosystem), name];
+        const values = [Number(personal), Number(id), Number(ecosystem), name];
         const columnsQuery = columnsArray.map(col => `"${col}"`).join(', ');
         const placeholders = columnsArray.map((_, i) => `$${i + 1}`).join(', ');
        
@@ -131,15 +144,15 @@ const addSkill = async (req, res, next) => {
 };
 
 //@desc Update skill
-//@route PATCH /personal/skills
+//@route PATCH /personal/skills/:id
 //@access Private
 const updateSkill = async (req, res, next) => {
-    console.log('req.body:', req.body);
-
-    const { id, ecosystem, tech, name } = req.body;
+    const { id } = req.params;
+    if (!id) return res.status(400).json({ message: 'Skill ID required' });
+    const {ecosystem, tech, name } = req.body;
     
     //NB validate before making db query
-    if (!id || !ecosystem || !name) {
+    if (!ecosystem || !name) {
         return res.status(400).json({ message: "Missing required fields" });
     }    
 
@@ -190,10 +203,10 @@ const updateSkill = async (req, res, next) => {
 };
 
 //@desc Delete a skill
-//@route DELETE /personal/skills
+//@route DELETE /personal/skills/:id
 //@access Private
 const deleteSkill = async (req, res, next) => {
-    const { id } = req.body;
+    const { id } = req.params;
     if (!id) return res.status(400).json({ message: 'Skill ID required' });
     try {
         const result = await query(

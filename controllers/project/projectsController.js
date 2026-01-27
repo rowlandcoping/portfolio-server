@@ -116,7 +116,7 @@ const getAllPortfolioProjects =async (req, res, next) => {
             //NB any errors not handled here will be handled by our error handline middleware
             return res.status(404).json({message: 'No data found'})
         }
-        res.json(projects); 
+        res.json(projects);
     } catch (err) {
         next(err);
     }
