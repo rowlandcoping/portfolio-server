@@ -1,8 +1,11 @@
 import showMessage from "../utils/showMessage.js";
 import { fetchWithRedirect } from "../utils/fetchWithRedirect.js";
+import characterCounter from "../utils/characterCounter.js"; 
 
 const form = document.getElementById('aboutForm');
 const select = document.getElementById('type');
+const overInput = document.getElementById('overview');
+const characterCount = document.getElementById('character-count');
 
 
 //Populate drop-down
@@ -21,12 +24,21 @@ try {
     showMessage('error', err.message, false);
 }
 
-
+//indicate to user number of characters remaining
+const overviewCounter = characterCounter(overInput, characterCount, 400);
 
 //Submit Form
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
-    const formData = new FormData(form)
+
+    //validate character limit
+    overviewCounter.validate();
+    //display error if fields not valid
+    if (!form.reportValidity()) {
+        return; // Stops here and shows browser errors
+    }
+    
+    const formData = new FormData(form);
 
     const data = {
         type: formData.get('type'),

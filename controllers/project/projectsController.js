@@ -291,14 +291,15 @@ const addProject = async (req, res, next) => {
 };
 
 //@desc Update a project
-//@route PATCH /projects/projects/:id
+//@route PATCH /projects/projects/:id 
 //@access Private
 const updateProject = async (req, res, next) => {
     const { id } = req.params;
     const { user, name, url, repo, imageAlt, overview, features, issues, type, dateMvp, dateProd, oldOriginal, oldGreenTransformed, oldGrayscaleTransformed } = req.body;
-    if (!name || !overview || !type || !url ||!repo) {
+    if (!user || !name || !overview || !type || !url ||!repo) {
         return res.status(400).json({ message: "Missing required fields" });
     }
+    console.log(user)
 
 
     const result = await query('SELECT "id" FROM "Personal" WHERE "userId"=$1 LIMIT 1', [Number(user)]);

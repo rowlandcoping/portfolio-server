@@ -10,7 +10,7 @@
         <main class="center-top">
             <h1>Update About Page</h1>
             <p id="showMessage"></p>
-            <form class="admin-form" id="editAboutForm" method="PATCH">                
+            <form class="admin-form" id="editAboutForm">                
                 <div class="admin-form-container">
                     <div class="input-container">
                         <label class="admin-label" for="type">Select Type of Project</label>
@@ -87,8 +87,9 @@
                             autocomplete="false"
                             placeholder="type here what it is all about"
                             required
-                        ></textarea>
-                    </div>                  
+                        ></textarea>                        
+                    </div>
+                    <p id="character-count"></p>               
                                      
                     <button class="admin-button" type="submit">Update About Page</button>
                 </div>

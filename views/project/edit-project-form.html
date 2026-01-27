@@ -9,7 +9,7 @@
     <body>
         <main class="center-top">
             <h1>Manage Project</h1>
-            <p id="showMessage"></p>
+            <p id="showMessage" tabindex="-1"></p>
             <form class="admin-form" id="editProjectForm" method="PATCH">                
                 <div class="admin-form-container">
                     <div class="input-container" id="user-selector">
@@ -69,6 +69,7 @@
                             required
                         ></textarea>
                     </div>
+                    <p id="character-count"></p>
                     <div class="input-container">
                         <label class="admin-label" for="type">Select Type of Project</label>
                         <select
@@ -130,6 +131,7 @@
                             />
                         </div>
                     </div>
+                    <p id="character-count-feature"></p>
                     <div class="input-container">                        
                         <h4 class="admin-label">Feature List</h4>                           
                         <div id="featureList" class="admin-input item-list"></div>
@@ -155,6 +157,7 @@
                             required
                         />
                     </div>
+                    <p id="character-count-issue"></p>
                     <div class="input-container">                        
                         <h4 class="admin-label">Issues List</h4>                           
                         <div id="issueList" class="admin-input item-list"></div>

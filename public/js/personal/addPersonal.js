@@ -1,9 +1,12 @@
 import showMessage from "../utils/showMessage.js";
 import { fetchWithRedirect } from "../utils/fetchWithRedirect.js";
 import { processImageHelper } from "../utils/imageProcessor.js";
-
+import characterCounter from "../utils/characterCounter.js";
 
 const form = document.getElementById('personalForm');
+const descriptionInput = document.getElementById('description');
+const characterCount = document.getElementById('character-count');
+
 const imageUpload = document.getElementById('image');
 const imageLoader = document.getElementById('imageLoader');
 const imageGreenPreview = document.getElementById('imageGreenPreview');
@@ -106,6 +109,8 @@ document.querySelectorAll('.add-button').forEach(button => {
     });
 });
 
+//update text to indicate to user number of characters remaining
+const overviewCounter = characterCounter(descriptionInput, characterCount, 400);
 
 //IMAGE HANDLING
 //previews images due for upload
@@ -151,6 +156,14 @@ imageCancel.addEventListener('click', (e) => {
 
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
+
+    //validate character limit
+    overviewCounter.validate();
+    //display error if fields not valid
+    if (!form.reportValidity()) {
+        return; // Stops here and shows browser errors
+    }
+
     const formData = new FormData(form);
     if (imageUpload.files.length > 0) {
         const baseName = imageUpload.files[0].name.replace(/\.[^/.]+$/, ''); // remove file extension

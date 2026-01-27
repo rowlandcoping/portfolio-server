@@ -2,6 +2,7 @@ import showMessage from "../utils/showMessage.js";
 import createListLink from "../utils/createListLink.js";
 import { fetchWithRedirect } from "../utils/fetchWithRedirect.js";
 import { processImageHelper } from "../utils/imageProcessor.js";
+import characterCounter from "../utils/characterCounter.js"; 
 
 const message = sessionStorage.getItem('flash');
 if (message) {
@@ -22,6 +23,9 @@ const dateMvp = document.getElementById('dateMvp');
 const dateProd = document.getElementById('dateProd');
 const featureInput = document.getElementById('featureInput');
 const issueInput = document.getElementById('issueInput');
+const characterCount = document.getElementById('character-count');
+const characterCountFeature = document.getElementById('character-count-feature');
+const characterCountIssue = document.getElementById('character-count-issue');
 
 const imageUpload = document.getElementById('image');
 const imageLoader = document.getElementById('imageLoader');
@@ -200,6 +204,10 @@ function checkPlaceholder(list) {
         list.appendChild(noItems);
     }
 }
+//character counters
+const overviewCounter = characterCounter(overInput, characterCount, 400);
+const featureCounter = characterCounter(featureInput, characterCountFeature, 35);
+const issueCounter = characterCounter(issueInput, characterCountIssue, 35);
 
 //update feature list
 
@@ -208,7 +216,13 @@ function updateFeatureList(listType) {
     const input =  document.getElementById(`${listType}Input`);
     const value = input.value.trim();
     const list = document.getElementById(`${listType}List`);
-
+    
+    if (list.children.length >= 3) {
+        // Show error or prevent adding        
+        showMessage('error', 'Maximum of 3 items allowed');
+        document.getElementById('showMessage').focus();
+        return;
+    }
     // Remove "No items found" placeholder if present
     const placeholder = list.querySelector('.placeholder');
     if (placeholder) placeholder.remove();
@@ -238,10 +252,21 @@ function updateFeatureList(listType) {
 // Add button listeners
 document.querySelectorAll('.add-button').forEach(button => {
     button.addEventListener('click', () => {
-        const listType = button.id.replace(/^add/i, '').toLowerCase();        
+        const listType = button.id.replace(/^add/i, '').toLowerCase();
+        if (listType === "feature") {
+            featureCounter.validate();
+        } else {
+            issueCounter.validate();
+        }
+        //display error if fields not valid
+        if (!form.reportValidity()) {
+            return; // Stops here and shows browser errors
+        }       
         updateFeatureList(listType);
     });
 });
+
+
 
 //IMAGE HANDLING
 //previews images due for upload
@@ -253,21 +278,21 @@ imageUpload.addEventListener('change', () => {
 
 //seperate function to avoid endless image loading loop
 imageLoader.onload = async () => {
-  const greenResult = await processImageHelper(imageLoader, "green");
-  const grayscaleResult = await processImageHelper(imageLoader, "grayscale");
-  originalBlob = greenResult.originalBlob;
-  transformedGreenBlob = greenResult.transformedBlob;
-  transformedGrayscaleBlob = grayscaleResult.transformedBlob;
-  const greenPreviewUrl = URL.createObjectURL(transformedGreenBlob);
-  const grayscalePreviewUrl = URL.createObjectURL(transformedGrayscaleBlob);
-  imageGreenPreview.src = greenPreviewUrl;
-  imageGreenPreview.style.display = 'block';
-  imageGrayscalePreview.src = grayscalePreviewUrl;
-  imageGrayscalePreview.style.display = 'block';
-  imageCancel.style.display = "block";
-  currentImage.style.display = "none";
-  // clean up
-  URL.revokeObjectURL(imageLoader.src);
+    const greenResult = await processImageHelper(imageLoader, "green");
+    const grayscaleResult = await processImageHelper(imageLoader, "grayscale");
+    originalBlob = greenResult.originalBlob;
+    transformedGreenBlob = greenResult.transformedBlob;
+    transformedGrayscaleBlob = grayscaleResult.transformedBlob;
+    const greenPreviewUrl = URL.createObjectURL(transformedGreenBlob);
+    const grayscalePreviewUrl = URL.createObjectURL(transformedGrayscaleBlob);
+    imageGreenPreview.src = greenPreviewUrl;
+    imageGreenPreview.style.display = 'block';
+    imageGrayscalePreview.src = grayscalePreviewUrl;
+    imageGrayscalePreview.style.display = 'block';
+    imageCancel.style.display = "block";
+    currentImage.style.display = "none";
+    // clean up
+    URL.revokeObjectURL(imageLoader.src);
 };
 
 // cancel image update/add
@@ -288,6 +313,12 @@ imageCancel.addEventListener('click', (e) => {
 //SUBMIT FORM
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
+    //validate character limit
+    overviewCounter.validate();
+    //display error if fields not valid
+    if (!form.reportValidity()) {
+        return; // Stops here and shows browser errors
+    }
     const formData = new FormData(form);
     if (imageUpload.files.length > 0) {
         const baseName = imageUpload.files[0].name.replace(/\.[^/.]+$/, ''); // remove file extension
@@ -309,8 +340,9 @@ form.addEventListener('submit', async (e) => {
 
         formData.delete('image');
     }
-    formData.append('user', userSelector.value || userId);
-    console.log(id);
+    if (!admin) {
+        formData.append('user', userId);
+    }
     try {
         await fetchWithRedirect({
             url: `/projects/${id}`,

@@ -1,6 +1,7 @@
 import showMessage from "../utils/showMessage.js";
 import createListLink from "../utils/createListLink.js";
 import { fetchWithRedirect } from "../utils/fetchWithRedirect.js";
+import characterCounter from "../utils/characterCounter.js"; 
 
 const message = sessionStorage.getItem('flash');
 if (message) {
@@ -16,6 +17,7 @@ const serverRepoInput = document.getElementById('serverRepo');
 const copyYearInput = document.getElementById('copyYear');
 const copyNameInput = document.getElementById('copyName');
 const select = document.getElementById('type');
+const characterCount = document.getElementById('character-count');
 
 //POPULATE FIELDS
 try {
@@ -41,7 +43,8 @@ try {
     copyYearInput.value = result.copyYear;
     copyNameInput.value = result.copyName;
     select.value = String(result.typeId);
-    //NB route needs to retrieve it for logged in person.    
+    //NB route needs to retrieve it for logged in person.
+    //set current word count 
 } catch (err) {
     showMessage('error', err.message || 'Retrieving Data Failed');
 }
@@ -79,9 +82,21 @@ addProjeco.addEventListener('click', () => {
     window.location.href = `/dashboard/project/projectecosystem/about/${data.id}`;
 });
 
+
+//update text to indicate to user number of characters remaining
+const overviewCounter = characterCounter(overInput, characterCount, 400);
+
 //SUBMIT FORM
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
+
+    //validate character limit
+    overviewCounter.validate();
+    //display error if fields not valid
+    if (!form.reportValidity()) {
+        return; // Stops here and shows browser errors
+    }
+
     data.overview = overInput.value
     data.clientRepo = clientRepoInput.value
     data.serverRepo = serverRepoInput.value
