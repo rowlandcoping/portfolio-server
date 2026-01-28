@@ -42,6 +42,21 @@ const getAllUsers =async (req, res) => {
     res.json(users);
 }
 
+//@desc Get current user info
+//@route GET /users/current
+//@access Private
+const getCurrentUser = async (req, res) => {
+    const id = req.session?.userId;
+    if (!id) return res.status(400).json({ message: 'User ID required' });
+
+    const result = await query('SELECT * from "User" where "id" =$1 LIMIT 1', [Number(id)]);
+
+    const user = result.rows[0];
+    if (!user) return res.status(404).json({ message: 'No user found' });
+
+    res.json(user);
+}
+
 //@desc Get a user
 //@route GET /users/:id
 //@access Private
@@ -243,6 +258,7 @@ const deleteUser = async (req, res, next) => {
 
 export default {
     getAllUsers,
+    getCurrentUser,
     getUserById,
     getPortfolioUser,
     addUser,

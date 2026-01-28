@@ -12,6 +12,9 @@
             <p id="showMessage" tabindex="-1"></p>
             <form class="admin-form" id="editProjectForm" method="PATCH">                
                 <div class="admin-form-container">
+                    <div class="input-container">
+                        <label class="user-toggle" for="live">Display Project?</label><input type="checkbox" id="live" name="live">
+                    </div>
                     <div class="input-container" id="user-selector">
                         <label class="admin-label" for="user">Assign to User</label>
                         <select
@@ -54,7 +57,6 @@
                             name="repo"
                             type="text"
                             autocomplete="false"
-                            required
                             placeholder="enter github url"
                         />
                     </div>                    
@@ -127,7 +129,6 @@
                                 name="features"
                                 type="hidden"
                                 autocomplete="false"
-                                required
                             />
                         </div>
                     </div>
@@ -154,7 +155,6 @@
                             name="issues"
                             type="hidden"
                             autocomplete="false"
-                            required
                         />
                     </div>
                     <p id="character-count-issue"></p>

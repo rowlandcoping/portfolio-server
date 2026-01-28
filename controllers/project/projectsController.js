@@ -159,7 +159,7 @@ const getIssuesByProjectId = async (req, res) => {
 //@access Private
 const addProject = async (req, res, next) => {
     //NB features = [] defaults to empty array if there is no value.
-    const { name, overview, url, repo, imageAlt, features=[], issues=[], type, dateMvp, dateProd, user } = req.body;
+    const { live, name, overview, url, repo, imageAlt, features=[], issues=[], type, dateMvp, dateProd, user } = req.body;
     const id = req.session?.userId;
     const featureArray = JSON.parse(features);    
     const issueArray = JSON.parse(issues);
@@ -182,7 +182,7 @@ const addProject = async (req, res, next) => {
     }
 
     //NB validate before making db query
-    if (!name || !overview || !type || !url ||!repo) {
+    if (!name || !overview || !type || !url) {
         return res.status(400).json({ message: "Missing required fields" });
     }
      
@@ -210,6 +210,7 @@ const addProject = async (req, res, next) => {
 
         //create project
         const columnsArray = [
+            'live',
             'name', 
             'overview', 
             'url', 
@@ -225,6 +226,7 @@ const addProject = async (req, res, next) => {
             'dateProd'
         ];
         const values = [
+            Boolean(live),
             name,
             overview,
             url,
@@ -295,11 +297,13 @@ const addProject = async (req, res, next) => {
 //@access Private
 const updateProject = async (req, res, next) => {
     const { id } = req.params;
-    const { user, name, url, repo, imageAlt, overview, features, issues, type, dateMvp, dateProd, oldOriginal, oldGreenTransformed, oldGrayscaleTransformed } = req.body;
-    if (!user || !name || !overview || !type || !url ||!repo) {
+    const { live, user, name, url, repo, imageAlt, overview, features, issues, type, dateMvp, dateProd, oldOriginal, oldGreenTransformed, oldGrayscaleTransformed } = req.body;
+    if (!user || !name || !overview || !type || !url) {
         return res.status(400).json({ message: "Missing required fields" });
     }
     console.log(user)
+
+
 
 
     const result = await query('SELECT "id" FROM "Personal" WHERE "userId"=$1 LIMIT 1', [Number(user)]);
@@ -332,6 +336,7 @@ const updateProject = async (req, res, next) => {
 
         //update project
         const columnsArray = [
+            'live',
             'name', 
             'overview', 
             'url', 
@@ -344,6 +349,7 @@ const updateProject = async (req, res, next) => {
             'dateProd'
         ];
         const values = [
+            Boolean(live),
             name,
             overview,
             url,

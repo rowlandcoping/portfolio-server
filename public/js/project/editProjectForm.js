@@ -14,6 +14,7 @@ const url = new URL(window.location.href);
 const id = Number(url.pathname.split('/').pop());
 
 const form = document.getElementById('editProjectForm');
+const liveToggle = document.getElementById('live');
 const nameInput = document.getElementById('name');
 const overInput = document.getElementById('overview');
 const urlInput = document.getElementById('url');
@@ -65,12 +66,15 @@ try {
     });
     nameInput.value = result.name;
     urlInput.value = result.url;
-
     repoInput.value = result.repo;
     overInput.value = result.overview;
     altInput.value = result.imageAlt;
     currentImage.src = result.imageGrn;
 
+    //populate live checkbox
+    if (result.live) {
+        liveToggle.checked = true
+    }
     //populate types selector
     const typeOptions = await fetchWithRedirect({
         url: '/projects/types'
@@ -216,13 +220,17 @@ function updateFeatureList(listType) {
     const input =  document.getElementById(`${listType}Input`);
     const value = input.value.trim();
     const list = document.getElementById(`${listType}List`);
-    
+
+    /* NB FOR LEGACY PROJECTS THIS CAUSES ISSUE REMOVING EXCESS FEATURES/ISSUES SO DISABLED FOR NOW */
+    /*
     if (list.children.length >= 3) {
         // Show error or prevent adding        
         showMessage('error', 'Maximum of 3 items allowed');
         document.getElementById('showMessage').focus();
         return;
     }
+    */
+   
     // Remove "No items found" placeholder if present
     const placeholder = list.querySelector('.placeholder');
     if (placeholder) placeholder.remove();

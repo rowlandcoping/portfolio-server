@@ -16,6 +16,10 @@ router.route('/')
     .patch(requireAdmin, usersController.updateUser)
     .delete(requireAdmin, usersController.deleteUser)
 
+router.route('/current')
+    .get(usersController.getCurrentUser)
+
+
 router.route('/roles')
     .get(requireAdmin, rolesController.getAllRoles)
     .post(requireAdmin, rolesController.addRole)

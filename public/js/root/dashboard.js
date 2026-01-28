@@ -32,6 +32,20 @@ try {
     showMessage('error', err.message);
 }
 
+
+try {
+    const about = await fetchWithRedirect({
+        url: '/personal/about'
+    });
+    if (about) {
+        document.getElementById('createAbout').style.display = 'none';
+    } else {
+        document.getElementById('manageAbout').style.display = 'none';
+    }
+} catch (err) {
+    showMessage('error', err.message);
+}
+
 const message = sessionStorage.getItem('flash');
 if (message) {
     showMessage('success', message)

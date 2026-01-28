@@ -13,6 +13,9 @@
             <form class="admin-form" id="projectForm" method="POST">                
                 <div class="admin-form-container">
                     <div class="input-container">
+                        <label class="user-toggle" for="live">Display Project?</label><input type="checkbox" id="live" name="live" checked>
+                    </div>
+                    <div class="input-container">
                         <label class="user-toggle" for="userToggle">Assign to another user</label><input type="checkbox" id="userToggle" name="userToggle">
                     </div>
                     <div id="userSelect" class="input-container">
@@ -58,7 +61,6 @@
                             name="repo"
                             type="text"
                             autocomplete="false"
-                            required
                             placeholder="enter github url"
                         />
                     </div>                    
@@ -124,7 +126,6 @@
                                 name="features"
                                 type="hidden"
                                 autocomplete="false"
-                                required
                             />
                         </div>
                     </div>
@@ -151,7 +152,6 @@
                             name="issues"
                             type="hidden"
                             autocomplete="false"
-                            required
                         />
                     </div>
                     <p id="character-count-issue"></p>

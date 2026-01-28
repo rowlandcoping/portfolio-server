@@ -10,9 +10,18 @@ router.use(requireSession);
 router.get(['/', '.html'], (req, res) => {
     res.sendFile(path.join(viewDir, 'personal', 'add-personal.html'));
 });
-
-router.get('/edit', (req, res) => {
+router.get(['/userid', '/userid.html'], (req, res) => {
+    res.sendFile(path.join(viewDir, 'personal', 'view-userid.html'));
+});
+router.get(['/edit', '/edit.html'], (req, res) => {
     res.sendFile(path.join(viewDir, 'personal', 'edit-personal-form.html'));
+});
+router.get(['/messages', '/messages.html'], (req, res) => {
+    res.sendFile(path.join(viewDir, 'personal', 'view-messages.html'));
+});
+
+router.get(['/about', '/about.html'], (req, res) => {
+    res.sendFile(path.join(viewDir, 'personal', 'add-about.html'));
 });
 router.get(['/skill/edit', '/skill/edit.html'], (req, res) => {
     res.sendFile(path.join(viewDir, 'personal', 'edit-skill.html'));
@@ -22,13 +31,6 @@ router.get(['/link/edit', '/link/edit.html'], (req, res) => {
     res.sendFile(path.join(viewDir, 'personal', 'edit-link.html'));
 });
 
-router.get(['/messages', '/messages.html'], (req, res) => {
-    res.sendFile(path.join(viewDir, 'personal', 'view-messages.html'));
-});
-
-router.get(['/about', '/about.html'], (req, res) => {
-    res.sendFile(path.join(viewDir, 'personal', 'add-about.html'));
-});
 router.get(['/about/edit', '/about/edit.html'], (req, res) => {
     res.sendFile(path.join(viewDir, 'personal', 'edit-about-form.html'));
 });
