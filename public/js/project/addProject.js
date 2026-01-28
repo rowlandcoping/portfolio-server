@@ -125,16 +125,13 @@ document.querySelectorAll('.add-button').forEach(button => {
         const input =  document.getElementById(`${listType}Input`);
         const value = input.value.trim();
         const list = document.getElementById(`${listType}List`);
-
-        /* NB FOR LEGACY PROJECTS THIS CAUSES ISSUE REMOVING EXCESS FEATURES/ISSUES SO DISABLED FOR NOW */
-        /*
+                
         if (list.children.length >= 3) {
             // Show error or prevent adding        
             showMessage('error', 'Maximum of 3 items allowed');
             document.getElementById('showMessage').focus();
             return;
         }
-        */
 
         // Remove "No items found" placeholder if present
         const placeholder = list.querySelector('.placeholder');
