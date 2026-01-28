@@ -115,7 +115,7 @@ document.querySelectorAll('.add-button').forEach(button => {
         if (listType === "feature") {
             featureCounter.validate();
         } else {
-            issueCounter.validate();
+            issueCounter.validate(); 
         }
         //display error if fields not valid
         if (!form.reportValidity()) {

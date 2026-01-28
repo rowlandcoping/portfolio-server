@@ -157,15 +157,15 @@ model Link {
 }
 
 model Contact {
-  id        Int       @id @default(autoincrement())
-  email     String
-  name      String
-  projectId Int?
-  message   String
-  timestamp DateTime? @default(now())
-  personId  Int?
-  personal  Personal? @relation(fields: [personId], references: [id], onDelete: Cascade)
-  project   Project?  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    id        Int       @id @default(autoincrement())
+    email     String
+    name      String
+    projectId Int?
+    message   String
+    timestamp DateTime? @default(now())
+    personId  Int?
+    personal  Personal? @relation(fields: [personId], references: [id], onDelete: Cascade)
+    project   Project?  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }
 
 model Ecosystem {

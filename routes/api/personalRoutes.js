@@ -53,9 +53,11 @@ router.route('/profilelinks')
 router.route('/profileskills')
     .post(skillsController.getSkillsByProfileId)
 
-//contact views not yet established; tomorrow problem.
-router.route('/contacts')
-    .get(contactsController.getAllContacts)
+//All managed by logged in user
+router.route('/usercontacts')
+    .get(contactsController.getContactByUserId)
+//Check ID in controller
+router.route('/contacts/:id')
     .delete(contactsController.deleteContact)
 
 router.route('/about/:id')
@@ -75,9 +77,5 @@ router.route('/skills/:id')
     .get(requireProfileOwnership, skillsController.getSkillById)
     .patch(requireProfileOwnership, skillsController.updateSkill)
     .delete(requireProfileOwnership, skillsController.deleteSkill)
-
-//route to be secured as views are built
-router.route('/contacts/:id')
-    .get(contactsController.getContactById)
 
 export default router

@@ -30,6 +30,32 @@ const getContactById = async (req, res) => {
     res.json(contact);
 }
 
+//@desc Return contacts by loggedin userId
+//@route GET /personal/usercontacts
+//@access Private
+const getContactByUserId = async (req, res) => {
+    const user = req.session?.userId;
+    if (!user) return res.status(400).json({ message: 'User ID required' });
+    
+    try {
+        const result = await query(`
+            SELECT DISTINCT c.* 
+            FROM "Contact" c
+            LEFT JOIN "Personal" p ON c."personId" = p."id"
+            WHERE p."userId" = $1
+        `, [Number(user)]);
+        
+        if (result.rows.length === 0) {
+        return res.status(404).json({ message: 'No messages found' });
+        }
+        
+        res.json(result.rows);
+
+    } catch(err) {
+        next(err);
+    }
+}
+
 //@desc Create new contact
 //@route POST /personal/contacts
 //@access Private
@@ -81,11 +107,33 @@ const addContact = async (req, res, next) => {
 };
 
 //@desc Delete a contact
-//@route DELETE /personal/contacts
+//@route DELETE /personal/contacts/:id
 //@access Private
 const deleteContact = async (req, res, next) => {
-    const { id } = req.body;
-    if (!id) return res.status(400).json({ message: 'Contact ID required' });
+    const { id } = req.params;
+    const { userId, roles } = req.session;
+    if (!id || !userId || !roles.length) return res.status(400).json({ message: 'Missing Data' });
+
+    try {
+        const contactCheck = await query(`
+            SELECT c.*, p."userId" 
+            FROM "Contact" c
+            JOIN "Personal" p ON c."personId" = p."id"
+            WHERE c."id" = $1
+        `, [Number(id)]);
+        
+        if (contactCheck.rows.length === 0) {
+            return res.status(404).json({ message: 'Contact not found' });
+        }
+        
+        const contact = contactCheck.rows[0];
+        if (!roles.includes("admin") && !roles.includes("owner") && Number(contact.userId) !== Number(userId)) {
+            logEvents('Unauthorised access attmpt', 'errLog.log');
+            return res.status(403).json({ message: 'Permission Denied.' });
+        }
+    } catch(err) {
+        next(err);
+    }
 
     try {
         const result = await query(
@@ -98,7 +146,7 @@ const deleteContact = async (req, res, next) => {
         return res.status(404).json({ message: `Contact with id ${id} not found` });
         }
 
-        res.json({ message: `Contact with id ${id} deleted.`, contact: result.rows[0] });
+        res.json({ message: `Message with id ${id} deleted.`, contact: result.rows[0] });
 
     } catch (err) {
         next(err);
@@ -108,6 +156,7 @@ const deleteContact = async (req, res, next) => {
 export default {
     getAllContacts,
     getContactById,
+    getContactByUserId,
     addContact,
     deleteContact
 }
