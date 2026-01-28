@@ -108,6 +108,7 @@ const getAllPortfolioProjects =async (req, res, next) => {
                 ) AS "projectEcosystem"
             FROM "Project" pr
             WHERE pr."userId" = $1
+            AND pr."live" = true
             ORDER BY pr."dateMvp" DESC;
         `, [Number(user.id)]);
         const projects = result.rows;
