@@ -1,0 +1,18 @@
+services:
+  api:
+    build: .
+    container_name: node-api
+    restart: unless-stopped
+    ports:
+      - "3500:3500"  # or whatever port your server uses
+    volumes:
+      - ./:/app
+      - /app/node_modules  # Prevents host node_modules from overwriting
+    env_file:
+      - .env
+    networks:
+      - shared-network
+
+networks:
+  shared-network:
+    external: true
