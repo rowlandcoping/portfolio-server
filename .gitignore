@@ -3,3 +3,4 @@ node_modules
 logs
 /generated/prisma
 images
+docker-compose.override.yml

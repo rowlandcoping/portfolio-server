@@ -1,13 +1,10 @@
 services:
-  api:
+  web:
     build: .
     container_name: node-api
     restart: unless-stopped
-    ports:
-      - "3500:3500"  # or whatever port your server uses
     volumes:
-      - ./:/app
-      - /app/node_modules  # Prevents host node_modules from overwriting
+      - ./images:/app/images
     env_file:
       - .env
     networks:
